@@ -1,0 +1,73 @@
+% \iffalse
+% gzuthesis.dtx
+% A LaTeX thesis template for Guizhou University
+% \fi
+
+%<*class>
+\NeedsTeXFormat{LaTeX2e}[2022-06-01]
+
+\ProvidesExplClass
+  {gzuthesis}
+  {2026/09/20}
+  {0.1.1}
+  {Guizhou University Thesis Template}
+
+% --------------------------------------------------------------------------
+% Class options
+% --------------------------------------------------------------------------
+
+\RequirePackage{l3keys2e}
+
+\ExplSyntaxOn
+
+\tl_new:N \g__gzu_degree_tl
+\tl_new:N \g__gzu_degree_type_tl
+
+\keys_define:nn { gzu / class }
+  {
+    degree .choice:,
+
+    degree / master .code:n =
+      {
+        \tl_gset:Nn \g__gzu_degree_tl { master }
+      },
+
+    degree / doctor .code:n =
+      {
+        \tl_gset:Nn \g__gzu_degree_tl { doctor }
+      },
+
+    degree .initial:n = master,
+
+    degree-type .choice:,
+
+    degree-type / academic .code:n =
+      {
+        \tl_gset:Nn \g__gzu_degree_type_tl { academic }
+      },
+
+    degree-type / professional .code:n =
+      {
+        \tl_gset:Nn \g__gzu_degree_type_tl { professional }
+      },
+
+    degree-type .initial:n = academic,
+  }
+
+\ProcessKeysOptions { gzu / class }
+
+\ExplSyntaxOff
+
+% --------------------------------------------------------------------------
+% Base class
+% --------------------------------------------------------------------------
+
+\LoadClass[
+  a4paper,
+  UTF8,
+  zihao=5,
+  fontset=fandol
+]{ctexbook}
+
+\endinput
+%</class>

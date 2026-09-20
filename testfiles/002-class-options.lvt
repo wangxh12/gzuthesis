@@ -1,0 +1,21 @@
+\input regression-test.tex
+
+\documentclass[
+  degree=doctor,
+  degree-type=professional
+]{gzuthesis}
+
+\begin{document}
+
+\START
+
+\ExplSyntaxOn
+
+\TYPE{degree = \tl_use:N \g__gzu_degree_tl}
+\TYPE{degree-type = \tl_use:N \g__gzu_degree_type_tl}
+
+\ExplSyntaxOff
+
+\END
+
+\end{document}
