@@ -1,0 +1,54 @@
+% !TeX program = xelatex
+% Compile from the project root: latexmk -outdir=build/body-stress examples/body-stress.tex
+% Layout examples only; these are not research results.
+\documentclass[degree-type=professional,bibliography=none]{gzuthesis}
+\hypersetup{pdftitle={硕士论文复杂正文排版检查}}
+\begin{document}
+\frontmatter
+\tableofcontents
+\mainmatter
+\chapter{面向复杂研究场景的多源观测数据处理方法与具有较长标题的硕士学位论文正文排版示例及其跨环境一致性检查}
+本章用于检查长章标题在正文和目次中能否自然换行。它不是研究结论。标题中的数学表达式应通过文本替代写入 PDF 书签。
+\section{含有\texorpdfstring{$\alpha+\beta$}{alpha + beta}的标题\quad 与书签}
+这段标题在 PDF 书签中应显示可读文字，而不包含原始命令。复杂数学公式没有通用的无损文本转换，应由作者明确给出文字替代。
+
+\section{长网址自动换行}
+以下地址仅为排版测试，不是真实文献或数据链接：
+\url{https://example.org/datasets/abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789}
+
+网址之后的正文仍应采用五号宋体和 20 bp 基线间距。修改字体再恢复正文时，\texttt{\string\normalsize} 也应恢复同样的正文行距。
+
+\section{多行单元格与表格后的正文}
+表~\ref{tab:wrapping}~使用固定总宽度和自动换行列。单元格里的文字行距与整行表格的最小高度分别设置，避免一格中有多行文字时出现过大的行间空白。
+\begin{table}
+  \centering
+  \caption{包含多行说明的参数表}
+  \label{tab:wrapping}
+  \begin{tabularx}{\linewidth}{l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X}
+    \toprule
+    项目 & 内容说明 & 使用条件 \\
+    \midrule
+    参数一 & 较长的单元格文字应在给定列宽内自动折行，保持小五号宋体。 & 这里放入另一段较长的说明，用于检查左右两列的行距是否一致。 \\
+    参数二 & 短说明。 & 短条件。 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+下面是直接放在正文中的非浮动表格，用来检查表格结束后是否发生字号泄漏：
+\par\medskip
+\noindent\begin{tabular}{lp{.65\linewidth}}
+  \toprule 项目 & 描述 \\ \midrule
+  测试项 & 这是使用段落列的独立表格，文字跨行时仍采用小五号宋体。 \\
+  \bottomrule
+\end{tabular}
+\par\medskip
+此处已经离开表格环境，正文必须恢复五号宋体和原有行距，不能继续沿用表格的小五号字。
+{\small 这是局部的小字号文字。}局部字号改变结束后，正常正文同样应恢复。
+
+\chapter{长公式的分页}
+下面的一组等式故意超过一页，测试 align 环境能否在行与行之间分页，避免整组推导被推到下一页或溢出页面。
+式~\eqref{eq:first-row}~和式~\eqref{eq:last-row}~分别为首行、末行，编号应连续且引用正确。
+\input{examples/display-rows}
+公式后的正文正常接续。若某几行必须保持在同一页，可以在对应换行处使用 \verb|\\*|；需要建议分页时使用 \verb|\displaybreak|。
+嵌套在单个 equation 中的 aligned 或 split 仍是不可分页的整体。
+\end{document}

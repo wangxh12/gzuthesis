@@ -1,0 +1,30 @@
+\input regression-test.tex
+\documentclass[bibliography=none]{gzuthesis}
+\begin{document}
+\START
+\makeatletter
+\TYPE{paper-width=\the\paperwidth}
+\TYPE{paper-height=\the\paperheight}
+\TYPE{body-size=\f@size}
+\TYPE{body-baseline=\the\baselineskip}
+\TYPE{body-indent=\the\parindent}
+\TYPE{paragraph-skip=\the\parskip}
+\frontmatter
+\TYPE{front-page=\thepage}
+\mainmatter
+\TYPE{main-page=\thepage}
+\setcounter{chapter}{2}
+\setcounter{figure}{3}
+\setcounter{table}{4}
+\setcounter{equation}{5}
+\TYPE{figure=\thefigure,table=\thetable,equation=\theequation}
+\backmatter
+\appendix
+\setcounter{chapter}{1}
+\TYPE{appendix-mainmatter=\if@mainmatter true\else false\fi}
+\TYPE{appendix-chapter=\thechapter}
+\TYPE{appendix-equation=\theequation}
+\TYPE{appendix-page=\thepage}
+\makeatother
+\END
+\end{document}

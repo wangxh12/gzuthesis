@@ -1,73 +1,94 @@
-% \iffalse
-% gzuthesis.dtx
-% A LaTeX thesis template for Guizhou University
-% \fi
 
-%<*class>
-\NeedsTeXFormat{LaTeX2e}[2022-06-01]
+% \section{实现细节}
+%
+% \subsection{基本信息}
+%
+% 声明 GZUThesis 文档类。
+%
+%    \begin{macrocode}
+%<*cls>
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesClass{gzuthesis}
+  [2026/11/15 v0.1 Guizhou University Thesis Template]
+%    \end{macrocode}
+%
+% \subsection{定义选项}
+%
+% GZUThesis 仅支持硕士和博士学位论文，
+% 并区分学术学位和专业学位。
+%
+%    \begin{macrocode}
+\RequirePackage{kvoptions}
+\RequirePackage{etoolbox}
 
-\ProvidesExplClass
-  {gzuthesis}
-  {2026/09/20}
-  {0.1.1}
-  {Guizhou University Thesis Template}
+\SetupKeyvalOptions{
+  family = gzu,
+  prefix = gzu@,
+}
 
-% --------------------------------------------------------------------------
-% Class options
-% --------------------------------------------------------------------------
+\DeclareStringOption[master]{degree}
+\DeclareStringOption[academic]{degree-type}
 
-\RequirePackage{l3keys2e}
+\DeclareDefaultOption{
+  \PassOptionsToClass{\CurrentOption}{ctexbook}
+}
 
-\ExplSyntaxOn
+\ProcessKeyvalOptions*
+%    \end{macrocode}
+%
+% \subsection{学位类型判断}
+%
+% 定义内部布尔条件，供后续排版代码使用。
+%
+%    \begin{macrocode}
+\newif\ifgzu@degree@master
+\newif\ifgzu@degree@doctor
 
-\tl_new:N \g__gzu_degree_tl
-\tl_new:N \g__gzu_degree_type_tl
-
-\keys_define:nn { gzu / class }
+\newif\ifgzu@degree@type@academic
+\newif\ifgzu@degree@type@professional
+%    \end{macrocode}
+%
+% 检查学位层次。
+%
+%    \begin{macrocode}
+\ifdefstring{\gzu@degree}{master}
+  {\gzu@degree@mastertrue}
   {
-    degree .choice:,
-
-    degree / master .code:n =
+    \ifdefstring{\gzu@degree}{doctor}
+      {\gzu@degree@doctortrue}
       {
-        \tl_gset:Nn \g__gzu_degree_tl { master }
-      },
-
-    degree / doctor .code:n =
-      {
-        \tl_gset:Nn \g__gzu_degree_tl { doctor }
-      },
-
-    degree .initial:n = master,
-
-    degree-type .choice:,
-
-    degree-type / academic .code:n =
-      {
-        \tl_gset:Nn \g__gzu_degree_type_tl { academic }
-      },
-
-    degree-type / professional .code:n =
-      {
-        \tl_gset:Nn \g__gzu_degree_type_tl { professional }
-      },
-
-    degree-type .initial:n = academic,
+        \ClassError{gzuthesis}
+          {Invalid degree `\gzu@degree'}
+          {Use degree=master or degree=doctor.}
+      }
   }
+%    \end{macrocode}
+%
+% 检查学位类别。
+%
+%    \begin{macrocode}
+\edef\gzu@degree@type{
+  \csname gzu@degree-type\endcsname
+}
 
-\ProcessKeysOptions { gzu / class }
-
-\ExplSyntaxOff
-
-% --------------------------------------------------------------------------
-% Base class
-% --------------------------------------------------------------------------
-
-\LoadClass[
-  a4paper,
-  UTF8,
-  zihao=5,
-  fontset=fandol
-]{ctexbook}
-
-\endinput
-%</class>
+\ifdefstring{\gzu@degree@type}{academic}
+  {\gzu@degree@type@academictrue}
+  {
+    \ifdefstring{\gzu@degree@type}{professional}
+      {\gzu@degree@type@professionaltrue}
+      {
+        \ClassError{gzuthesis}
+          {Invalid degree-type `\gzu@degree@type'}
+          {Use degree-type=academic or professional.}
+      }
+  }
+%    \end{macrocode}
+%
+% \subsection{加载基础文档类}
+%
+% 采用 ctexbook 作为基础文档类。
+%
+%    \begin{macrocode}
+\LoadClass[a4paper,UTF8]{ctexbook}
+%</cls>
+%    \end{macrocode}

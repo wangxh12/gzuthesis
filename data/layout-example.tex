@@ -1,0 +1,114 @@
+\chapter{图表与公式排版}
+\label{chap:layout}
+\section{图的编号与标题}
+如图~\ref{fig:workflow}~所示，研究过程可表示为资料收集、方法设计和结果分析三个阶段。
+图题置于图的下方，图注置于图题上方。硕士论文可以使用中文图题；本例同时展示可选的双语图题，中文在上。
+\begin{figure}[htbp]
+  \centering
+  \begin{minipage}{0.85\textwidth}
+    \centering
+    \setlength{\fboxsep}{10pt}
+    \fbox{资料收集}\quad$\longrightarrow$\quad
+    \fbox{方法设计}\quad$\longrightarrow$\quad\fbox{结果分析}
+    \medskip
+    \gzunote{注：方框为排版演示，不表示特定实验步骤。}
+    \gzubicaption{研究流程示意}{Schematic of the research workflow}
+    \label{fig:workflow}
+  \end{minipage}
+\end{figure}
+
+\section{三线表}
+表~\ref{tab:parameters}~展示三线表的写法。表题位于表格上方，表格内容为小五号宋体，顶线和底线宽度为 1.5 磅，中线宽度为 0.75 磅。
+\begin{table}[htbp]
+  \centering
+  \gzubicaption{示例参数及其含义}{Example parameters and their meanings}
+  \label{tab:parameters}
+  \begin{tabular}{clc}
+    \toprule
+    符号 & 含义 & 示例值 \\
+    \midrule
+    $n$ & 样本数量 & 120 \\
+    $d$ & 特征维数 & 8 \\
+    $\alpha$ & 权重系数 & 0.5 \\
+    \bottomrule
+  \end{tabular}
+  \gzunote{注：数值仅用于展示表格排版。}
+\end{table}
+
+\section{数学公式}
+如式~\eqref{eq:mean}~所示，算术平均值由所有观测值之和除以样本数量得到。
+公式单独成行，编号按章排列并在右侧对齐。
+\begin{equation}
+  \bar{x}=\frac{1}{n}\sum_{i=1}^{n}x_i .
+  \label{eq:mean}
+\end{equation}
+\gzuequationwhere{$\bar{x}$ 为算术平均值；$n$ 为样本数量；$x_i$ 为第 $i$ 个观测值。}
+
+\subsection{多行公式}
+较长公式可使用对齐环境，在关系符号附近换行。式~\eqref{eq:variance}~给出一个两行公式示例。
+\begin{equation}
+  \begin{aligned}
+    s^2 &= \frac{1}{n-1}\sum_{i=1}^{n}(x_i-\bar{x})^2 \\
+        &= \frac{1}{n-1}\left(\sum_{i=1}^{n}x_i^2-n\bar{x}^{\,2}\right).
+  \end{aligned}
+  \label{eq:variance}
+\end{equation}
+
+\section{跨页表格}
+表~\ref{tab:long}~故意设置为较长的表格，以检查跨页时的表号、续表标记和重复表头。
+跨页表格应直接使用 longtable 环境，不要嵌套在 table 浮动体中。该示例采用硕士论文允许的中文表题。
+\begin{longtable}{cll}
+  \caption{跨页数据排版示例}\label{tab:long}\\
+  \toprule 编号 & 项目 & 说明 \\ \midrule
+  \endfirsthead
+  \caption[]{跨页数据排版示例（续）}\\
+  \toprule 编号 & 项目 & 说明 \\ \midrule
+  \endhead
+  \bottomrule
+  \endfoot
+  1 & 项目一 & 示例数据 \\
+  2 & 项目二 & 示例数据 \\
+  3 & 项目三 & 示例数据 \\
+  4 & 项目四 & 示例数据 \\
+  5 & 项目五 & 示例数据 \\
+  6 & 项目六 & 示例数据 \\
+  7 & 项目七 & 示例数据 \\
+  8 & 项目八 & 示例数据 \\
+  9 & 项目九 & 示例数据 \\
+  10 & 项目十 & 示例数据 \\
+  11 & 项目十一 & 示例数据 \\
+  12 & 项目十二 & 示例数据 \\
+  13 & 项目十三 & 示例数据 \\
+  14 & 项目十四 & 示例数据 \\
+  15 & 项目十五 & 示例数据 \\
+  16 & 项目十六 & 示例数据 \\
+  17 & 项目十七 & 示例数据 \\
+  18 & 项目十八 & 示例数据 \\
+  19 & 项目十九 & 示例数据 \\
+  20 & 项目二十 & 示例数据 \\
+  21 & 项目二十一 & 示例数据 \\
+  22 & 项目二十二 & 示例数据 \\
+  23 & 项目二十三 & 示例数据 \\
+  24 & 项目二十四 & 示例数据 \\
+  25 & 项目二十五 & 示例数据 \\
+  26 & 项目二十六 & 示例数据 \\
+  27 & 项目二十七 & 示例数据 \\
+  28 & 项目二十八 & 示例数据 \\
+  29 & 项目二十九 & 示例数据 \\
+  30 & 项目三十 & 示例数据 \\
+  31 & 项目三十一 & 示例数据 \\
+  32 & 项目三十二 & 示例数据 \\
+  33 & 项目三十三 & 示例数据 \\
+  34 & 项目三十四 & 示例数据 \\
+  35 & 项目三十五 & 示例数据 \\
+  36 & 项目三十六 & 示例数据 \\
+  37 & 项目三十七 & 示例数据 \\
+  38 & 项目三十八 & 示例数据 \\
+  39 & 项目三十九 & 示例数据 \\
+  40 & 项目四十 & 示例数据 \\
+  41 & 项目四十一 & 示例数据 \\
+  42 & 项目四十二 & 示例数据 \\
+  43 & 项目四十三 & 示例数据 \\
+  44 & 项目四十四 & 示例数据 \\
+  45 & 项目四十五 & 示例数据 \\
+\end{longtable}

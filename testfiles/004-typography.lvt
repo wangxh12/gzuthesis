@@ -1,0 +1,24 @@
+\input regression-test.tex
+\documentclass[bibliography=none]{gzuthesis}
+\begin{document}
+\START
+\makeatletter
+\small\normalsize
+\TYPE{restored-body-size=\f@size}
+\TYPE{restored-body-baseline=\the\baselineskip}
+\setbox0=\vbox{%
+  \begin{tabular}{p{4cm}}
+    \TYPE{cell-size=\f@size}%
+    \TYPE{cell-baseline=\the\baselineskip}%
+    第一行\newline 第二行\\
+  \end{tabular}%
+  \TYPE{after-table-size=\f@size}%
+  \TYPE{after-table-baseline=\the\baselineskip}%
+  \begin{tabularx}{5cm}{X}自动换行的段落单元格\end{tabularx}%
+  \TYPE{after-tabularx-size=\f@size}%
+  \TYPE{after-tabularx-baseline=\the\baselineskip}%
+}
+\TYPE{display-break-penalty=\the\interdisplaylinepenalty}
+\makeatother
+\END
+\end{document}
