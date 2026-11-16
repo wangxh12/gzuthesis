@@ -1,15 +1,39 @@
-\begin{abstractzh}
-学位论文的规范排版是准确表达研究内容和组织学术材料的重要基础。本示例围绕贵州大学硕士学位论文的编排要求，展示从题名页、答辩委员会名单和声明页，到中英文摘要、目次、正文及结尾部分的完整组织方式。文档中的姓名、学号、单位及研究内容均为示例，使用时需要由作者据实替换。
+% !TEX root = ../gzuthesis-example.tex
 
-模板将论文基本信息集中设置，统一生成前置页面，并分别控制正文、章节标题、图表题注和参考文献的字体与字号。针对中文论文中常见的长网址、多行表格、跨页公式和附录编号问题，示例给出了可直接使用的写法。正文后的致谢、参考文献、附录、索引、作者简历和后记采用独立的样式，同时保持页码连续。
+% 中英文摘要和关键字
 
-本摘要仅说明模板的用途，不报告任何实际科研发现。正式撰写时，中文摘要应概括研究目的、方法、结果和结论，突出研究工作的创新或改进，通常控制在三百至一千字，并选择三至八个关键词。英文摘要应与中文摘要的内容对应。作者应在提交前逐项核对论文信息、声明签名、参考文献及院系补充要求。
-\end{abstractzh}
+\begin{abstract}
+  论文的摘要是对论文研究内容和成果的高度概括。
+  摘要应对论文所研究的问题及其研究目的进行描述，对研究方法和过程进行简单介绍，对研究成果和所得结论进行概括。
+  摘要应具有独立性和自明性，其内容应包含与论文全文同等量的主要信息。
+  使读者即使不阅读全文，通过摘要就能了解论文的总体内容和主要成果。
 
-\begin{abstracten}
-Consistent thesis formatting supports the clear presentation of research and the organization of academic material. This example demonstrates the structure of a master's thesis at Guizhou University, from the title page, defense committee and declarations to the Chinese and English abstracts, contents, main text and end matter. Names, student details, affiliations and research descriptions are illustrative and must be replaced with accurate information.
+  论文摘要的书写应力求精确、简明。
+  切忌写成对论文书写内容进行提要的形式，尤其要避免“第 1 章……；第 2 章……；……”这种或类似的陈述方式。
 
-The template stores thesis information centrally and generates the preliminary pages with consistent fonts and sizes. Examples address long URLs, multiline table cells, equations spanning pages and appendix numbering. Acknowledgements, references, appendices, an index, the author's curriculum vitae and a postscript have separate styles while retaining continuous page numbers.
+  关键词是为了文献标引工作、用以表示全文主要内容信息的单词或术语。
+  关键词不超过 5 个，每个关键词中间用分号分隔。
 
-This abstract describes the template and reports no research findings. In an actual thesis, the abstract should state the research purpose, methods, results and conclusions, with emphasis on the contributions or improvements. The Chinese abstract normally contains 300 to 1,000 Chinese characters and three to eight keywords. The English abstract should convey the same content. Authors should verify all personal information, declaration signatures, references and additional departmental requirements before submission.
-\end{abstracten}
+  % 关键词用“英文逗号”分隔，输出时会自动处理为正确的分隔符
+  \gzusetup{
+    keywords = {关键词 1, 关键词 2, 关键词 3, 关键词 4, 关键词 5},
+  }
+\end{abstract}
+
+\begin{abstract*}
+  An abstract of a dissertation is a summary and extraction of research work and contributions.
+  Included in an abstract should be description of research topic and research objective, brief introduction to methodology and research process, and summary of conclusion and contributions of the research.
+  An abstract should be characterized by independence and clarity and carry identical information with the dissertation.
+  It should be such that the general idea and major contributions of the dissertation are conveyed without reading the dissertation.
+
+  An abstract should be concise and to the point.
+  It is a misunderstanding to make an abstract an outline of the dissertation and words “the first chapter”, “the second chapter” and the like should be avoided in the abstract.
+
+  Keywords are terms used in a dissertation for indexing, reflecting core information of the dissertation.
+  An abstract may contain a maximum of 5 keywords, with semi-colons used in between to separate one another.
+
+  % Use comma as separator when inputting
+  \gzusetup{
+    keywords* = {keyword 1, keyword 2, keyword 3, keyword 4, keyword 5},
+  }
+\end{abstract*}

@@ -3,23 +3,21 @@ requirements/
 
 ## vscode
 .vscode/
-
-## .gitignore for thuthesis
-thuthesis/
+versions
 
 ## distribution files
 .DS_Store
 package-lock.json
 node_modules/
 dist/
-thuthesis*.zip
-thuthesis-ctan/
+gzuthesis*.zip
+gzuthesis-ctan/
 
 ## generated files:
 dtx-style.sty
-thuthesis.cls
-thuthesis.pdf
-thuthesis-example.pdf
+gzuthesis.cls
+gzuthesis.pdf
+gzuthesis-example.pdf
 *.hd
 
 ## test files:

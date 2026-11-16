@@ -17,7 +17,7 @@
 %
 % \iffalse
 %<*driver>
-\ProvidesFile{gzuthesis.dtx}[2026/11/15 0.1.0 Guizhou University Thesis Template]
+\ProvidesFile{gzuthesis.dtx}[2026/11/16 0.2.0-dev Guizhou University Thesis Template]
 \documentclass{ltxdoc}
 \usepackage{dtx-style}
 
@@ -104,8 +104,7 @@
 % ]{gzuthesis}
 % \end{verbatim}
 %
-% 论文标题、作者、导师等元数据配置接口
-% 将在后续版本中实现。
+% 论文标题、作者、导师等信息使用下述统一配置接口。
 % 
 % \subsection{论文信息配置}
 %
@@ -117,11 +116,11 @@
 %   title* = {English Thesis Title},
 %   author = {张三},
 %   student-id = {2026000000},
-%   supervisor = {李四 教授},
-%   discipline = {机械工程},
-%   research-direction = {智能故障诊断},
-%   department = {机械工程学院},
-%   date = {2026-11},
+%   supervisor = {李四, 教授},
+%   discipline = {电子信息},
+%   research-direction = {自然语言处理},
+%   department = {计算机科学与技术学院},
+%   date = {2027-06-01},
 % }
 % \end{verbatim}
 %
@@ -372,8 +371,8 @@
 
 % \subsection{图表编号、双语题注与三线表}
 %
-% 图、表和公式默认按章编号，采用短横线连接。
-% 附录相应为 A-1 等；章节和定理编号保持不变。
+% 图、表和公式默认按章编号，采用句点连接。
+% 附录相应为 A.1 等；以下示例可改用短横线，章节和定理编号不变。
 % 可以在导言区统一覆盖默认值：
 %
 % \begin{verbatim}
@@ -439,7 +438,19 @@
 % \end{verbatim}
 % 
 % 
-% 
+% \subsection{输出模式}
+%
+% GZUThesis 支持打印版和电子版两种输出模式。
+%
+% |output=print| 为默认模式，在双面排版时，
+% 根据页面奇偶性自动补充必要的空白页。
+%
+% |output=electronic| 为电子版，不额外生成
+% 打印装订所需的空白页。
+%
+% |include-spine| 仅对打印版生效。
+% 当电子版设置 |include-spine=true| 时，
+% 模板忽略该选项并给出警告。
 % 
 % 
 % 
@@ -457,110 +468,300 @@
 %    \begin{macrocode}
 %<*cls>
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{gzuthesis}[2026/11/15 v0.1.0 Guizhou University Thesis Template]
+\ProvidesClass{gzuthesis}[2026/11/16 v0.2.0-dev Guizhou University Thesis Template]
 %    \end{macrocode}
 %
-% \subsection{文档类选项}
+% \subsection{统一配置系统}
+% \label{sec:defoption}
 %
-% GZUThesis 支持硕士和博士学位论文，
-% 并区分学术学位和专业学位。
+% 配置声明参考 ThuThesis 的 |name|、|choices|、|default| 和选项钩子机制。
+% 文档类选项与 \cs{gzusetup} 共用 |gzu| 配置族；数据保存与页面排版分离。
+% 本实现增加赋值前校验和类选项锁定，避免非法输入或延迟修改破坏已有状态。
 %
-% \subsubsection{选项定义}
+% \subsubsection{配置接口与辅助命令}
 %
-% 使用 |kvoptions| 宏包处理文档类选项。
+% \cs{gzusetup} 可以多次调用，同一作用域内后一次设置覆盖前一次设置。
+% 文本字段原样保存，不提前展开题目中的命令；枚举字段展开后检查合法值。
+% 配置项之间不应包含空白行。
 %
 %    \begin{macrocode}
+\RequirePackage{kvdefinekeys}
+\RequirePackage{kvsetkeys}
 \RequirePackage{kvoptions}
 
 \SetupKeyvalOptions{
-  family = gzu,
-  prefix = gzu@,
+  family  = gzu,
+  prefix  = gzu@,
+  setkeys = \kvsetkeys,
+}
+
+\newcommand\gzuthesis{GZUThesis}
+\newcommand\gzuversion{0.2.0-dev}
+% 保留已有示例中的版本命令；论文信息不依赖该别名。
+\providecommand\version{\gzuversion}
+
+\newcommand\gzu@error[2]{\ClassError{gzuthesis}{#1}{#2}}
+
+% 各排版模块初始化完毕后，才执行用户赋值触发的钩子。
+\newif\ifgzu@options@ready
+\gzu@options@readyfalse
+\let\gzu@setup@hook\@empty
+
+\newcommand\gzusetup[1]{%
+  \let\gzu@setup@hook\@empty
+  \kvsetkeys{gzu}{#1}%
+  \gzu@setup@hook
+}
+
+\newcommand\gzu@define@key[1]{%
+  \kvsetkeys{gzu@key}{#1}%
+}
+
+\newcommand\gzu@option@hook[2]{%
+  \expandafter\g@addto@macro\csname gzu@#1@@code\endcsname{#2}%
+}
+
+\newcommand\gzu@run@option@hook[1]{%
+  \ifgzu@options@ready
+    \@nameuse{gzu@#1@@code}%
+  \fi
 }
 %    \end{macrocode}
 %
-% 定义学位层次选项 |degree|，默认值为 |master|。
-% 定义学位类别选项 |degree-type|，默认值为 |academic|。
+% \subsubsection{配置声明}
+%
+% |name| 指定内部变量名，|choices| 指定合法枚举值，
+% |default| 指定初始值；省略默认值时，文本字段为空，枚举字段取首项。
+% |code| 可定义赋值后的操作，后续模块也可通过 \cs{gzu@option@hook} 追加操作。
+% 文档类初始化期间，定义默认值和解析类选项只更新数据与枚举条件；
+% 各排版模块加载所需宏包后自行应用一次初始值。
 %
 %    \begin{macrocode}
-\DeclareStringOption[master]{degree}
-\DeclareStringOption[academic]{degree-type}
-\DeclareStringOption[auto]{fontset}
-\DeclareStringOption[xits]{math-font}
-%    \end{macrocode}
-%
-% 未由 GZUThesis 处理的选项传递给 |ctexbook|。
-%
-%    \begin{macrocode}
-\DeclareDefaultOption{
-  \PassOptionsToClass{\CurrentOption}{ctexbook}
+\kv@define@key{gzu@definition}{name}{\def\gzu@@name{#1}}
+\kv@define@key{gzu@definition}{choices}{\def\gzu@@choices{#1}}
+\kv@define@key{gzu@definition}{default}{\def\gzu@@default{#1}}
+\kv@define@key{gzu@definition}{code}{\def\gzu@@code{#1}}
+
+\kv@set@family@handler{gzu@key}{%
+  \@ifundefined{gzu@#1@@name}{%
+    \gzu@declare@key{#1}{#2}%
+  }{%
+    \gzu@error{Option `#1' already defined}%
+      {Declare each option only once.}%
+  }%
 }
 
-\ProcessKeyvalOptions*
+\newcommand\gzu@declare@key[2]{%
+  \def\gzu@@name{#1}%
+  \let\gzu@@choices\@empty
+  \let\gzu@@default\@empty
+  \let\gzu@@code\@empty
+  \kvsetkeys{gzu@definition}{#2}%
+  \expandafter\let\csname gzu@#1@@name\endcsname\gzu@@name
+  \expandafter\let\csname gzu@#1@@choices\endcsname\gzu@@choices
+  \expandafter\let\csname gzu@#1@@code\endcsname\gzu@@code
+  \@namedef{gzu@#1@@reset}{}%
+  \@namedef{gzu@#1@@guard}{\@firstofone}%
+  \def\gzu@declare@choice##1{%
+    \ifx\gzu@@default\@empty
+      \def\gzu@@default{##1}%
+    \fi
+    \expandafter\newif\csname ifgzu@\gzu@@name @##1\endcsname
+    \@namedef{gzu@#1@@choice@##1}{}%
+    \expandafter\g@addto@macro\csname gzu@#1@@reset\endcsname{%
+      \@nameuse{gzu@\@nameuse{gzu@#1@@name}@##1false}%
+    }%
+  }%
+  \expandafter\comma@parse\expandafter{\gzu@@choices}{\gzu@declare@choice}%
+  \kv@define@key{gzu}{#1}{\gzu@set@key{#1}{##1}}%
+  \def\gzu@set@default##1{\gzu@set@key{#1}{##1}}%
+  \expandafter\gzu@set@default\expandafter{\gzu@@default}%
+}
 %    \end{macrocode}
 %
-% \subsubsection{学位类型判断}
+% \subsubsection{赋值、校验与生效阶段}
 %
-% 定义内部条件变量，供后续模块判断学位类型。
+% 先检查配置项是否允许修改，再检查枚举值；通过后才保存数据并更新条件。
+% 非法值不会清空旧状态，也不会触发排版钩子。
+% 类初始化选项在文档类加载结束时锁定，不能通过 \cs{gzusetup} 再次设置。
 %
 %    \begin{macrocode}
-\newif\ifgzu@degree@master
-\newif\ifgzu@degree@doctor
+\newcommand\gzu@set@key[2]{%
+  \@nameuse{gzu@#1@@guard}{\gzu@set@key@value{#1}{#2}}%
+}
 
-\newif\ifgzu@degree@type@academic
-\newif\ifgzu@degree@type@professional
-%    \end{macrocode}
-%
-% 定义用于比较的字符串常量。
-%
-%    \begin{macrocode}
-\def\gzu@master{master}
-\def\gzu@doctor{doctor}
-
-\def\gzu@academic{academic}
-\def\gzu@professional{professional}
-%    \end{macrocode}
-%
-% 根据 |degree| 的取值设置对应条件。
-% 当取值不合法时，给出错误信息。
-%
-%    \begin{macrocode}
-\ifx\gzu@degree\gzu@master
-  \gzu@degree@mastertrue
-\else
-  \ifx\gzu@degree\gzu@doctor
-    \gzu@degree@doctortrue
+\newcommand\gzu@set@key@value[2]{%
+  \expandafter\ifx\csname gzu@#1@@choices\endcsname\@empty
+    \@namedef{gzu@\@nameuse{gzu@#1@@name}}{#2}%
+    \gzu@run@option@hook{#1}%
   \else
-    \ClassError{gzuthesis}
-      {Invalid degree `\gzu@degree'}
-      {Use degree=master or degree=doctor.}
+    \edef\gzu@@value{#2}%
+    \@ifundefined{gzu@#1@@choice@\gzu@@value}{%
+      \gzu@error{Invalid value `#1 = \gzu@@value'}%
+        {Allowed values: \@nameuse{gzu@#1@@choices}.}%
+    }{%
+      \expandafter\let\csname gzu@\@nameuse{gzu@#1@@name}\endcsname\gzu@@value
+      \@nameuse{gzu@#1@@reset}%
+      \@nameuse{gzu@\@nameuse{gzu@#1@@name}@\gzu@@value true}%
+      \gzu@run@option@hook{#1}%
+    }%
   \fi
-\fi
+}
+
+\newcommand\gzu@option@classonly[1]{%
+  \@namedef{gzu@#1@@guard}{\gzu@reject@class@option{#1}}%
+}
+
+\newcommand\gzu@reject@class@option[2]{%
+  \gzu@error{Option `#1' is only valid in documentclass}%
+    {Move this option to the optional argument of \string\documentclass.}%
+}
 %    \end{macrocode}
 %
-% 获取 |degree-type| 的取值，并设置对应条件。
+% \subsubsection{文档类初始化选项}
+%
+% 保持原版的默认学位、中文字体选择和数学字体。
+% 本版仅支持硕士、博士，以及学术学位、专业学位。
 %
 %    \begin{macrocode}
-\edef\gzu@degree@type{\csname gzu@degree-type\endcsname}
-
-\ifx\gzu@degree@type\gzu@academic
-  \gzu@degree@type@academictrue
-\else
-  \ifx\gzu@degree@type\gzu@professional
-    \gzu@degree@type@professionaltrue
-  \else
-    \ClassError{gzuthesis}
-      {Invalid degree-type `\gzu@degree@type'}
-      {Use degree-type=academic or degree-type=professional.}
-  \fi
-\fi
+\gzu@define@key{
+  degree = {
+    choices = {master, doctor},
+    default = master,
+  },
+  degree-type = {
+    name = degree@type,
+    choices = {academic, professional},
+    default = academic,
+  },
+  fontset = {
+    choices = {auto, windows, mac, ubuntu, fandol},
+    default = auto,
+  },
+  math-font = {
+    name = math@font,
+    choices = {lm, stix, xits, libertinus},
+    default = xits,
+  },
+}
+%    \end{macrocode}
+%
+% \subsubsection{论文信息配置项}
+%
+% 带星号的配置项保存英文信息，统一映射为带 |@en| 后缀的内部变量。
+% 文本字段初始为空；具体学位名称不替代 |degree| 和 |degree-type|。
+% 导师中文信息使用 |姓名, 职称|，英文信息保存用户提供的完整文字。
+% 日期按用户输入原样保存和输出，不自动补当天日期或转换格式。
+% 可选字段已注册但不自动增加页面；英文题名页尚未实现。
+%
+%    \begin{macrocode}
+\gzu@define@key{
+  title = {},
+  title* = {name = title@en},
+  keywords = {},
+  keywords* = {name = keywords@en},
+  author = {},
+  author* = {name = author@en},
+  student-id = {name = student@id},
+  degree-category = {name = degree@category},
+  degree-category* = {name = degree@category@en},
+  supervisor = {},
+  supervisor* = {name = supervisor@en},
+  associate-supervisor = {name = associate@supervisor},
+  associate-supervisor* = {name = associate@supervisor@en},
+  co-supervisor = {name = co@supervisor},
+  co-supervisor* = {name = co@supervisor@en},
+  department = {},
+  department* = {name = department@en},
+  discipline = {},
+  discipline* = {name = discipline@en},
+  research-direction = {name = research@direction},
+  research-direction* = {name = research@direction@en},
+  professional-field = {name = professional@field},
+  professional-field* = {name = professional@field@en},
+  date = {},
+  graduation-year = {name = graduation@year},
+  clc = {},
+  udc = {},
+  school-code = {name = school@code},
+  secret-level = {name = secret@level},
+  secret-year = {name = secret@year},
+}
+%    \end{macrocode}
+%
+% \subsubsection{排版配置项}
+%
+% 原先分散在图表、公式和参考文献模块中的配置项统一在此声明。
+% 编号连接符保留实际源码的句点默认值，而不是旧文档误写的短横线。
+% |include-spine=false| 仍保留中文封面背页，不绘制书脊。
+% |cite-style| 只用于 |natbib|，不接管 |biblatex| 的引用样式。
+%
+%    \begin{macrocode}
+\gzu@define@key{
+  % 输出模式：打印版或电子版
+  output = {
+    choices = {print, electronic},
+    default = print,
+  },
+  % 是否在封面背页绘制书脊
+  include-spine = {
+    name = include@spine,
+    choices = {false, true},
+    default = false,
+  },
+  figure-number-separator = {
+    name = figure@separator,
+    default = {.},
+  },
+  table-number-separator = {
+    name = table@separator,
+    default = {.},
+  },
+  equation-number-separator = {
+    name = equation@separator,
+    default = {.},
+  },
+  table-rule-width = {
+    name = table@rule@width,
+    default = {1.5bp},
+  },
+  table-midrule-width = {
+    name = table@midrule@width,
+    default = {0.75bp},
+  },
+  table-cmidrule-width = {
+    name = table@cmidrule@width,
+    default = {0.75bp},
+  },
+  caption-language = {
+    name = caption@language,
+    choices = {auto, chinese, bilingual},
+    default = auto,
+  },
+  cite-style = {
+    name = cite@style,
+    choices = {auto, super, inline, author-year},
+    default = auto,
+  },
+  math-style = {
+    name = math@style,
+    choices = {GB, ISO, TeX},
+    default = ISO,
+  },
+}
 %    \end{macrocode}
 %
 % \subsection{基础文档类}
 %
-% GZUThesis 使用 |ctexbook| 作为基础文档类。
-% 采用 UTF-8 编码和 A4 纸张。
+% GZUThesis 仍以 |ctexbook| 为基础，保留 UTF-8、A4、小四号和双面排版。
+% 未由本模板定义的文档类选项继续传给 |ctexbook|。
 %
 %    \begin{macrocode}
+\DeclareDefaultOption{%
+  \PassOptionsToClass{\CurrentOption}{ctexbook}%
+}
+\ProcessKeyvalOptions*
+
 \LoadClass[
   a4paper,
   UTF8,
@@ -571,125 +772,6 @@
 ]{ctexbook}
 %    \end{macrocode}
 %
-
-% \subsection{论文信息配置}
-%
-% GZUThesis 使用统一的 \cs{gzusetup} 命令配置论文信息。
-% 配置项采用 |key=value| 形式，可以多次调用。
-%
-% \subsubsection{配置接口}
-%
-% 使用 |kvdefinekeys| 和 |kvsetkeys| 宏包实现键值配置。
-%
-%    \begin{macrocode}
-\RequirePackage{kvdefinekeys}
-\RequirePackage{kvsetkeys}
-
-\newcommand\gzusetup[1]{%
-  \kvsetkeys{gzuinfo}{#1}%
-}
-%    \end{macrocode}
-%
-% \subsubsection{论文信息变量}
-%
-% 定义用于存储论文信息的内部宏命令。
-% 所有字段初始为空，由用户通过 \cs{gzusetup} 赋值。
-%
-%    \begin{macrocode}
-\newcommand\gzu@title{}
-\newcommand\gzu@title@en{}
-\newcommand\gzu@author{}
-\newcommand\gzu@student@id{}
-\newcommand\gzu@supervisor{}
-\newcommand\gzu@supervisor@en{}
-\newcommand\gzu@discipline{}
-\newcommand\gzu@research@direction{}
-\newcommand\gzu@department{}
-\newcommand\gzu@date{}
-\newcommand\gzu@graduation@year{}
-\newcommand\gzu@clc{}
-\newcommand\gzu@udc{}
-\newcommand\gzu@school@code{}
-\newcommand\gzu@secret@level{}
-%    \end{macrocode}
-%
-% \subsubsection{配置项定义}
-%
-% 通过 \cs{kv@define@key} 将配置项与内部变量关联。
-%
-%    \begin{macrocode}
-\kv@define@key{gzuinfo}{title}{%
-  \def\gzu@title{#1}%
-}
-\kv@define@key{gzuinfo}{title*}{%
-  \def\gzu@title@en{#1}%
-}
-\kv@define@key{gzuinfo}{author}{%
-  \def\gzu@author{#1}%
-}
-\kv@define@key{gzuinfo}{student-id}{%
-  \def\gzu@student@id{#1}%
-}
-% 指导教师
-\kv@define@key{gzuinfo}{supervisor}{%
-  \def\gzu@supervisor{#1}%
-}
-\kv@define@key{gzuinfo}{supervisor*}{%
-  \def\gzu@supervisor@en{#1}%
-}
-
-\kv@define@key{gzuinfo}{discipline}{%
-  \def\gzu@discipline{#1}%
-}
-\kv@define@key{gzuinfo}{research-direction}{%
-  \def\gzu@research@direction{#1}%
-}
-\kv@define@key{gzuinfo}{department}{%
-  \def\gzu@department{#1}%
-}
-\kv@define@key{gzuinfo}{date}{%
-  \def\gzu@date{#1}%
-}
-\kv@define@key{gzuinfo}{graduation-year}{%
-  \def\gzu@graduation@year{#1}%
-}
-\kv@define@key{gzuinfo}{clc}{%
-  \def\gzu@clc{#1}%
-}
-\kv@define@key{gzuinfo}{udc}{%
-  \def\gzu@udc{#1}%
-}
-\kv@define@key{gzuinfo}{school-code}{%
-  \def\gzu@school@code{#1}%
-}
-\kv@define@key{gzuinfo}{secret-level}{%
-  \def\gzu@secret@level{#1}%
-}
-
-% 是否在中文封面背页生成书脊（默认 false）
-\newif\ifgzu@include@spine
-\gzu@include@spinefalse
-
-\def\gzu@spine@true{true}
-\def\gzu@spine@false{false}
-
-\kv@define@key{gzuinfo}{include-spine}{%
-  \edef\gzu@spine@value{#1}%
-  \ifx\gzu@spine@value\gzu@spine@true
-    \gzu@include@spinetrue
-  \else
-    \ifx\gzu@spine@value\gzu@spine@false
-      \gzu@include@spinefalse
-    \else
-      \ClassError{gzuthesis}
-        {Invalid include-spine value `#1'}
-        {Use include-spine=true or include-spine=false.}%
-    \fi
-  \fi
-}
-
-%    \end{macrocode}
-% 
 % \subsection{页面布局}
 % \label{sec:layout}
 %
@@ -774,23 +856,18 @@
 % 默认通过 |fontset=auto| 自动选择。
 %
 %    \begin{macrocode}
-\def\gzu@fontset@auto{auto}
-\def\gzu@fontset@windows{windows}
-\def\gzu@fontset@mac{mac}
-\def\gzu@fontset@ubuntu{ubuntu}
-\def\gzu@fontset@fandol{fandol}
 
-\ifx\gzu@fontset\gzu@fontset@auto
+\ifgzu@fontset@auto
   \IfFontExistsTF{SimSun}{
-    \def\gzu@fontset{windows}
+    \gzu@set@key{fontset}{windows}
   }{
     \IfFontExistsTF{Songti SC}{
-      \def\gzu@fontset{mac}
+      \gzu@set@key{fontset}{mac}
     }{
       \IfFontExistsTF{Noto Serif CJK SC}{
-        \def\gzu@fontset{ubuntu}
+        \gzu@set@key{fontset}{ubuntu}
       }{
-        \def\gzu@fontset{fandol}
+        \gzu@set@key{fontset}{fandol}
       }
     }
   }
@@ -800,7 +877,7 @@
 % Windows 中易字体。
 %
 %    \begin{macrocode}
-\ifx\gzu@fontset\gzu@fontset@windows
+\ifgzu@fontset@windows
   \setCJKmainfont{SimSun}[
     AutoFakeBold = 3,
     ItalicFont = KaiTi
@@ -816,7 +893,7 @@
 % macOS 华文字体。
 %
 %    \begin{macrocode}
-\else\ifx\gzu@fontset\gzu@fontset@mac
+\else\ifgzu@fontset@mac
   \setCJKmainfont{Songti SC}
   \setCJKsansfont{Heiti SC}
   \setCJKmonofont{STFangsong}
@@ -829,7 +906,7 @@
 % Linux 环境中的思源字体。
 %
 %    \begin{macrocode}
-\else\ifx\gzu@fontset\gzu@fontset@ubuntu
+\else\ifgzu@fontset@ubuntu
   \setCJKmainfont{Noto Serif CJK SC}[
     ItalicFont = FandolKai-Regular.otf
   ]
@@ -844,7 +921,7 @@
 % TeX Live 提供的 Fandol 字体。
 %
 %    \begin{macrocode}
-\else\ifx\gzu@fontset\gzu@fontset@fandol
+\else\ifgzu@fontset@fandol
   \setCJKmainfont{FandolSong}[
     Extension = .otf,
     UprightFont = *-Regular,
@@ -1092,16 +1169,21 @@
 % 当需要插入空白页时，不显示页眉、页脚和页码。
 %
 %    \begin{macrocode}
+% 双面分页处理
+% print      : 必要时补充空白页，保证右页起始
+% electronic : 只结束当前页，不额外补充空白页
 \renewcommand\cleardoublepage{%
   \clearpage
   \if@twoside
-    \ifodd\c@page
-    \else
-      \thispagestyle{empty}%
-      \hbox{}%
-      \newpage
-      \if@twocolumn
-        \hbox{}\newpage
+    \ifgzu@output@print
+      \ifodd\c@page
+      \else
+        \thispagestyle{empty}%
+        \hbox{}%
+        \newpage
+        \if@twocolumn
+          \hbox{}\newpage
+        \fi
       \fi
     \fi
   \fi
@@ -1145,6 +1227,38 @@
   \@mainmatterfalse
 }
 %    \end{macrocode}
+% 
+% 
+
+% \subsubsection{未编号章节的统一处理}
+%
+% 用于摘要、致谢、符号对照表、参考文献等。
+% 在生成章节标题之前建立 PDF 跳转锚点，
+% 保证目录链接和书签跳转到章节顶部。
+%
+% 第一个参数：页面显示的标题
+% 第二个参数：目录与页眉使用的标题
+%
+%    \begin{macrocode}
+\newcommand\gzu@unnumbered@chapter[2]{%
+  % 先切换到目标章节所在页面
+  \if@openright
+    \cleardoublepage
+  \else
+    \clearpage
+  \fi
+  % 在章节标题之前建立跳转锚点
+  \@ifpackageloaded{hyperref}{\phantomsection}{}%
+  % 记录目录和 PDF 书签
+  \addcontentsline{toc}{chapter}{#2}%
+  % 生成未编号章节标题
+  \chapter*{#1}%
+  % 设置页眉
+  \markboth{#2}{#2}%
+}
+%    \end{macrocode}
+% 
+% 
 % 
 % \subsection{目录}
 % \label{sec:toc}
@@ -1234,6 +1348,36 @@
 %    \end{macrocode}
 %
 % 
+% 
+% 
+% 
+% \subsection{PDF 书签导航}
+% \label{sec:pdf-bookmarks}
+%
+% PDF 书签与正文目录保持一致，
+% 显示到 subsection 层级（如 1.1.1）。
+%
+% 书签自动包含章节编号，并采用可展开的树形结构。
+% 不编号的摘要、图表清单等保持无编号。
+%
+% hyperref 由用户在导言区加载，
+% 本模板在宏包加载完成后应用书签配置。
+%
+%    \begin{macrocode}
+\AddToHook{package/hyperref/after}{%
+  \hypersetup{
+    unicode = true,
+    bookmarksnumbered = true,
+    bookmarksdepth = 2,
+    bookmarksopen = true,
+    bookmarksopenlevel = 2,
+    pdfpagemode = UseOutlines,
+  }%
+}
+%    \end{macrocode}
+% 
+% 
+% 
 
 % \subsection{插图和表格}
 % \label{sec:float}
@@ -1274,8 +1418,6 @@
 % 例如，第一章第一幅图编号为 1.1。
 %
 %    \begin{macrocode}
-\newcommand\gzu@figure@separator{.}
-\newcommand\gzu@table@separator{.}
 
 \renewcommand\thefigure{%
   \ifnum\c@chapter>\z@
@@ -1295,13 +1437,9 @@
 % 提供图表编号连接符的配置接口。
 %
 %    \begin{macrocode}
-\kv@define@key{gzuinfo}{figure-number-separator}{%
-  \def\gzu@figure@separator{#1}%
-}
+% 配置项已在统一配置系统中声明。
 
-\kv@define@key{gzuinfo}{table-number-separator}{%
-  \def\gzu@table@separator{#1}%
-}
+% 配置项已在统一配置系统中声明。
 %    \end{macrocode}
 %
 % \subsubsection{图表题注}
@@ -1346,46 +1484,34 @@
 %
 %    \begin{macrocode}
 \newif\ifgzu@caption@bilingual
-\newcommand\gzu@caption@language{auto}
 
-\newcommand\gzu@set@caption@language[1]{%
-  \ifboolexpr{
-    test {\ifstrequal{#1}{auto}} or
-    test {\ifstrequal{#1}{chinese}} or
-    test {\ifstrequal{#1}{bilingual}}
-  }{%
-    \def\gzu@caption@language{#1}%
-    \ifstrequal{#1}{auto}{%
-      \ifgzu@degree@doctor
-        \gzu@caption@bilingualtrue
-      \else
-        \gzu@caption@bilingualfalse
-      \fi
-    }{%
-      \ifstrequal{#1}{bilingual}
-        {\gzu@caption@bilingualtrue}
-        {\gzu@caption@bilingualfalse}%
-    }%
-    \ifgzu@caption@bilingual
-      \captionsetup{bi-lang=both}%
+\newcommand\gzu@apply@caption@language{%
+  \ifgzu@caption@language@auto
+    \ifgzu@degree@doctor
+      \gzu@caption@bilingualtrue
     \else
-      \captionsetup{bi-lang=first}%
-      \ifgzu@degree@doctor
-        \ClassWarningNoLine{gzuthesis}{%
-          Chinese-only captions selected for a doctoral thesis.
-          Use auto or bilingual for bilingual captions}%
-      \fi
+      \gzu@caption@bilingualfalse
     \fi
-  }{%
-    \ClassError{gzuthesis}{Invalid caption-language `#1'}%
-      {Use auto, chinese, or bilingual.}%
-  }%
+  \else
+    \ifgzu@caption@language@bilingual
+      \gzu@caption@bilingualtrue
+    \else
+      \gzu@caption@bilingualfalse
+    \fi
+  \fi
+  \ifgzu@caption@bilingual
+    \captionsetup{bi-lang=both}%
+  \else
+    \captionsetup{bi-lang=first}%
+    \ifgzu@degree@doctor
+      \ClassWarningNoLine{gzuthesis}{%
+        Chinese-only captions selected for a doctoral thesis.
+        Use auto or bilingual for bilingual captions}%
+    \fi
+  \fi
 }
-
-\kv@define@key{gzuinfo}{caption-language}{%
-  \gzu@set@caption@language{#1}%
-}
-\gzu@set@caption@language{auto}
+\gzu@apply@caption@language
+\gzu@option@hook{caption-language}{\gzu@apply@caption@language}
 %    \end{macrocode}
 %
 % 统一题注接口：可选参数用于中文清单短标题，
@@ -1442,23 +1568,21 @@
 % \subsubsection{三线表}
 %
 % 三线表的上、下边线采用 1.5 bp，
-% 中间分隔线采用 1 bp。
+% 中间分隔线采用 0.75 bp。
 %
 %    \begin{macrocode}
-\setlength\heavyrulewidth{1.5bp}
-\setlength\lightrulewidth{0.75bp}
-\setlength\cmidrulewidth{0.75bp}
+\setlength\heavyrulewidth{\gzu@table@rule@width}
+\setlength\lightrulewidth{\gzu@table@midrule@width}
+\setlength\cmidrulewidth{\gzu@table@cmidrule@width}
 
-\kv@define@key{gzuinfo}{table-rule-width}{%
-  \setlength\heavyrulewidth{#1}%
+\gzu@option@hook{table-rule-width}{%
+  \setlength\heavyrulewidth{\gzu@table@rule@width}%
 }
-
-\kv@define@key{gzuinfo}{table-midrule-width}{%
-  \setlength\lightrulewidth{#1}%
+\gzu@option@hook{table-midrule-width}{%
+  \setlength\lightrulewidth{\gzu@table@midrule@width}%
 }
-
-\kv@define@key{gzuinfo}{table-cmidrule-width}{%
-  \setlength\cmidrulewidth{#1}%
+\gzu@option@hook{table-cmidrule-width}{%
+  \setlength\cmidrulewidth{\gzu@table@cmidrule@width}%
 }
 %    \end{macrocode}
 %
@@ -1485,9 +1609,8 @@
 %
 %    \begin{macrocode}
 \renewcommand\listoffigures{%
-  \chapter*{\listfigurename}%
-  \markboth{\listfigurename}{\listfigurename}%
-  \addcontentsline{toc}{chapter}{\listfigurename}%
+  \gzu@unnumbered@chapter
+    {\listfigurename}{\listfigurename}%
   \@starttoc{lof}%
 }
 %    \end{macrocode}
@@ -1498,9 +1621,8 @@
 %
 %    \begin{macrocode}
 \renewcommand\listoftables{%
-  \chapter*{\listtablename}%
-  \markboth{\listtablename}{\listtablename}%
-  \addcontentsline{toc}{chapter}{\listtablename}%
+  \gzu@unnumbered@chapter
+    {\listtablename}{\listtablename}%
   \@starttoc{lot}%
 }
 %    \end{macrocode}
@@ -1538,76 +1660,135 @@
 % 使用 |amsmath| 提供公式环境，
 % 使用 |unicode-math| 配置数学字体和符号样式。
 %
-% \subsubsection{数学宏包}
+% \subsubsection{数学字体与符号样式}
 %
-% 加载数学公式宏包。
+% 参考 ThuThesis，将数学字体与数学样式分开配置。
+% 数学字体支持 lm、stix、xits 和 libertinus。
+% 数学样式支持 GB、ISO 和 TeX，默认 ISO。
 %
 %    \begin{macrocode}
 \RequirePackage{amsmath}
 \RequirePackage{unicode-math}
-%    \end{macrocode}
-%
-% \subsubsection{数学符号样式}
-%
-% 参考 ThuThesis 中文论文的数学符号规则，
-% 采用 ISO 风格的字母和粗体变量，
-% 偏微分符号使用正体。
-%
-%    \begin{macrocode}
-\unimathsetup{
-  math-style = ISO,
-  bold-style = ISO,
-  partial    = upright,
-}
-%    \end{macrocode}
-%
-% 小于等于号和大于等于号采用倾斜形式。
-%
-%    \begin{macrocode}
-\AtBeginDocument{%
-  \let\le\leqslant
-  \let\ge\geqslant
-  \let\leq\leqslant
-  \let\geq\geqslant
-}
-%    \end{macrocode}
-%
-% \subsubsection{数学字体}
-%
-% 默认采用 XITS Math。
-% 同时支持 STIX Two Math 和 Latin Modern Math。
-%
-%    \begin{macrocode}
-\edef\gzu@math@font{%
-  \csname gzu@math-font\endcsname
+
+% 数学风格的基本正斜体配置
+\newcommand\gzu@apply@math@style{%
+  \ifgzu@math@style@TeX
+    \unimathsetup{
+      math-style = TeX,
+      bold-style = TeX,
+      partial    = italic,
+    }%
+  \else
+    \unimathsetup{
+      math-style = ISO,
+      bold-style = ISO,
+      partial    = upright,
+    }%
+  \fi
 }
 
-\def\gzu@math@font@xits{xits}
-\def\gzu@math@font@stix{stix}
-\def\gzu@math@font@lm{lm}
-%    \end{macrocode}
-%
-% 根据文档类选项加载对应数学字体。
-%
-%    \begin{macrocode}
-\ifx\gzu@math@font\gzu@math@font@xits
-  \setmathfont{XITSMath-Regular.otf}[
-    BoldFont = XITSMath-Bold.otf,
-    StylisticSet = 8,
-  ]
-\else
-  \ifx\gzu@math@font\gzu@math@font@stix
-    \setmathfont{STIXTwoMath-Regular.otf}
+% 补充不同数学风格下的符号规则
+% 在文档开始时应用，确保 unicode-math 符号已经定义
+\newcommand\gzu@apply@math@symbols{%
+  \ifgzu@math@style@GB
+    \let\le\leqslant
+    \let\ge\geqslant
+    \let\leq\leqslant
+    \let\geq\geqslant
+    \addnolimits{\int\iint\iiint\oint}%
+    \def\mathellipsis{\mathinner{\unicodecdots}}%
   \else
-    \ifx\gzu@math@font\gzu@math@font@lm
-      \setmathfont{latinmodern-math.otf}
+    \let\le\leq
+    \let\ge\geq
+    \ifgzu@math@style@ISO
+      \removenolimits{\int\iint\iiint\oint}%
     \else
-      \ClassError{gzuthesis}
-        {Invalid math font `\gzu@math@font'}
-        {Use math-font=xits, stix or lm.}
+      \addnolimits{\int\iint\iiint\oint}%
     \fi
+    \def\mathellipsis{\mathinner{\unicodeellipsis}}%
   \fi
-\fi
+  \ifgzu@math@style@TeX\else
+    \def\Re{\operatorname{Re}}%
+    \def\Im{\operatorname{Im}}%
+  \fi
+}
+
+\AddToHook{begindocument/end}{%
+  \gzu@apply@math@symbols
+}
+
+
+% 根据配置选择数学字体
+% 先完成条件判断，再统一执行字体加载
+\newcommand\gzu@apply@math@font{%
+  \ifgzu@math@font@lm
+    \def\gzu@math@load{%
+      \setmathfont{latinmodern-math.otf}%
+    }%
+  \else\ifgzu@math@font@stix
+    \ifgzu@math@style@TeX
+      \def\gzu@math@load{%
+        \setmathfont{STIXTwoMath-Regular.otf}%
+      }%
+    \else
+      \def\gzu@math@load{%
+        \setmathfont[
+          StylisticSet = 8
+        ]{STIXTwoMath-Regular.otf}%
+      }%
+    \fi
+  \else\ifgzu@math@font@xits
+    \ifgzu@math@style@TeX
+      \def\gzu@math@load{%
+        \setmathfont[
+          BoldFont = XITSMath-Bold.otf
+        ]{XITSMath-Regular.otf}%
+      }%
+    \else
+      \def\gzu@math@load{%
+        \setmathfont[
+          BoldFont = XITSMath-Bold.otf,
+          StylisticSet = 8
+        ]{XITSMath-Regular.otf}%
+      }%
+    \fi
+  \else\ifgzu@math@font@libertinus
+    \ifgzu@math@style@TeX
+      \def\gzu@math@load{%
+        \setmathfont[
+          StylisticSet = 8
+        ]{LibertinusMath-Regular.otf}%
+      }%
+    \else
+      \def\gzu@math@load{%
+        \setmathfont{LibertinusMath-Regular.otf}%
+      }%
+    \fi
+  \fi\fi\fi\fi
+
+  % 在全部条件结束后加载数学字体
+  \gzu@math@load
+  % STIX 模式下采用传统衬线黑板粗体
+  \ifgzu@math@font@stix
+    \setmathfont{latinmodern-math.otf}[range=bb]%
+  \fi
+}
+
+
+% 统一应用数学配置
+\newcommand\gzu@apply@math@settings{%
+  \gzu@apply@math@style
+  \gzu@apply@math@font
+}
+
+% 导言区结束后统一应用数学字体及样式
+% 避免在 \gzusetup 解析过程中反复加载数学字体
+\AddToHook{begindocument/before}{%
+  \gzu@apply@math@settings
+  \gzu@option@classonly{math-style}%
+  \gzu@option@classonly{math-font}%
+}
+
 %    \end{macrocode}
 %
 % \subsubsection{公式编号}
@@ -1616,7 +1797,6 @@
 % 例如，第一章第一条公式编号为 1.1。
 %
 %    \begin{macrocode}
-\newcommand\gzu@equation@separator{.}
 
 \renewcommand\theequation{%
   \ifnum\c@chapter>\z@
@@ -1629,9 +1809,7 @@
 % 提供公式编号连接符的配置接口。
 %
 %    \begin{macrocode}
-\kv@define@key{gzuinfo}{equation-number-separator}{%
-  \def\gzu@equation@separator{#1}%
-}
+% 配置项已在统一配置系统中声明。
 %    \end{macrocode}
 %
 % \subsubsection{公式编号括号}
@@ -1756,10 +1934,7 @@
 \renewcommand\bibname{参考文献}
 
 \newcommand\gzu@bib@heading[1]{%
-  \chapter*{#1}%
-  \markboth{#1}{#1}%
-  \@ifpackageloaded{hyperref}{\phantomsection}{}%
-  \addcontentsline{toc}{chapter}{#1}%
+  \gzu@unnumbered@chapter{#1}{#1}%
 }
 
 % For the Chinese graduate thesis only.
@@ -1768,63 +1943,41 @@
 \newif\ifgzu@language@chinese
 \gzu@language@chinesetrue
 
-\def\gzu@cite@style{auto}
-\def\gzu@cite@style@auto{auto}
-\def\gzu@cite@style@super{super}
-\def\gzu@cite@style@inline{inline}
-\def\gzu@cite@style@author@year{author-year}
-
 \newcommand\gzu@apply@cite@style{%
-  \ifx\gzu@cite@style\gzu@cite@style@auto
-  \else
-    \ifx\gzu@cite@style\gzu@cite@style@super
-      \citestyle{super}%
-    \else
-      \ifx\gzu@cite@style\gzu@cite@style@inline
-        \citestyle{inline}%
-      \else
-        \ifx\gzu@cite@style\gzu@cite@style@author@year
-          \citestyle{author-year}%
-        \else
-          \ClassError{gzuthesis}{Unknown cite-style `\gzu@cite@style'}%
-            {Use auto, super, inline, or author-year.}%
-        \fi
-      \fi
+  \@ifpackageloaded{natbib}{%
+    \ifgzu@cite@style@auto\else
+      \expandafter\citestyle\expandafter{\gzu@cite@style}%
     \fi
-  \fi
+  }{}%
 }
-\kv@define@key{gzuinfo}{cite-style}{\def\gzu@cite@style{#1}}
+\gzu@option@hook{cite-style}{\gzu@apply@cite@style}
 
 % Applies only when natbib is loaded explicitly by the user.
 \PassOptionsToPackage{compress}{natbib}
+% natbib 参考文献排版
+% 引用格式由 gbt7714 管理
+% GZUThesis 只负责章节和版面格式
+\PassOptionsToPackage{compress}{natbib}
+
 \AddToHook{package/natbib/after}{%
-  \newcommand\bibstyle@super{\bibpunct{[}{]}{,}{s}{,}{,}}%
-  \newcommand\bibstyle@inline{\bibpunct{[}{]}{,}{n}{,}{,}}%
-  \@namedef{bibstyle@author-year}{\bibpunct{(}{)}{;}{a}{,}{,}}%
-  \@namedef{bibstyle@gzuthesis-numeric}{\citestyle{super}}%
-  \@namedef{bibstyle@gzuthesis-author-year}{\citestyle{author-year}}%
-  \DeclareRobustCommand\inlinecite{\@inlinecite}%
-  \def\@inlinecite#1{\begingroup\let\@cite\NAT@citenum\citep{#1}\endgroup}%
-  \let\onlinecite\inlinecite
-  \renewcommand\bibsection{\gzu@bib@heading{\bibname}}%
-  \renewcommand\bibfont{\fontsize{10.5bp}{16bp}\selectfont}%
+  % 参考文献标题、目录及 PDF 书签
+  \renewcommand\bibsection{%
+    \gzu@bib@heading{\bibname}%
+  }%
+
+  % 参考文献正文格式
+  \renewcommand\bibfont{%
+    \fontsize{10.5bp}{16bp}\selectfont
+  }%
+
+  % 文献条目间距与悬挂缩进
   \setlength\bibsep{3bp plus 3bp minus 3bp}%
   \setlength\bibhang{21bp}%
-  \def\@biblabel#1{[#1]\hfill}%
-  \renewcommand\NAT@bibsetnum[1]{%
-    \setlength{\labelwidth}{1cm}%
-    \setlength{\leftmargin}{\labelwidth}%
-    \setlength{\labelsep}{0pt}%
-    \setlength{\itemsep}{\bibsep}%
-    \setlength{\parsep}{0pt}%
-    \ifNAT@openbib
-      \addtolength{\leftmargin}{\bibindent}%
-      \setlength{\itemindent}{-\bibindent}%
-      \setlength{\listparindent}{\itemindent}%
-      \setlength{\parsep}{0pt}%
-    \fi
+
+  % 应用 GZUThesis 引用配置
+  \AtBeginDocument{%
+    \gzu@apply@cite@style
   }%
-  \AtBeginDocument{\gzu@apply@cite@style}%
 }
 
 % Only runs if the user selected biblatex instead of natbib.
@@ -1899,10 +2052,9 @@
 %
 % \subsubsection{固定列宽的信息行}
 %
-% 顶端信息为两列组。每组的标签宽度固定为 29 mm，
-% 因此“中图分类号”和“UDC 分类号”的取值对齐；右侧亦然。
+% 顶端信息为左右两组。左侧标签取两行自然宽度的最大值，
+% 冒号独立排版；右侧标签为四个汉字宽，数值列取两项内容的最大宽度。
 %    \begin{macrocode}
-% 左上角标签的统一宽度
 % 左上角标签统一宽度
 \newlength\gzu@cover@left@labelwidth
 \newlength\gzu@cover@left@tmpwidth
@@ -2077,21 +2229,14 @@
 
 \ExplSyntaxOff
 
-% 届别及学位论文名称：所有字符等距排列
+% 学位论文名称：保留当前六字等距排列，不输出届别
 \ExplSyntaxOn
-
-\tl_new:N \l__gzu_cover_degree_text_tl
-\dim_new:N \l__gzu_cover_degree_cell_dim
 
 \cs_new_protected:Npn \gzu_cover_degree_line:
   {
-    % 总宽度可以自己微调，115mm 比较合适，如果还不够宽可以改大
+    % 保留当前 100 mm 的学位论文名称宽度。
     \hbox to 100mm
       {
-        % \hfill % 最左侧弹簧
-        % \gzu@graduation@year % 2027 作为一个整体，绝不被拆开
-        % \hfill
-        % 届
         \hfill
         \ifgzu@degree@doctor
           博
@@ -2118,16 +2263,13 @@
 
 
 % 中文封面背页
-% 无论是否启用书脊，都保留这一页
-
-% 中文封面背页
 % include-spine=false 时保留空白页
 % include-spine=true 时绘制书脊
 \newcommand\gzu@cover@verso{%
   \thispagestyle{empty}%
   \null
 
-  \ifgzu@include@spine
+  \ifgzu@include@spine@true
     \begin{tikzpicture}[
       remember picture,
       overlay,
@@ -2154,6 +2296,32 @@
 
 
 
+% 三行标题之间的统一垂直间距，只分配一次长度寄存器。
+\newlength\gzu@cover@heading@gap
+\setlength\gzu@cover@heading@gap{6mm}
+%    \end{macrocode}
+%    
+%    
+% \subsubsection{封面日期格式化}
+%
+% 用户通过 date 配置项输入 ISO 日期 YYYY-MM-DD。
+% 中文封面只显示年份和月份，不显示日期。
+%
+%    \begin{macrocode}
+\def\gzu@cover@date@parse#1-#2-#3\@nil{%
+  #1\hspace{0.5em}年\hspace{0.5em}%
+  \number\numexpr#2\relax\hspace{0.5em}月%
+}
+
+\newcommand\gzu@cover@date{%
+  \expandafter\gzu@cover@date@parse
+  \gzu@date\@nil
+}
+%    \end{macrocode}
+%    
+%    
+%    
+%    \begin{macrocode}
 \renewcommand\maketitle{%
   \begin{titlepage}%
     \thispagestyle{empty}%
@@ -2181,35 +2349,64 @@
       \gzu@cover@right@row{35}{学校代码}{\gzu@school@code}
       \gzu@cover@right@row{42}{密\hfill 级}{\gzu@secret@level}
 
-      \node[anchor=north]
-        at ([yshift=-74mm]current page.north)
-        {\gzu@cover@schoolfont\fontsize{29bp}{50bp}\selectfont
-          贵\hspace{1em}州\hspace{1em}大\hspace{1em}学};
 
-      \node[anchor=north]
-        at ([yshift=-90mm]current page.north)
+      % 三行标题共用已初始化的垂直间距。
+
+      % 第一行：贵州大学
+      \node[anchor=north] (gzuCoverSchool)
+        at ([yshift=-74mm]current page.north)
+        {%
+          \gzu@cover@schoolfont
+          \fontsize{29bp}{50bp}\selectfont
+          贵\hspace{1em}州\hspace{1em}大\hspace{1em}学
+        };
+
+      % 第二行：硕士学位论文
+      \node[anchor=north] (gzuCoverDegree)
+        at ([yshift=-\gzu@cover@heading@gap]gzuCoverSchool.south)
         {%
           \gzu@cover@song\gzu@cover@times
           \fontsize{20bp}{34bp}\selectfont
           \gzu@cover@degree@line
         };
 
-      \node[anchor=north]
-        at ([yshift=-104mm]current page.north)
-        {\gzu@cover@song\fontsize{16.5bp}{26bp}\selectfont
-          \gzu@cover@degree@type};
+      % 第三行：（专业学位）
+      \node[anchor=north] (gzuCoverDegreeType)
+        at ([yshift=-\gzu@cover@heading@gap]gzuCoverDegree.south)
+        {%
+          \gzu@cover@song
+          \fontsize{16.5bp}{26bp}\selectfont
+          \gzu@cover@degree@type
+        };
 
-      % Both thesis titles: 20 bp as specified in the Word reference.
-      \node[anchor=north,align=center,text width=183mm]
+
+      % 中文论文标题
+      \node[
+        anchor=north,
+        align=center,
+        text width=183mm
+      ] (gzuCoverTitleZh)
         at ([yshift=-117mm]current page.north)
-        {\gzu@cover@song\gzu@cover@times\fontsize{20bp}{27bp}\selectfont
-          \gzu@title};
-      \node[anchor=north,align=center,text width=183mm]
-        at ([yshift=-132mm]current page.north)
-        {\gzu@cover@times\fontsize{20bp}{27bp}\selectfont
-          \gzu@title@en};
+        {%
+          \gzu@cover@song\gzu@cover@times
+          \fontsize{20bp}{27bp}\selectfont
+          \gzu@title
+        };
 
-      % Six baselines, spaced by 9 mm; identical label/value columns.
+      % 英文论文标题
+      \node[
+        anchor=north,
+        align=center,
+        text width=183mm
+      ] (gzuCoverTitleEn)
+        at ([yshift=-5mm]gzuCoverTitleZh.south)
+        {%
+          \gzu@cover@times
+          \fontsize{20bp}{27bp}\selectfont
+          \gzu@title@en
+        };
+
+      % 六行信息的基线间距为 10 mm，标签列和填写列的宽度保持一致。
       \gzu@cover@info@row{180}{学\hfill 生\hfill 姓\hfill 名：}{\gzu@author}
       \gzu@cover@info@row{190}{学\hfill 号：}{\gzu@student@id}
       \gzu@cover@info@row{200}{导\hfill 师\hfill 姓\hfill 名\hfill 、\hfill 职\hfill 称：}{\gzu@cover@supervisor}
@@ -2217,7 +2414,7 @@
       \gzu@cover@info@row{220}{研\hfill 究\hfill 方\hfill 向：}{\gzu@research@direction}
       \gzu@cover@info@row{230}{培\hfill 养\hfill 单\hfill 位：}{\gzu@department}
 
-      % Location and date: SimHei 14 bp; Latin numbers in Times New Roman.
+      % 地点与日期均为 14 bp；日期中文使用黑体，西文使用无衬线字体。
       \node[anchor=north,align=center]
         at ([yshift=-251mm]current page.north)
         {%
@@ -2225,19 +2422,147 @@
           \fontsize{14bp}{20bp}\selectfont
           中国·贵州·贵阳\\[1.5mm]
           \gzu@cover@hei\sffamily
-          \gzu@date
+          \gzu@cover@date
         };
     \end{tikzpicture}%
   \end{titlepage}%
 
   % 自动处理中文封面的背页
-  \gzu@cover@verso
-
+  %\gzu@cover@verso
+  
+  % 仅打印版生成封面背页
+  \ifgzu@output@print
+    \gzu@cover@verso
+  \else
+    % 电子版忽略书脊配置
+    \ifgzu@include@spine@true
+      \ClassWarningNoLine{gzuthesis}
+        {include-spine=true is ignored when output=electronic}%
+    \fi
+  \fi
 }
 %    \end{macrocode}
 % 
 % 
 
+% \subsection{摘要}
+% \label{sec:abstract}
+%
+% 中英文摘要分别使用 abstract 和 abstract* 环境。
+% 关键词通过 keywords 和 keywords* 配置项提供。
+% 输入时以英文逗号分隔，由模板自动转换为输出格式。
+%
+%    \begin{macrocode}
+
+% 摘要章节标题与目录
+% 统一处理标题、页眉、目录和 PDF 书签锚点
+\newcommand\gzu@abstract@heading[2]{%
+  \gzu@unnumbered@chapter{#1}{#2}%
+}
+
+% 关键词列表格式化
+\ExplSyntaxOn
+
+\clist_new:N \l__gzu_abstract_keywords_clist
+
+\cs_new_protected:Npn \gzu_abstract_keywords:nnn #1#2#3
+  {
+    \exp_args:NNo \clist_set:Nn
+      \l__gzu_abstract_keywords_clist {#1}
+
+    \clist_if_empty:NF \l__gzu_abstract_keywords_clist
+      {
+        \par\medskip\noindent
+        \textbf{#2}%
+        \clist_use:Nn
+          \l__gzu_abstract_keywords_clist {#3}%
+        \par
+      }
+  }
+
+\cs_new_eq:NN
+  \gzu@abstract@keywords
+  \gzu_abstract_keywords:nnn
+
+\ExplSyntaxOff
+
+% 中文摘要
+\newenvironment{abstract}{%
+  \gzu@abstract@heading{摘\quad 要}{摘要}%
+  \ignorespaces
+}{%
+  \gzu@abstract@keywords
+    {\gzu@keywords}{关键词：}{；}%
+}
+
+% 英文摘要
+\newenvironment{abstract*}{%
+  \gzu@abstract@heading{Abstract}{Abstract}%
+  \ignorespaces
+}{%
+  \gzu@abstract@keywords
+    {\gzu@keywords@en}{Keywords:~}{;~}%
+}
+
+%    \end{macrocode}
+%    
+%    
+% \subsection{主要符号对照表}
+% \label{sec:denotation}
+%
+% 参考 ThuThesis，使用 enumitem 实现符号对照表。
+% denotation 环境自动生成标题，并支持设置符号列宽。
+% 默认符号列宽为 2.5 cm，可通过可选参数调整。
+%
+% \subsubsection{加载宏包}
+%
+%    \begin{macrocode}
+\RequirePackage{enumitem}
+%    \end{macrocode}
+%
+% \subsubsection{符号对照表名称}
+%
+%    \begin{macrocode}
+\newcommand\gzu@denotation@name{主要符号对照表}
+%    \end{macrocode}
+%
+% \subsubsection{符号列表样式}
+%
+% 使用 description 列表实现双列结构。
+% 左侧为符号或缩略语，右侧为其对应说明。
+%
+%    \begin{macrocode}
+\newlist{gzu@denotation}{description}{1}
+
+\setlist[gzu@denotation]{%
+  nosep,
+  font=\normalfont,
+  align=left,
+  leftmargin=!,
+  labelindent=0pt,
+  labelwidth=2.5cm,
+  labelsep*=0.5cm,
+  itemindent=0pt,
+}
+%    \end{macrocode}
+%
+% \subsubsection{符号对照表环境}
+%
+% 自动生成不编号章节标题，并加入目录。
+% 可选参数用于设置左侧符号列宽度。
+%
+%    \begin{macrocode}
+\newenvironment{denotation}[1][2.5cm]{%
+  \gzu@unnumbered@chapter
+    {\gzu@denotation@name}
+    {\gzu@denotation@name}%
+  \begin{gzu@denotation}[labelwidth=#1]%
+}{%
+  \end{gzu@denotation}%
+}
+%    \end{macrocode}
+%    
+%    
 % \subsection{致谢}
 % \label{sec:acknowledgements}
 %
@@ -2250,15 +2575,13 @@
 \newcommand\gzu@acknowledgements@tocname{致谢}
 
 \newenvironment{acknowledgements}{%
-  \chapter*{\gzu@acknowledgements@name}%
-  \markboth
-    {\gzu@acknowledgements@tocname}
+  \gzu@unnumbered@chapter
+    {\gzu@acknowledgements@name}
     {\gzu@acknowledgements@tocname}%
-  \@ifpackageloaded{hyperref}{\phantomsection}{}%
-  \addcontentsline{toc}{chapter}{%
-    \gzu@acknowledgements@tocname}%
   \ignorespaces
-}{\par}
+}{%
+  \par
+}
 %    \end{macrocode}
 %
 % \subsection{附录}
@@ -2288,11 +2611,45 @@
     }%
   }%
 }
-%</cls>
+%    \end{macrocode}
+%
+% \subsection{完成配置初始化}
+%
+% 学位与字体只在文档类加载时设置；其余已实现配置继续通过 \cs{gzusetup} 设置。
+% 此时所有模块已读取初始配置，可以安全执行后续赋值触发的排版钩子。
+%
+%    \begin{macrocode}
+\gzu@option@classonly{degree}
+\gzu@option@classonly{degree-type}
+\gzu@option@classonly{fontset}
+\gzu@options@readytrue
 %    \end{macrocode}
 
 % 
-% 
+% \subsection{辅助排版命令}
+% \label{sec:helper-commands}
+%
+% 参考 ThuThesis，提供常用的 LaTeX 术语排版命令。
+% 这些命令用于在正文或示例中表示控制序列、
+% 环境、文件、宏包和文档类名称。
+%
+% \begin{description}
+%   \item[\cs{cs}] 排版 LaTeX 控制序列。
+%   \item[\cs{env}] 排版环境名称。
+%   \item[\cs{file}] 排版文件名称。
+%   \item[\cs{pkg}] 排版宏包名称。
+%   \item[\cs{cls}] 排版文档类名称。
+% \end{description}
+%
+%    \begin{macrocode}
+\DeclareRobustCommand\cs[1]{\texttt{\char`\\#1}}
+\DeclareRobustCommand\file{\nolinkurl}
+\DeclareRobustCommand\env{\textsf}
+\DeclareRobustCommand\pkg{\textsf}
+\DeclareRobustCommand\cls{\textsf}
+%</cls>
+%    \end{macrocode}
+%
 % 
 % 
 % 
@@ -2310,7 +2667,7 @@
 %<*dtx-style>
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{dtx-style}
-  [2026/11/15 v0.1.0 GZUThesis documentation style]
+  [2026/11/16 v0.2.0-dev GZUThesis documentation style]
 \RequirePackage[UTF8]{ctex}
 \RequirePackage{siunitx}
 %</dtx-style>

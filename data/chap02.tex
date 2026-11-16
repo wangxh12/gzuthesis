@@ -1,88 +1,149 @@
-\chapter{基础理论与问题定义}\label{chap:foundations}
-\section{多变量序列与滑动窗口}
-设第 $k$ 个架次的观测为
-$\mat{X}^{(k)}=[\vect{x}^{(k)}_0,\ldots,\vect{x}^{(k)}_{T_k-1}]^{\mathsf T}$，
-其中 $\vect{x}^{(k)}_t\in\Rset^C$。本例采用零起始下标，与 Python 数组索引一致。
-一个长度为 $L$ 的窗口只包含待预测时刻之前的观测：
-\begin{equation}
- \mat{U}^{(k)}_t=
- \begin{bmatrix}
- (\vect{z}^{(k)}_{t-L})^{\mathsf T}\\
- (\vect{z}^{(k)}_{t-L+1})^{\mathsf T}\\
- \vdots\\
- (\vect{z}^{(k)}_{t-1})^{\mathsf T}
- \end{bmatrix}\in\Rset^{L\times C},\qquad t=L,\ldots,T_k-1.
- \label{eq:window}
-\end{equation}
-式~\eqref{eq:window} 同时演示了矩阵换行和行内维度说明。
-窗口顺序展平后构成 $LC$ 维向量，附加常数项得到
-$\vect{u}_t\in\Rset^{LC+1}$。样本输入中不含 $\vect{z}_t$，
-因此这种组织方式可以用于一步因果预测。
+% !TEX root = ../gzuthesis-example.tex
 
-\begin{definition}[合法的架次内窗口]\label{def:window}
-若窗口中所有输入观测和目标观测均属于同一个架次，且输入时刻严格小于目标时刻，
-则称该窗口为合法的架次内预测窗口。
-\end{definition}
+\chapter{图表示例}
 
-\begin{proposition}[窗口数量]\label{prop:count}
-对于长度为 $T$ 的架次，在窗口长度为 $L$、步长为 1、预测长度为 1 且
-$T>L$ 的条件下，可生成 $T-L$ 个合法窗口。
-\end{proposition}
-\begin{proof}
-合法目标时刻从 $L$ 到 $T-1$，其整数个数为
-$(T-1)-L+1=T-L$。每个目标时刻唯一对应此前的 $L$ 个观测，故结论成立。
-\end{proof}
+\section{插图}
 
-\section{数据标准化与尺度}
-对于各变量的不同量纲，仅使用训练数据估计均值和标准差。
-令 $\mathcal{T}$ 为训练观测集合，则
-\begin{align}
- \mu_c &= \frac{1}{|\mathcal{T}|}\sum_{(k,t)\in\mathcal{T}}x^{(k)}_{t,c},\label{eq:mu}\\
- \sigma_c &= \sqrt{\frac{1}{|\mathcal{T}|}\sum_{(k,t)\in\mathcal{T}}
-       (x^{(k)}_{t,c}-\mu_c)^2},\label{eq:std}\\
- z^{(k)}_{t,c} &= \frac{x^{(k)}_{t,c}-\mu_c}{\max(\sigma_c,\varepsilon)}.
- \label{eq:normalize}
-\end{align}
-本例取 $\varepsilon=10^{-8}$。训练和标准化公式中的分母均使用总体形式，
-与脚本的 \texttt{ddof=0} 保持一致。校准集与测试集不重新拟合这两个统计量。
+图片通常在 \env{figure} 环境中使用 \cs{includegraphics} 插入，如图~\ref{fig:example} 的源代码。
+建议矢量图片使用 PDF 格式，比如数据可视化的绘图；
+照片应使用 JPG 格式；
+其他的栅格图应使用无损的 PNG 格式。
+注意，LaTeX 不支持 TIFF 格式；EPS 格式已经过时。
 
-\section{异常分数与决策}
-\subsection{残差分数}
-预测器输出 $\widehat{\vect{z}}_t$ 后，将各通道的平方误差平均：
-\begin{equation}
- e_t=\frac{1}{C}\sum_{c=1}^{C}(z_{t,c}-\widehat z_{t,c})^2.
- \label{eq:residual}
-\end{equation}
-该分数位于标准化空间，是非负标量。它不是概率，因而不应直接解释为
-“系统发生故障的概率”。对所有通道取平均还意味着不同变量拥有相同聚合权重，
-这种选择在真实应用中需要结合传感器噪声和安全重要性重新评估。
+\begin{figure}
+  \centering
+  \includegraphics[width=0.5\linewidth]{example-image-a.pdf}
+  \caption*{国外的期刊习惯将图表的标题和说明文字写成一段，需要改写为标题只含图表的名称，其他说明文字以注释方式写在图表下方，或者写在正文中。}
+  \caption{示例图片标题}
+  \label{fig:example}
+\end{figure}
 
-\subsection{阈值与二值标签}
-给定平滑分数 $s_t$ 和阈值 $\tau$，预测标签为
-\begin{equation}
- \widehat y_t=
- \begin{cases}
- 1,&s_t>\tau,\\
- 0,&s_t\leq\tau.
- \end{cases}\label{eq:decision}
-\end{equation}
-异常分数较高并不自动意味着模型已经定位故障部件。
-本例只报告异常点判断，不把通道误差大小等同于因果解释。
+若图或表中有附注，采用英文小写字母顺序编号，附注写在图或表的下方。
+国外的期刊习惯将图表的标题和说明文字写成一段，需要改写为标题只含图表的名称，其他说明文字以注释方式写在图表下方，或者写在正文中。
 
-\section{评价指标与实现约定}
-在对应窗口目标的测试时刻计算 TP、FP、TN 和 FN；每个架次的前 $L$ 个点
-没有对应预测，因而不计入评价。精确率、召回率、F1 和误报率分别为
-\begin{align}
- P&=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}},&
- R&=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FN}},\\
- F_1&=\frac{2PR}{P+R},&
- \mathrm{FAR}&=\frac{\mathrm{FP}}{\mathrm{FP}+\mathrm{TN}}.
- \label{eq:metrics}
-\end{align}
-当分母为零时，脚本将相应的精确率、召回率或 F1 设为零。
-AUROC 则由正负样本分数的排序计算，并对并列分数采用平均秩。
-本例始终使用逐点标签，不以命中异常区间中的一个点替换整段预测。
+如果一个图由两个或两个以上分图组成时，各分图分别以 (a)、(b)、(c)...... 作为图序，并须有分图题。
+推荐使用 \pkg{subcaption} 宏包来处理， 比如图~\ref{fig:subfig-a} 和图~\ref{fig:subfig-b}。
 
-上述约定使数字结果可以追溯到明确的程序行为。
-但是，逐点指标不能完整描述报警延迟和重复报警成本。
-这些工程属性应在真实任务中单独报告，而不应通过修改逐点标签隐式表达。
+\begin{figure}
+  \centering
+  \subcaptionbox{分图 A\label{fig:subfig-a}}
+    {\includegraphics[width=0.35\linewidth]{example-image-a.pdf}}
+  \subcaptionbox{分图 B\label{fig:subfig-b}}
+    {\includegraphics[width=0.35\linewidth]{example-image-b.pdf}}
+  \caption{多个分图的示例}
+  \label{fig:multi-image}
+\end{figure}
+
+
+
+\section{表格}
+
+表应具有自明性。表中参数应标明量和单位的符号。
+为使表格简洁易读，均采用三线表（例如表~\ref{tab:three-line}）。
+必要时可加辅助线，三线表无法清晰表达时可采用其他格式。
+
+表序与表题置于表的上方。表单元格中的文字一般应居中书写（上下居中，左右居中），
+不宜左右居中书写的，可采取两端对齐的方式书写。
+
+\begin{table}
+  \centering
+  \caption{三线表示例}
+  \begin{tabular}{cc}
+    \toprule
+    文件名          & 描述                         \\
+    \midrule
+    gzuthesis.dtx   & 模板的源文件，包括文档和注释 \\
+    gzuthesis.cls   & 模板文件                     \\
+    gzuthesis-*.bst & BibTeX 参考文献表样式文件    \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:three-line}
+\end{table}
+
+若表中有附注，采用英文小写字母顺序编号，附注写在表的下方。
+推荐使用 \pkg{threeparttable} 宏包。
+
+\begin{table}
+  \centering
+  \begin{threeparttable}[c]
+    \caption{带附注的表格示例}
+    \label{tab:three-part-table}
+    \begin{tabular}{cc}
+      \toprule
+      文件名                 & 描述                         \\
+      \midrule
+      gzuthesis.dtx\tnote{a} & 模板的源文件，包括文档和注释 \\
+      gzuthesis.cls\tnote{b} & 模板文件                     \\
+      gzuthesis-*.bst        & BibTeX 参考文献表样式文件    \\
+      \bottomrule
+    \end{tabular}
+    \begin{tablenotes}
+      \item [a] 可以通过 xelatex 编译生成模板的使用说明文档；
+        使用 xetex 编译 \file{gzuthesis.ins} 时则会从 \file{.dtx} 中去除掉文档和注释，得到精简的 \file{.cls} 文件。
+      \item [b] 更新模板时，一定要记得编译生成 \file{.cls} 文件，否则编译论文时载入的依然是旧版的模板。
+    \end{tablenotes}
+  \end{threeparttable}
+\end{table}
+
+如某个表需要转页接排，可以“续表”的形式另页打印，格式同前，只需在每页表序前加“续”字即可。
+续表均应重复表头。
+推荐使用 \pkg{longtable} 宏包。
+
+\begin{longtable}{cccc}
+    \caption{跨页长表格的表题}
+    \label{tab:longtable} \\
+    \toprule
+    表头 1 & 表头 2 & 表头 3 & 表头 4 \\
+    \midrule
+  \endfirsthead
+    \caption*{续表~\thetable\quad 跨页长表格的表题} \\
+    \toprule
+    表头 1 & 表头 2 & 表头 3 & 表头 4 \\
+    \midrule
+  \endhead
+    \bottomrule
+  \endfoot
+  Row 1  & & & \\
+  Row 2  & & & \\
+  Row 3  & & & \\
+  Row 4  & & & \\
+  Row 5  & & & \\
+  Row 6  & & & \\
+  Row 7  & & & \\
+  Row 8  & & & \\
+  Row 9  & & & \\
+  Row 10 & & & \\
+\end{longtable}
+
+
+
+\section{算法}
+
+算法环境可以使用 \pkg{algorithms} 或者 \pkg{algorithm2e} 宏包。
+
+\renewcommand{\algorithmicrequire}{\textbf{输入：}\unskip}
+\renewcommand{\algorithmicensure}{\textbf{输出：}\unskip}
+
+\begin{algorithm}
+  \caption{Calculate $y = x^n$}
+  \label{alg1}
+  \small
+  \begin{algorithmic}
+    \REQUIRE $n \geq 0$
+    \ENSURE $y = x^n$
+
+    \STATE $y \leftarrow 1$
+    \STATE $X \leftarrow x$
+    \STATE $N \leftarrow n$
+
+    \WHILE{$N \neq 0$}
+      \IF{$N$ is even}
+        \STATE $X \leftarrow X \times X$
+        \STATE $N \leftarrow N / 2$
+      \ELSE[$N$ is odd]
+        \STATE $y \leftarrow y \times X$
+        \STATE $N \leftarrow N - 1$
+      \ENDIF
+    \ENDWHILE
+  \end{algorithmic}
+\end{algorithm}

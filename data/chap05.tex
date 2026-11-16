@@ -1,150 +1,409 @@
-\chapter{实验结果与分析}\label{chap:experiments}
-\DemoNotice
-\section{实验设置}
-本例在第~\ref{chap:data}~章给定的划分上运行四个透明基线。
-持续值预测直接使用前一观测；滑动平均取过去九个观测的均值；
-岭回归使用相同输入窗口；最后一项在岭回归分数上增加 $\rho=0.2$ 的 EWMA。
-所有阈值均由各自的正常校准分数估计，测试标签不参与该过程。
+% 数学公式排版综合测试章节
+% 使用方式：在主文件中加入 \input{data/chap_formula_test}
+% 依赖：amsmath、amssymb（通常由学位论文模板统一加载）
+% 本文件不修改全局公式编号规则、字体或页面布局。
 
-\begin{table}[htbp]
-\centering
-\gzucaption{实验参数与数据使用范围}{Experimental parameters and permitted data usage}
-\label{tab:parameters}
-\begin{tabularx}{\textwidth}{@{}lllX@{}}
-\toprule
-类别 & 参数 & 取值 & 说明 \\
-\midrule
-数据 & 随机种子 & 20261116 & 每架次使用基础种子加架次编号 \\
-输入 & $L,C$ & 9，6 & 一步预测，不跨架次滑窗 \\
-训练 & $\lambda$ & 1.0 & 不惩罚截距，目标为残差平方和 \\
-校准 & $q$ & 0.99 & 正常校准分数，线性插值分位数 \\
-平滑 & $\rho$ & 0.2 & 每架次重置状态 \\
-评价 & 点调整 & 不使用 & 按有效目标时刻逐点计算 \\
-\bottomrule
-\end{tabularx}
-\end{table}
+\chapter{数学公式排版综合测试}
+\label{chap:formula-test}
 
-\section{总体检测结果}
-表~\ref{tab:results} 的数值来自生成脚本，而不是手工指定。
-P、R、F1 和 FAR 以百分数表示，AUROC 使用 $[0,1]$ 范围。
-本例共有 \DemoTestWindows{} 个有效测试目标，其中
-\DemoPositivePoints{} 个被生成器标记为异常。
+本章集中检验学位论文模板中的数学公式排版。测试覆盖行内与独立公式、自动编号与交叉引用、多行对齐、长公式折行、分段函数、矩阵、复杂运算符、数学字体和中文混排等情形。为便于观察，示例尽量选用数学分析、线性代数、概率统计和工程建模中的常见表达，而不是没有语义的符号组合。阅读时应重点检查公式与正文的距离、编号在右侧的位置、各行对齐方式、括号高度、上下标层级，以及跨页时的留白是否合理。
 
-\begin{table}[htbp]
-\centering
-\gzucaption[合成实验结果]{四种基线在合成测试集上的逐点检测结果}
- {Pointwise detection results of four baselines on the synthetic test set}
-\label{tab:results}
-\begin{tabular}{@{}lrrrrr@{}}
-\toprule
-\multirow{2}{*}{方法} & \multicolumn{3}{c}{逐点检测（\%）} & \multicolumn{2}{c}{补充指标} \\
-\cmidrule(lr){2-4}\cmidrule(l){5-6}
- & P & R & F1 & FAR（\%） & AUROC \\
-\midrule
-\ExampleResultRows
-\bottomrule
-\end{tabular}
-\end{table}
+\section{行内公式与独立公式}
+\label{sec:formula-inline}
 
-岭回归加平滑的 F1 为 \DemoFone\%，误报率为 \DemoFAR\%。
-这些结果并不构成“平滑一定提高检测性能”的证明。
-不同基线使用不同分数分布和对应阈值；统一分位数并不意味着统一的测试误报预算。
-对固定数据的一次运行也不足以建立具有统计保证的模型排序。
+行内公式应当与中文基线协调。例如，质能关系可写作 $E=mc^2$，复指数恒等式为 $e^{\mathrm{i}\pi}+1=0$，向量 $\boldsymbol{x}\in\mathbb{R}^{n}$ 与矩阵 $\boldsymbol{A}\in\mathbb{R}^{m\times n}$ 分别表示 $n$ 维向量和 $m\times n$ 阶实矩阵。希腊字母 $\alpha,\beta,\gamma,\theta,\lambda,\mu,\sigma,\omega$ 与上下标 $x_i^{(k+1)}$ 也应具有稳定的字距和行高。
 
-\begin{table}[htbp]
-\centering
-\gzucaption{结果对应的混淆矩阵计数}{Confusion-matrix counts underlying the reported metrics}
-\label{tab:confusion}
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-方法 & TP & FP & TN & FN \\
-\midrule
-\ExampleConfusionRows
-\bottomrule
-\end{tabular}
-\end{table}
+在同一段中对比行内分式 $\frac{a+b}{c+d}$、紧凑分式 $\tfrac{a+b}{c+d}$ 与显式展示样式 $\displaystyle\frac{a+b}{c+d}$，可以观察行距是否被局部较高的数学表达式撑开。行内求和 $\sum_{i=1}^{n}x_i$ 与行内积分 $\int_0^1f(x)\,\mathrm{d}x$ 同样用于测试上下标与文字基线的关系。这里的微分符号采用直立体 $\mathrm{d}$，复数单位采用直立体 $\mathrm{i}$。\footnote{脚注中的行内公式也需要检查，例如 $a^2+b^2=c^2$ 和 $\sqrt{x^2+y^2}$。}
 
-表~\ref{tab:confusion} 提供原始计数，读者可利用式~\eqref{eq:metrics}
-独立复算关键指标。报告计数能够避免百分数四舍五入造成的表面矛盾，
-也能说明相同的 F1 可能对应不同的误报和漏报结构。
+独立公式应当在正文宽度内居中，且编号位置符合模板要求。以一维匀加速运动为例：
+\begin{equation}
+  s(t)=s_0+v_0t+\frac{1}{2}at^2.
+  \label{eq:test-motion}
+\end{equation}
+式\eqref{eq:test-motion}用于观察单行公式的垂直间距、编号括号、标点位置以及后续段落的缩进。相同的物理量也可以写成速度与位移的关系：
+\begin{equation}
+  v^2-v_0^2=2a(s-s_0).
+  \label{eq:test-velocity}
+\end{equation}
 
-\section{预测曲线与异常区间}
-图~\ref{fig:prediction} 展示 F10 架次中漂移附近的观测和岭回归预测。
-两条曲线的接近程度表示局部预测误差，但不能仅凭肉眼判断完整序列的检测效果。
-特别是持续偏置进入输入窗口后，预测器可能逐渐追随异常观测。
+为检查无编号公式的表现，下面使用星号环境：
+\begin{equation*}
+  (a+b)^2=a^2+2ab+b^2.
+\end{equation*}
+无编号公式不应占用公式计数器，也不应出现空白编号位置。
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=.94\textwidth]{prediction.pdf}
-\gzucaption{漂移区间附近的观测与预测}{Observed and predicted roll values near the drift interval}
-\label{fig:prediction}
-\end{figure}
+\section{编号、引用与多行对齐}
+\label{sec:formula-align}
 
-\begin{figure}[htbp]
-\centering
-\begin{subfigure}{.48\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{pitch-event.pdf}
-  \caption{俯仰振动}\label{fig:pitch-sub}
-\end{subfigure}\hfill
-\begin{subfigure}{.48\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{current-event.pdf}
-  \caption{电流偏置}\label{fig:current-sub}
-\end{subfigure}
-\gzucaption{两类不同的合成异常片段}{Two different types of injected synthetic anomalies}
-\label{fig:events}
-\end{figure}
+对于推导过程，等号通常需要在多行之间对齐。例如，将二次多项式配方：
+\begin{align}
+  f(x)
+    &= ax^2+bx+c \label{eq:test-align-first}\\
+    &= a\left(x+\frac{b}{2a}\right)^2
+       +c-\frac{b^2}{4a} \notag\\
+    &= a(x-x_0)^2+f(x_0),
+       \qquad x_0=-\frac{b}{2a}. \label{eq:test-align-last}
+\end{align}
+上式中第一行和第三行有编号，中间行通过 \texttt{\textbackslash notag} 取消编号，可检查省略编号后右侧位置是否仍然稳定。引用示例分别为式\eqref{eq:test-align-first}和式\eqref{eq:test-align-last}。
 
-图~\ref{fig:events} 使用两个子图展示不同信号。
-图~\ref{fig:events}\subref{fig:pitch-sub} 为高频振动，
-图~\ref{fig:events}\subref{fig:current-sub} 为恒定偏置。
-这一引用写法还用于检验子图编号与主图编号是否独立、稳定。
-各子图的单独标题采用中文，图组总题注使用双语，未生成重复的插图清单条目。
+当整个推导只需要一个编号时，应使用单个 \texttt{equation} 环境嵌套 \texttt{split}：
+\begin{equation}
+  \label{eq:test-split}
+  \begin{split}
+    \lVert\boldsymbol{A}\boldsymbol{x}-\boldsymbol{b}\rVert_2^2
+      &= (\boldsymbol{A}\boldsymbol{x}-\boldsymbol{b})^{\mathsf{T}}
+         (\boldsymbol{A}\boldsymbol{x}-\boldsymbol{b})\\
+      &= \boldsymbol{x}^{\mathsf{T}}\boldsymbol{A}^{\mathsf{T}}\boldsymbol{A}\boldsymbol{x}
+         -2\boldsymbol{b}^{\mathsf{T}}\boldsymbol{A}\boldsymbol{x}
+         +\boldsymbol{b}^{\mathsf{T}}\boldsymbol{b}.
+  \end{split}
+\end{equation}
+式\eqref{eq:test-split}可用于比较多行公式整体居中、行距与单一编号的垂直对齐位置。
 
-\section{分数与平滑敏感性}
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=.96\textwidth]{anomaly-score.pdf}
-\gzucaption{原始残差、平滑分数与校准阈值}{Raw residuals, smoothed scores, and calibration threshold}
-\label{fig:score}
-\end{figure}
+对于并列但不要求按等号对齐的多个等式，可使用 \texttt{gather}：
+\begin{gather}
+  \sin^2\theta+\cos^2\theta=1,
+  \label{eq:test-gather-trig}\\
+  1+\tan^2\theta=\frac{1}{\cos^2\theta},
+  \label{eq:test-gather-tan}\\
+  \lim_{x\to 0}\frac{\sin x}{x}=1.
+  \label{eq:test-gather-limit}
+\end{gather}
 
-图~\ref{fig:score} 使用对数纵轴，同时绘出原始分数、平滑分数和固定阈值。
-浅色区间表示生成器记录的异常位置，而不是模型预测。
-平滑可以改变局部峰值，也会在异常结束后保留历史响应。
-因此，在依赖持续观测的检测任务中，减少孤立峰值和增加响应延迟往往同时存在。
+并排对齐的两组关系可以通过 \texttt{alignat} 紧凑排版：
+\begin{alignat}{2}
+  x_1+x_2 &= 3, &\qquad 2y_1-y_2 &= 1, \label{eq:test-alignat-a}\\
+  2x_1-x_2 &= 0, &\qquad y_1+3y_2 &= 4. \label{eq:test-alignat-b}
+\end{alignat}
+这里应检查两组等号是否各自成列，以及组间水平间距是否均匀。
 
-\begin{table}[htbp]
-\centering
-\gzucaption{平滑系数的敏感性分析}{Sensitivity analysis of the smoothing coefficient}
-\label{tab:sensitivity}
-\begin{tabular}{@{}rrrrr@{}}
-\toprule
-$\rho$ & P（\%） & R（\%） & F1（\%） & FAR（\%） \\
-\midrule
-\ExampleSensitivityRows
-\bottomrule
-\end{tabular}
-\end{table}
+\section{长公式折行与说明文字}
+\label{sec:formula-long}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=.90\textwidth]{smoothing-sensitivity.pdf}
-\gzucaption{不同平滑系数下的逐点指标}{Pointwise metrics under different smoothing coefficients}
-\label{fig:sensitivity}
-\end{figure}
+长公式不能简单依赖页面自动换行；适当的折行位置通常位于加号、减号或等号等二元运算符附近。下面的多项式展开采用 \texttt{multline}，测试首行偏左、末行偏右的排版规则：
+\begin{multline}
+  \label{eq:test-multline}
+  P(x)=a_0+a_1x+a_2x^2+a_3x^3+a_4x^4+a_5x^5\\
+  {}+a_6x^6+a_7x^7+a_8x^8+a_9x^9+a_{10}x^{10}.
+\end{multline}
 
-表~\ref{tab:sensitivity} 和图~\ref{fig:sensitivity} 遍历预先指定的五个系数，
-每个系数都重新使用校准数据估计阈值。本节是事后描述，不使用测试结果重新选定默认值。
-若将该分析转换为正式模型选择，应再设置独立验证协议，而不能把测试集同时作为调参集。
+较复杂的函数推导可以在对齐公式之间加入普通说明文字。下面的例子检验 \texttt{\textbackslash intertext} 是否维持正确的缩进和公式前后间距：
+\begin{align}
+  J(\boldsymbol{x})
+    &=\frac{1}{2}\lVert\boldsymbol{A}\boldsymbol{x}-\boldsymbol{b}\rVert_2^2
+      +\frac{\lambda}{2}\lVert\boldsymbol{x}\rVert_2^2,
+      \label{eq:test-intertext-objective}\\
+  \intertext{对目标函数关于 $\boldsymbol{x}$ 求梯度，并令其等于零，可得}
+  \nabla J(\boldsymbol{x})
+    &=\boldsymbol{A}^{\mathsf{T}}
+      (\boldsymbol{A}\boldsymbol{x}-\boldsymbol{b})
+      +\lambda\boldsymbol{x}=\boldsymbol{0},
+      \label{eq:test-intertext-gradient}\\
+  (\boldsymbol{A}^{\mathsf{T}}\boldsymbol{A}+\lambda\boldsymbol{I})\boldsymbol{x}
+    &=\boldsymbol{A}^{\mathsf{T}}\boldsymbol{b}.
+      \label{eq:test-intertext-normal}
+\end{align}
 
-\section{局限与结果解释}
-首先，生成器只模拟少量连续信号与简单耦合，不包括传感器同步误差、
-控制器闭环响应或真实故障的传播过程。其次，三次测试飞行共享同一类异常注入规则，
-不能代表跨平台泛化。再次，没有重复运行多个随机种子，因而未报告均值和标准差。
+下面采用 \texttt{subequations} 将一组方程纳入同一主编号，检查编号后缀以及组引用：
+\begin{subequations}\label{eq:test-system}
+  \begin{align}
+    \frac{\mathrm{d}x}{\mathrm{d}t}&=\sigma(y-x),
+      \label{eq:test-system-x}\\
+    \frac{\mathrm{d}y}{\mathrm{d}t}&=x(\rho-z)-y,
+      \label{eq:test-system-y}\\
+    \frac{\mathrm{d}z}{\mathrm{d}t}&=xy-\beta z.
+      \label{eq:test-system-z}
+  \end{align}
+\end{subequations}
+整个方程组可引用为式\eqref{eq:test-system}，其中第二条方程可单独引用为式\eqref{eq:test-system-y}。请检查主编号与子编号是否均符合学校规定。
 
-最后，本文没有训练 LSTM、PatchTST、Anomaly Transformer 或 MOMENT。
-这些模型仅在相关工作中被引用，不能将文献名称填入本例结果表并赋予虚构成绩。
-需要比较这些方法时，应实现相同的数据协议、重新训练或按照公开模型的使用规则运行，
-并在论文中区分原文结果、复现结果和本文结果。
+\section{分段函数与自适应定界符}
+\label{sec:formula-cases}
+
+分段函数需要同时处理大括号、条件文字和行距。首先考虑饱和函数：
+\begin{equation}
+  \label{eq:test-cases}
+  \operatorname{sat}(x)=
+  \begin{cases}
+    -1, & x<-1,\\
+    x, & -1\le x\le 1,\\
+    1, & x>1.
+  \end{cases}
+\end{equation}
+
+含中文条件的分段表达式可用于检查数学环境中的中文字体与基线：
+\begin{equation}
+  \label{eq:test-cases-chinese}
+  q(t)=
+  \begin{cases}
+    q_0, & \text{初始阶段},\\
+    q_0+kt, & \text{线性增长阶段},\\
+    q_{\max}, & \text{达到饱和状态}.
+  \end{cases}
+\end{equation}
+
+在较高的分式外侧，自适应括号应随内容增加高度：
+\begin{equation}
+  \label{eq:test-delimiters}
+  F(x)=\left[
+    \frac{1}{1+x^2}
+    +\left(\frac{x+1}{x-1}\right)^2
+  \right]^{1/2}.
+\end{equation}
+也可以通过手动尺寸命令比较定界符大小：
+\begin{equation}
+  \label{eq:test-manual-delimiters}
+  \bigl(a+b\bigr),\qquad
+  \Bigl(a+b\Bigr),\qquad
+  \biggl(\frac{a+b}{c+d}\biggr),\qquad
+  \Biggl(\frac{a+b}{c+d}\Biggr).
+\end{equation}
+
+条件集合中的竖线可以跟随括号高度自动变化：
+\begin{equation}
+  \label{eq:test-middle}
+  \mathcal{S}=
+  \left\{x\in\mathbb{R}\ \middle|\
+    \frac{x^2-1}{x^2+1}\ge 0
+  \right\}.
+\end{equation}
+
+\section{矩阵、行列式与数组}
+\label{sec:formula-matrix}
+
+矩阵排版应检查列对齐、元素间距以及括号与矩阵整体高度的匹配。最常见的圆括号矩阵为：
+\begin{equation}
+  \label{eq:test-pmatrix}
+  \boldsymbol{A}=
+  \begin{pmatrix}
+    1 & 2 & 3\\
+    0 & -1 & 4\\
+    2 & 1 & 0
+  \end{pmatrix}.
+\end{equation}
+
+方括号矩阵可以用于表达线性变换；同时，向量通常排版为列矩阵：
+\begin{equation}
+  \label{eq:test-bmatrix}
+  \begin{bmatrix}
+    y_1\\y_2\\y_3
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    a_{11}&a_{12}&a_{13}\\
+    a_{21}&a_{22}&a_{23}\\
+    a_{31}&a_{32}&a_{33}
+  \end{bmatrix}
+  \begin{bmatrix}
+    x_1\\x_2\\x_3
+  \end{bmatrix}.
+\end{equation}
+
+花括号与双竖线环境可测试不同定界符的高度与线宽：
+\begin{equation}
+  \label{eq:test-brace-matrix}
+  \begin{Bmatrix}
+    a&b\\c&d
+  \end{Bmatrix},\qquad
+  \begin{Vmatrix}
+    a&b\\c&d
+  \end{Vmatrix},\qquad
+  \begin{vmatrix}
+    a&b\\c&d
+  \end{vmatrix}=ad-bc.
+\end{equation}
+
+带有省略号的大型矩阵可检查上下标、水平居中和行列间距：
+\begin{equation}
+  \label{eq:test-large-matrix}
+  \boldsymbol{K}=
+  \begin{pmatrix}
+    k_{11} & k_{12} & \cdots & k_{1n}\\
+    k_{21} & k_{22} & \cdots & k_{2n}\\
+    \vdots & \vdots & \ddots & \vdots\\
+    k_{n1} & k_{n2} & \cdots & k_{nn}
+  \end{pmatrix}.
+\end{equation}
+
+若需要指定列对齐方式，可以使用 \texttt{array} 环境。下面第一列居中，后两列右对齐：
+\begin{equation}
+  \label{eq:test-array}
+  \left[
+  \begin{array}{c|rr}
+    \lambda & x_1 & x_2\\ \hline
+    \lambda_1 & 1 & -1\\
+    \lambda_2 & 2 & 3
+  \end{array}
+  \right].
+\end{equation}
+行内小矩阵用于观察在行内数学模式下的高度：$\bigl(\begin{smallmatrix}a&b\\c&d\end{smallmatrix}\bigr)$。其高度不应使上下两行正文过度重叠。
+
+\section{分式、根式、上下标与复杂算符}
+\label{sec:formula-operators}
+
+不同层级的分式会影响公式高度和分数线的粗细。连分式可以写为：
+\begin{equation}
+  \label{eq:test-cfrac}
+  x=1+\cfrac{1}{2+\cfrac{1}{3+\cfrac{1}{4}}}.
+\end{equation}
+组合数与分式、根式的混合排版如下：
+\begin{equation}
+  \label{eq:test-binomial}
+  \binom{n}{k}=\frac{n!}{k!(n-k)!},\qquad
+  r=\sqrt[n]{\frac{a^2+b^2}{1+\alpha^2}}.
+\end{equation}
+
+大运算符必须正确处理上下限的位置。下面分别测试求和、乘积、嵌套下标以及多重积分：
+\begin{equation}
+  \label{eq:test-sum-product}
+  \sum_{i=1}^{n}i^2=\frac{n(n+1)(2n+1)}{6},\qquad
+  \prod_{k=1}^{n}k=n!.
+\end{equation}
+\begin{equation}
+  \label{eq:test-substack}
+  S=\sum_{\substack{1\le i\le n\\i\ \text{为偶数}}}\frac{1}{i^2}.
+\end{equation}
+\begin{equation}
+  \label{eq:test-integrals}
+  \int_0^1 x^2\,\mathrm{d}x=\frac{1}{3},\qquad
+  \iint_{D}(x+y)\,\mathrm{d}x\,\mathrm{d}y,
+  \qquad
+  \oint_{\partial D}\boldsymbol{F}\cdot\mathrm{d}\boldsymbol{r}.
+\end{equation}
+\begin{equation}
+  \label{eq:test-triple-integral}
+  V=\iiint_{\Omega}1\,\mathrm{d}x\,\mathrm{d}y\,\mathrm{d}z,
+  \qquad \Omega\subset\mathbb{R}^3.
+\end{equation}
+
+极限、偏导、全导数及竖线求值符号的布局为：
+\begin{equation}
+  \label{eq:test-derivatives}
+  \lim_{h\to0}\frac{f(x+h)-f(x)}{h}=f'(x),\qquad
+  \frac{\partial^2u}{\partial x\,\partial y},\qquad
+  \left.\frac{\mathrm{d}f}{\mathrm{d}x}\right|_{x=x_0}.
+\end{equation}
+
+可以用花括号注释多项式的不同部分，测试标注文字与公式的距离：
+\begin{equation}
+  \label{eq:test-braces}
+  \underbrace{x_1+x_2+\cdots+x_n}_{\text{共 $n$ 项}}
+  +\overbrace{\vphantom{\sum_{i=1}^n}0+0+\cdots+0}^{\text{零项}} 
+  =\sum_{i=1}^{n}x_i.
+\end{equation}
+
+\section{概率统计与优化模型}
+\label{sec:formula-probability}
+
+统计公式集中检验期望符号、条件概率竖线、指数和积分。对随机变量 $X$，期望与方差可以表示为：
+\begin{align}
+  \mathbb{E}[X]
+    &=\int_{-\infty}^{+\infty}x f_X(x)\,\mathrm{d}x,
+      \label{eq:test-expectation}\\
+  \operatorname{Var}(X)
+    &=\mathbb{E}\bigl[(X-\mathbb{E}[X])^2\bigr].
+      \label{eq:test-variance}
+\end{align}
+
+贝叶斯公式中的条件概率与下标应保持清晰：
+\begin{equation}
+  \label{eq:test-bayes}
+  \mathbb{P}(A\mid B)
+  =\frac{\mathbb{P}(B\mid A)\mathbb{P}(A)}{\mathbb{P}(B)},
+  \qquad \mathbb{P}(B)>0.
+\end{equation}
+
+多元正态分布的密度函数包含行列式、转置和二次型，可用于测试较复杂的单行公式：
+\begin{equation}
+  \label{eq:test-gaussian}
+  p(\boldsymbol{x})
+  =\frac{1}{(2\pi)^{d/2}|\boldsymbol{\Sigma}|^{1/2}}
+   \exp\!\left[-\frac{1}{2}
+     (\boldsymbol{x}-\boldsymbol{\mu})^{\mathsf{T}}
+     \boldsymbol{\Sigma}^{-1}
+     (\boldsymbol{x}-\boldsymbol{\mu})\right].
+\end{equation}
+
+带约束的最优化问题可以采用下方条件和多行格式，观察运算符下限与公式主体的距离：
+\begin{equation}
+  \label{eq:test-argmin}
+  \boldsymbol{x}^{\star}
+  =\operatorname*{arg\,min}_{\substack{\boldsymbol{x}\in\mathbb{R}^{n}\\
+                             \boldsymbol{C}\boldsymbol{x}=\boldsymbol{d}}}
+    \left\{\frac{1}{2}\lVert\boldsymbol{A}\boldsymbol{x}-\boldsymbol{b}\rVert_2^2
+    +\lambda\lVert\boldsymbol{x}\rVert_1\right\}.
+\end{equation}
+
+数学字体的差异也应当得到保留。例如，函数空间 $\mathcal{H}$、实数集 $\mathbb{R}$、李代数符号 $\mathfrak{g}$、直立算符 $\operatorname{rank}(\boldsymbol{A})$、无衬线矩阵转置标记 $\boldsymbol{A}^{\mathsf{T}}$ 和等宽字体 $\mathtt{ABC}$ 不应出现缺字或意外替代字体。
+
+\section{重音、箭头、特殊标记与引用检查}
+\label{sec:formula-special}
+
+变量上方的重音记号常用于统计估计、均值和时间导数。比较 $\hat\theta$、$\widehat{\boldsymbol{\theta}}$、$\tilde x$、$\bar x$、$\overline{AB}$、$\vec v$、$\dot x$ 和 $\ddot x$，可以检查重音与基字符之间是否存在明显偏移。
+
+下面以迭代更新为例，测试箭头、上下说明以及等号上方的标记：
+\begin{equation}
+  \label{eq:test-arrows}
+  \boldsymbol{x}^{(k)}
+  \xrightarrow[\text{迭代更新}]{\ k\to k+1\ }
+  \boldsymbol{x}^{(k+1)},\qquad
+  \Delta\boldsymbol{x}\overset{\mathrm{def}}{=}
+  \boldsymbol{x}^{(k+1)}-\boldsymbol{x}^{(k)}.
+\end{equation}
+
+为了检验特殊公式标签，可单独使用手动编号。该标签不参与常规公式编号序列，正式论文中一般不建议频繁使用：
+\begin{equation}
+  \tag{T}\label{eq:test-custom-tag}
+  \boldsymbol{I}\boldsymbol{x}=\boldsymbol{x}.
+\end{equation}
+手动标签的引用结果应为式\eqref{eq:test-custom-tag}。
+
+最后通过集中引用检查公式编号、超链接与引用标点的一致性：单行公式见式\eqref{eq:test-motion}，多行同号公式见式\eqref{eq:test-split}，子公式见式\eqref{eq:test-system-x}—\eqref{eq:test-system-z}，长公式见式\eqref{eq:test-multline}，矩阵公式见式\eqref{eq:test-large-matrix}，概率公式见式\eqref{eq:test-bayes}。这些编号应当在至少两轮编译后稳定显示，不应出现问号或重复标签警告。
+
+\section{长推导与页面边界测试}
+\label{sec:formula-pagebreak}
+
+这一节安排一组较长的数学推导，用于观察连续多行公式在页面剩余空间不足时的处理方式。默认情况下，\texttt{amsmath} 对多行公式的跨页拆分有专门限制，模板应确保公式不会越过页脚，也不会出现公式编号与公式主体分离的情况。若需要允许跨页，应在全局排版规则允许的前提下，由模板统一决定是否启用相关设置。
+
+设 $\boldsymbol{X}\in\mathbb{R}^{m\times n}$、$\boldsymbol{y}\in\mathbb{R}^{m}$，考虑带 $\ell_2$ 正则项的线性回归损失：
+\begin{align}
+  \mathcal{L}(\boldsymbol{w})
+    &=\frac{1}{2m}\sum_{i=1}^{m}
+        (\boldsymbol{x}_i^{\mathsf{T}}\boldsymbol{w}-y_i)^2
+      +\frac{\lambda}{2}\boldsymbol{w}^{\mathsf{T}}\boldsymbol{w}
+      \label{eq:test-long-derive-a}\\
+    &=\frac{1}{2m}
+        (\boldsymbol{X}\boldsymbol{w}-\boldsymbol{y})^{\mathsf{T}}
+        (\boldsymbol{X}\boldsymbol{w}-\boldsymbol{y})
+      +\frac{\lambda}{2}\boldsymbol{w}^{\mathsf{T}}\boldsymbol{w}
+      \notag\\
+    &=\frac{1}{2m}\Bigl[
+        \boldsymbol{w}^{\mathsf{T}}\boldsymbol{X}^{\mathsf{T}}
+          \boldsymbol{X}\boldsymbol{w}
+        -2\boldsymbol{y}^{\mathsf{T}}\boldsymbol{X}\boldsymbol{w}
+        +\boldsymbol{y}^{\mathsf{T}}\boldsymbol{y}
+      \Bigr]
+      +\frac{\lambda}{2}\boldsymbol{w}^{\mathsf{T}}\boldsymbol{w}
+      \label{eq:test-long-derive-b}\\
+  \nabla\mathcal{L}(\boldsymbol{w})
+    &=\frac{1}{m}\boldsymbol{X}^{\mathsf{T}}
+        (\boldsymbol{X}\boldsymbol{w}-\boldsymbol{y})
+      +\lambda\boldsymbol{w}
+      \label{eq:test-long-derive-c}\\
+  \nabla\mathcal{L}(\boldsymbol{w}^{\star})&=\boldsymbol{0}
+      \notag\\
+  \left(\boldsymbol{X}^{\mathsf{T}}\boldsymbol{X}
+       +m\lambda\boldsymbol{I}\right)\boldsymbol{w}^{\star}
+    &=\boldsymbol{X}^{\mathsf{T}}\boldsymbol{y}
+      \label{eq:test-long-derive-d}\\
+  \boldsymbol{w}^{\star}
+    &=\left(\boldsymbol{X}^{\mathsf{T}}\boldsymbol{X}
+       +m\lambda\boldsymbol{I}\right)^{-1}
+       \boldsymbol{X}^{\mathsf{T}}\boldsymbol{y},
+      \quad \lambda>0.
+      \label{eq:test-long-derive-e}
+\end{align}
+
+在式\eqref{eq:test-long-derive-a}—\eqref{eq:test-long-derive-e}之间，应检查所有带编号行的基线对齐、未编号行的间距、矩阵转置上标与负指数的高度。若上述公式整体无法容纳在一页中，应观察模板对跨页的具体策略是否满足论文规范，并避免通过任意缩小公式字号来掩盖潜在的版面问题。
+
+本章的测试重点不在于数学推导本身，而在于不同公式环境与论文整体排版规则能否协同工作。完成测试后，应检查编译日志是否出现 \texttt{Overfull \textbackslash hbox}、\texttt{Underfull \textbackslash hbox}、未定义引用或字体替换等警告，再结合输出 PDF 逐页检查公式的实际视觉效果。

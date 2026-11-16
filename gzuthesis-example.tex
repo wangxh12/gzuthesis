@@ -2,7 +2,7 @@
 % !TEX program = xelatex
 % !TEX spellcheck = en_US
 
-\documentclass[degree=master]{gzuthesis}
+\documentclass[degree=master,degree-type=academic,fontset=windows]{gzuthesis}
   % 学位 degree:
   %   doctor | master
   % 学位类型 degree-type:
@@ -22,15 +22,15 @@
 \maketitle
 
 % 学位论文指导小组、公开评阅人和答辩委员会名单
-\input{data/committee}
+% \input{data/committee}
 
 % 使用授权的说明
-\copyrightpage
+% \copyrightpage
 % 将签字扫描后授权文件 scan-copyright.pdf 替换原始页面
 % \copyrightpage[file=scan-copyright.pdf]
 
 \frontmatter
-\input{data/abstract}
+\input{data/abstracts}
 
 % 目录
 \tableofcontents
@@ -41,7 +41,7 @@
 % \listoffiguresandtables  % 插图和附表清单
 
 % 符号对照表
-% \input{data/denotation}
+\input{data/denotation}
 
 
 % 正文部分
@@ -50,6 +50,7 @@
 \input{data/chap02}
 \input{data/chap03}
 \input{data/chap04}
+\input{data/chap05}
 
 % 参考文献
 \bibliography{ref/refs}  % 参考文献使用 BibTeX 编译
@@ -67,22 +68,19 @@
 \input{data/acknowledgements}
 
 % 声明
-% 各类开题报告通常不需要
-\statement
+% \statement
 % 在提交终稿 PDF 时，先编译不含页眉页脚的声明页，以避免页码变化带来问题
 % \statement[page-style=empty]
 % 打印、签名、扫描为 PDF 文档后，将 scan-statement.pdf 替换原始页面，并生成页眉页脚
 % \statement[file=scan-statement.pdf]
 
 % 个人简历、在学期间完成的相关学术成果
-% 本科生可以附个人简历，也可以不附个人简历
 % \input{data/resume}
 
 % 指导教师/指导小组评语
-% 本科生不需要
-\input{data/comments}
+% \input{data/comments}
 
 % 答辩委员会决议书
-\input{data/resolution}
+% \input{data/resolution}
 
 \end{document}

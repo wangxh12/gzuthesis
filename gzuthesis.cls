@@ -32,56 +32,225 @@
 
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{gzuthesis}[2026/11/15 v0.1.0 Guizhou University Thesis Template]
+\ProvidesClass{gzuthesis}[2026/11/16 v0.2.0-dev Guizhou University Thesis Template]
+\RequirePackage{kvdefinekeys}
+\RequirePackage{kvsetkeys}
 \RequirePackage{kvoptions}
 
 \SetupKeyvalOptions{
-  family = gzu,
-  prefix = gzu@,
-}
-\DeclareStringOption[master]{degree}
-\DeclareStringOption[academic]{degree-type}
-\DeclareStringOption[auto]{fontset}
-\DeclareStringOption[xits]{math-font}
-\DeclareDefaultOption{
-  \PassOptionsToClass{\CurrentOption}{ctexbook}
+  family  = gzu,
+  prefix  = gzu@,
+  setkeys = \kvsetkeys,
 }
 
+\newcommand\gzuthesis{GZUThesis}
+\newcommand\gzuversion{0.2.0-dev}
+\providecommand\version{\gzuversion}
+
+\newcommand\gzu@error[2]{\ClassError{gzuthesis}{#1}{#2}}
+
+\newif\ifgzu@options@ready
+\gzu@options@readyfalse
+\let\gzu@setup@hook\@empty
+
+\newcommand\gzusetup[1]{%
+  \let\gzu@setup@hook\@empty
+  \kvsetkeys{gzu}{#1}%
+  \gzu@setup@hook
+}
+
+\newcommand\gzu@define@key[1]{%
+  \kvsetkeys{gzu@key}{#1}%
+}
+
+\newcommand\gzu@option@hook[2]{%
+  \expandafter\g@addto@macro\csname gzu@#1@@code\endcsname{#2}%
+}
+
+\newcommand\gzu@run@option@hook[1]{%
+  \ifgzu@options@ready
+    \@nameuse{gzu@#1@@code}%
+  \fi
+}
+\kv@define@key{gzu@definition}{name}{\def\gzu@@name{#1}}
+\kv@define@key{gzu@definition}{choices}{\def\gzu@@choices{#1}}
+\kv@define@key{gzu@definition}{default}{\def\gzu@@default{#1}}
+\kv@define@key{gzu@definition}{code}{\def\gzu@@code{#1}}
+
+\kv@set@family@handler{gzu@key}{%
+  \@ifundefined{gzu@#1@@name}{%
+    \gzu@declare@key{#1}{#2}%
+  }{%
+    \gzu@error{Option `#1' already defined}%
+      {Declare each option only once.}%
+  }%
+}
+
+\newcommand\gzu@declare@key[2]{%
+  \def\gzu@@name{#1}%
+  \let\gzu@@choices\@empty
+  \let\gzu@@default\@empty
+  \let\gzu@@code\@empty
+  \kvsetkeys{gzu@definition}{#2}%
+  \expandafter\let\csname gzu@#1@@name\endcsname\gzu@@name
+  \expandafter\let\csname gzu@#1@@choices\endcsname\gzu@@choices
+  \expandafter\let\csname gzu@#1@@code\endcsname\gzu@@code
+  \@namedef{gzu@#1@@reset}{}%
+  \@namedef{gzu@#1@@guard}{\@firstofone}%
+  \def\gzu@declare@choice##1{%
+    \ifx\gzu@@default\@empty
+      \def\gzu@@default{##1}%
+    \fi
+    \expandafter\newif\csname ifgzu@\gzu@@name @##1\endcsname
+    \@namedef{gzu@#1@@choice@##1}{}%
+    \expandafter\g@addto@macro\csname gzu@#1@@reset\endcsname{%
+      \@nameuse{gzu@\@nameuse{gzu@#1@@name}@##1false}%
+    }%
+  }%
+  \expandafter\comma@parse\expandafter{\gzu@@choices}{\gzu@declare@choice}%
+  \kv@define@key{gzu}{#1}{\gzu@set@key{#1}{##1}}%
+  \def\gzu@set@default##1{\gzu@set@key{#1}{##1}}%
+  \expandafter\gzu@set@default\expandafter{\gzu@@default}%
+}
+\newcommand\gzu@set@key[2]{%
+  \@nameuse{gzu@#1@@guard}{\gzu@set@key@value{#1}{#2}}%
+}
+
+\newcommand\gzu@set@key@value[2]{%
+  \expandafter\ifx\csname gzu@#1@@choices\endcsname\@empty
+    \@namedef{gzu@\@nameuse{gzu@#1@@name}}{#2}%
+    \gzu@run@option@hook{#1}%
+  \else
+    \edef\gzu@@value{#2}%
+    \@ifundefined{gzu@#1@@choice@\gzu@@value}{%
+      \gzu@error{Invalid value `#1 = \gzu@@value'}%
+        {Allowed values: \@nameuse{gzu@#1@@choices}.}%
+    }{%
+      \expandafter\let\csname gzu@\@nameuse{gzu@#1@@name}\endcsname\gzu@@value
+      \@nameuse{gzu@#1@@reset}%
+      \@nameuse{gzu@\@nameuse{gzu@#1@@name}@\gzu@@value true}%
+      \gzu@run@option@hook{#1}%
+    }%
+  \fi
+}
+
+\newcommand\gzu@option@classonly[1]{%
+  \@namedef{gzu@#1@@guard}{\gzu@reject@class@option{#1}}%
+}
+
+\newcommand\gzu@reject@class@option[2]{%
+  \gzu@error{Option `#1' is only valid in documentclass}%
+    {Move this option to the optional argument of \string\documentclass.}%
+}
+\gzu@define@key{
+  degree = {
+    choices = {master, doctor},
+    default = master,
+  },
+  degree-type = {
+    name = degree@type,
+    choices = {academic, professional},
+    default = academic,
+  },
+  fontset = {
+    choices = {auto, windows, mac, ubuntu, fandol},
+    default = auto,
+  },
+  math-font = {
+    name = math@font,
+    choices = {lm, stix, xits, libertinus},
+    default = xits,
+  },
+}
+\gzu@define@key{
+  title = {},
+  title* = {name = title@en},
+  keywords = {},
+  keywords* = {name = keywords@en},
+  author = {},
+  author* = {name = author@en},
+  student-id = {name = student@id},
+  degree-category = {name = degree@category},
+  degree-category* = {name = degree@category@en},
+  supervisor = {},
+  supervisor* = {name = supervisor@en},
+  associate-supervisor = {name = associate@supervisor},
+  associate-supervisor* = {name = associate@supervisor@en},
+  co-supervisor = {name = co@supervisor},
+  co-supervisor* = {name = co@supervisor@en},
+  department = {},
+  department* = {name = department@en},
+  discipline = {},
+  discipline* = {name = discipline@en},
+  research-direction = {name = research@direction},
+  research-direction* = {name = research@direction@en},
+  professional-field = {name = professional@field},
+  professional-field* = {name = professional@field@en},
+  date = {},
+  graduation-year = {name = graduation@year},
+  clc = {},
+  udc = {},
+  school-code = {name = school@code},
+  secret-level = {name = secret@level},
+  secret-year = {name = secret@year},
+}
+\gzu@define@key{
+  % 输出模式：打印版或电子版
+  output = {
+    choices = {print, electronic},
+    default = print,
+  },
+  % 是否在封面背页绘制书脊
+  include-spine = {
+    name = include@spine,
+    choices = {false, true},
+    default = false,
+  },
+  figure-number-separator = {
+    name = figure@separator,
+    default = {.},
+  },
+  table-number-separator = {
+    name = table@separator,
+    default = {.},
+  },
+  equation-number-separator = {
+    name = equation@separator,
+    default = {.},
+  },
+  table-rule-width = {
+    name = table@rule@width,
+    default = {1.5bp},
+  },
+  table-midrule-width = {
+    name = table@midrule@width,
+    default = {0.75bp},
+  },
+  table-cmidrule-width = {
+    name = table@cmidrule@width,
+    default = {0.75bp},
+  },
+  caption-language = {
+    name = caption@language,
+    choices = {auto, chinese, bilingual},
+    default = auto,
+  },
+  cite-style = {
+    name = cite@style,
+    choices = {auto, super, inline, author-year},
+    default = auto,
+  },
+  math-style = {
+    name = math@style,
+    choices = {GB, ISO, TeX},
+    default = ISO,
+  },
+}
+\DeclareDefaultOption{%
+  \PassOptionsToClass{\CurrentOption}{ctexbook}%
+}
 \ProcessKeyvalOptions*
-\newif\ifgzu@degree@master
-\newif\ifgzu@degree@doctor
 
-\newif\ifgzu@degree@type@academic
-\newif\ifgzu@degree@type@professional
-\def\gzu@master{master}
-\def\gzu@doctor{doctor}
-
-\def\gzu@academic{academic}
-\def\gzu@professional{professional}
-\ifx\gzu@degree\gzu@master
-  \gzu@degree@mastertrue
-\else
-  \ifx\gzu@degree\gzu@doctor
-    \gzu@degree@doctortrue
-  \else
-    \ClassError{gzuthesis}
-      {Invalid degree `\gzu@degree'}
-      {Use degree=master or degree=doctor.}
-  \fi
-\fi
-\edef\gzu@degree@type{\csname gzu@degree-type\endcsname}
-
-\ifx\gzu@degree@type\gzu@academic
-  \gzu@degree@type@academictrue
-\else
-  \ifx\gzu@degree@type\gzu@professional
-    \gzu@degree@type@professionaltrue
-  \else
-    \ClassError{gzuthesis}
-      {Invalid degree-type `\gzu@degree@type'}
-      {Use degree-type=academic or degree-type=professional.}
-  \fi
-\fi
 \LoadClass[
   a4paper,
   UTF8,
@@ -90,96 +259,6 @@
   fontset=none,
   twoside
 ]{ctexbook}
-
-\RequirePackage{kvdefinekeys}
-\RequirePackage{kvsetkeys}
-
-\newcommand\gzusetup[1]{%
-  \kvsetkeys{gzuinfo}{#1}%
-}
-\newcommand\gzu@title{}
-\newcommand\gzu@title@en{}
-\newcommand\gzu@author{}
-\newcommand\gzu@student@id{}
-\newcommand\gzu@supervisor{}
-\newcommand\gzu@supervisor@en{}
-\newcommand\gzu@discipline{}
-\newcommand\gzu@research@direction{}
-\newcommand\gzu@department{}
-\newcommand\gzu@date{}
-\newcommand\gzu@graduation@year{}
-\newcommand\gzu@clc{}
-\newcommand\gzu@udc{}
-\newcommand\gzu@school@code{}
-\newcommand\gzu@secret@level{}
-\kv@define@key{gzuinfo}{title}{%
-  \def\gzu@title{#1}%
-}
-\kv@define@key{gzuinfo}{title*}{%
-  \def\gzu@title@en{#1}%
-}
-\kv@define@key{gzuinfo}{author}{%
-  \def\gzu@author{#1}%
-}
-\kv@define@key{gzuinfo}{student-id}{%
-  \def\gzu@student@id{#1}%
-}
-\kv@define@key{gzuinfo}{supervisor}{%
-  \def\gzu@supervisor{#1}%
-}
-\kv@define@key{gzuinfo}{supervisor*}{%
-  \def\gzu@supervisor@en{#1}%
-}
-
-\kv@define@key{gzuinfo}{discipline}{%
-  \def\gzu@discipline{#1}%
-}
-\kv@define@key{gzuinfo}{research-direction}{%
-  \def\gzu@research@direction{#1}%
-}
-\kv@define@key{gzuinfo}{department}{%
-  \def\gzu@department{#1}%
-}
-\kv@define@key{gzuinfo}{date}{%
-  \def\gzu@date{#1}%
-}
-\kv@define@key{gzuinfo}{graduation-year}{%
-  \def\gzu@graduation@year{#1}%
-}
-\kv@define@key{gzuinfo}{clc}{%
-  \def\gzu@clc{#1}%
-}
-\kv@define@key{gzuinfo}{udc}{%
-  \def\gzu@udc{#1}%
-}
-\kv@define@key{gzuinfo}{school-code}{%
-  \def\gzu@school@code{#1}%
-}
-\kv@define@key{gzuinfo}{secret-level}{%
-  \def\gzu@secret@level{#1}%
-}
-
-\newif\ifgzu@include@spine
-\gzu@include@spinefalse
-
-\def\gzu@spine@true{true}
-\def\gzu@spine@false{false}
-
-\kv@define@key{gzuinfo}{include-spine}{%
-  \edef\gzu@spine@value{#1}%
-  \ifx\gzu@spine@value\gzu@spine@true
-    \gzu@include@spinetrue
-  \else
-    \ifx\gzu@spine@value\gzu@spine@false
-      \gzu@include@spinefalse
-    \else
-      \ClassError{gzuthesis}
-        {Invalid include-spine value `#1'}
-        {Use include-spine=true or include-spine=false.}%
-    \fi
-  \fi
-}
-
 \RequirePackage{geometry}
 
 \geometry{
@@ -210,28 +289,23 @@
   ItalicFont     = texgyrecursor-italic.otf,
   BoldItalicFont = texgyrecursor-bolditalic.otf,
 ]
-\def\gzu@fontset@auto{auto}
-\def\gzu@fontset@windows{windows}
-\def\gzu@fontset@mac{mac}
-\def\gzu@fontset@ubuntu{ubuntu}
-\def\gzu@fontset@fandol{fandol}
 
-\ifx\gzu@fontset\gzu@fontset@auto
+\ifgzu@fontset@auto
   \IfFontExistsTF{SimSun}{
-    \def\gzu@fontset{windows}
+    \gzu@set@key{fontset}{windows}
   }{
     \IfFontExistsTF{Songti SC}{
-      \def\gzu@fontset{mac}
+      \gzu@set@key{fontset}{mac}
     }{
       \IfFontExistsTF{Noto Serif CJK SC}{
-        \def\gzu@fontset{ubuntu}
+        \gzu@set@key{fontset}{ubuntu}
       }{
-        \def\gzu@fontset{fandol}
+        \gzu@set@key{fontset}{fandol}
       }
     }
   }
 \fi
-\ifx\gzu@fontset\gzu@fontset@windows
+\ifgzu@fontset@windows
   \setCJKmainfont{SimSun}[
     AutoFakeBold = 3,
     ItalicFont = KaiTi
@@ -242,7 +316,7 @@
   \setCJKfamilyfont{zhhei}{SimHei}[AutoFakeBold=3]
   \setCJKfamilyfont{zhkai}{KaiTi}
   \setCJKfamilyfont{zhfs}{FangSong}
-\else\ifx\gzu@fontset\gzu@fontset@mac
+\else\ifgzu@fontset@mac
   \setCJKmainfont{Songti SC}
   \setCJKsansfont{Heiti SC}
   \setCJKmonofont{STFangsong}
@@ -250,7 +324,7 @@
   \setCJKfamilyfont{zhhei}{Heiti SC}
   \setCJKfamilyfont{zhkai}{Kaiti SC}
   \setCJKfamilyfont{zhfs}{STFangsong}
-\else\ifx\gzu@fontset\gzu@fontset@ubuntu
+\else\ifgzu@fontset@ubuntu
   \setCJKmainfont{Noto Serif CJK SC}[
     ItalicFont = FandolKai-Regular.otf
   ]
@@ -260,7 +334,7 @@
   \setCJKfamilyfont{zhhei}{Noto Sans CJK SC}
   \setCJKfamilyfont{zhkai}{FandolKai-Regular.otf}
   \setCJKfamilyfont{zhfs}{FandolFang-Regular.otf}
-\else\ifx\gzu@fontset\gzu@fontset@fandol
+\else\ifgzu@fontset@fandol
   \setCJKmainfont{FandolSong}[
     Extension = .otf,
     UprightFont = *-Regular,
@@ -397,13 +471,15 @@
 \renewcommand\cleardoublepage{%
   \clearpage
   \if@twoside
-    \ifodd\c@page
-    \else
-      \thispagestyle{empty}%
-      \hbox{}%
-      \newpage
-      \if@twocolumn
-        \hbox{}\newpage
+    \ifgzu@output@print
+      \ifodd\c@page
+      \else
+        \thispagestyle{empty}%
+        \hbox{}%
+        \newpage
+        \if@twocolumn
+          \hbox{}\newpage
+        \fi
       \fi
     \fi
   \fi
@@ -421,6 +497,23 @@
 \renewcommand\backmatter{%
   \clearpage
   \@mainmatterfalse
+}
+
+\newcommand\gzu@unnumbered@chapter[2]{%
+  % 先切换到目标章节所在页面
+  \if@openright
+    \cleardoublepage
+  \else
+    \clearpage
+  \fi
+  % 在章节标题之前建立跳转锚点
+  \@ifpackageloaded{hyperref}{\phantomsection}{}%
+  % 记录目录和 PDF 书签
+  \addcontentsline{toc}{chapter}{#2}%
+  % 生成未编号章节标题
+  \chapter*{#1}%
+  % 设置页眉
+  \markboth{#2}{#2}%
 }
 \RequirePackage{titletoc}
 
@@ -457,6 +550,16 @@
   {\contentspush{\thecontentslabel\quad}}
   {}
   {\gzu@toc@leaders\thecontentspage}
+\AddToHook{package/hyperref/after}{%
+  \hypersetup{
+    unicode = true,
+    bookmarksnumbered = true,
+    bookmarksdepth = 2,
+    bookmarksopen = true,
+    bookmarksopenlevel = 2,
+    pdfpagemode = UseOutlines,
+  }%
+}
 
 \RequirePackage{graphicx}
 \RequirePackage[labelformat=simple]{subcaption}
@@ -469,8 +572,6 @@
 \renewcommand\tablename{表}
 \renewcommand\listfigurename{插图清单}
 \renewcommand\listtablename{附表清单}
-\newcommand\gzu@figure@separator{.}
-\newcommand\gzu@table@separator{.}
 
 \renewcommand\thefigure{%
   \ifnum\c@chapter>\z@
@@ -485,13 +586,7 @@
   \fi
   \arabic{table}%
 }
-\kv@define@key{gzuinfo}{figure-number-separator}{%
-  \def\gzu@figure@separator{#1}%
-}
 
-\kv@define@key{gzuinfo}{table-number-separator}{%
-  \def\gzu@table@separator{#1}%
-}
 \DeclareCaptionFont{gzu}{%
   \fontsize{11bp}{14.3bp}\selectfont
 }
@@ -512,46 +607,34 @@
 \bicaptionsetup[figure]{name=图}{name=Figure}
 \bicaptionsetup[table]{name=表}{name=Table}
 \newif\ifgzu@caption@bilingual
-\newcommand\gzu@caption@language{auto}
 
-\newcommand\gzu@set@caption@language[1]{%
-  \ifboolexpr{
-    test {\ifstrequal{#1}{auto}} or
-    test {\ifstrequal{#1}{chinese}} or
-    test {\ifstrequal{#1}{bilingual}}
-  }{%
-    \def\gzu@caption@language{#1}%
-    \ifstrequal{#1}{auto}{%
-      \ifgzu@degree@doctor
-        \gzu@caption@bilingualtrue
-      \else
-        \gzu@caption@bilingualfalse
-      \fi
-    }{%
-      \ifstrequal{#1}{bilingual}
-        {\gzu@caption@bilingualtrue}
-        {\gzu@caption@bilingualfalse}%
-    }%
-    \ifgzu@caption@bilingual
-      \captionsetup{bi-lang=both}%
+\newcommand\gzu@apply@caption@language{%
+  \ifgzu@caption@language@auto
+    \ifgzu@degree@doctor
+      \gzu@caption@bilingualtrue
     \else
-      \captionsetup{bi-lang=first}%
-      \ifgzu@degree@doctor
-        \ClassWarningNoLine{gzuthesis}{%
-          Chinese-only captions selected for a doctoral thesis.
-          Use auto or bilingual for bilingual captions}%
-      \fi
+      \gzu@caption@bilingualfalse
     \fi
-  }{%
-    \ClassError{gzuthesis}{Invalid caption-language `#1'}%
-      {Use auto, chinese, or bilingual.}%
-  }%
+  \else
+    \ifgzu@caption@language@bilingual
+      \gzu@caption@bilingualtrue
+    \else
+      \gzu@caption@bilingualfalse
+    \fi
+  \fi
+  \ifgzu@caption@bilingual
+    \captionsetup{bi-lang=both}%
+  \else
+    \captionsetup{bi-lang=first}%
+    \ifgzu@degree@doctor
+      \ClassWarningNoLine{gzuthesis}{%
+        Chinese-only captions selected for a doctoral thesis.
+        Use auto or bilingual for bilingual captions}%
+    \fi
+  \fi
 }
-
-\kv@define@key{gzuinfo}{caption-language}{%
-  \gzu@set@caption@language{#1}%
-}
-\gzu@set@caption@language{auto}
+\gzu@apply@caption@language
+\gzu@option@hook{caption-language}{\gzu@apply@caption@language}
 \NewDocumentCommand\gzucaption{o m m}{%
   \ifgzu@caption@bilingual
     \ifblank{#3}{%
@@ -580,35 +663,31 @@
 \AtBeginEnvironment{tabular}{\gzu@table@font}
 \AtBeginEnvironment{tabular*}{\gzu@table@font}
 \AtBeginEnvironment{longtable}{\gzu@table@font}
-\setlength\heavyrulewidth{1.5bp}
-\setlength\lightrulewidth{0.75bp}
-\setlength\cmidrulewidth{0.75bp}
+\setlength\heavyrulewidth{\gzu@table@rule@width}
+\setlength\lightrulewidth{\gzu@table@midrule@width}
+\setlength\cmidrulewidth{\gzu@table@cmidrule@width}
 
-\kv@define@key{gzuinfo}{table-rule-width}{%
-  \setlength\heavyrulewidth{#1}%
+\gzu@option@hook{table-rule-width}{%
+  \setlength\heavyrulewidth{\gzu@table@rule@width}%
 }
-
-\kv@define@key{gzuinfo}{table-midrule-width}{%
-  \setlength\lightrulewidth{#1}%
+\gzu@option@hook{table-midrule-width}{%
+  \setlength\lightrulewidth{\gzu@table@midrule@width}%
 }
-
-\kv@define@key{gzuinfo}{table-cmidrule-width}{%
-  \setlength\cmidrulewidth{#1}%
+\gzu@option@hook{table-cmidrule-width}{%
+  \setlength\cmidrulewidth{\gzu@table@cmidrule@width}%
 }
 \renewcommand\textfraction{0.15}
 \renewcommand\topfraction{0.85}
 \renewcommand\bottomfraction{0.65}
 \renewcommand\floatpagefraction{0.60}
 \renewcommand\listoffigures{%
-  \chapter*{\listfigurename}%
-  \markboth{\listfigurename}{\listfigurename}%
-  \addcontentsline{toc}{chapter}{\listfigurename}%
+  \gzu@unnumbered@chapter
+    {\listfigurename}{\listfigurename}%
   \@starttoc{lof}%
 }
 \renewcommand\listoftables{%
-  \chapter*{\listtablename}%
-  \markboth{\listtablename}{\listtablename}%
-  \addcontentsline{toc}{chapter}{\listtablename}%
+  \gzu@unnumbered@chapter
+    {\listtablename}{\listtablename}%
   \@starttoc{lot}%
 }
 \newcommand\gzu@list@leaders{%
@@ -631,52 +710,122 @@
 
 \RequirePackage{amsmath}
 \RequirePackage{unicode-math}
-\unimathsetup{
-  math-style = ISO,
-  bold-style = ISO,
-  partial    = upright,
-}
-\AtBeginDocument{%
-  \let\le\leqslant
-  \let\ge\geqslant
-  \let\leq\leqslant
-  \let\geq\geqslant
-}
-\edef\gzu@math@font{%
-  \csname gzu@math-font\endcsname
+
+\newcommand\gzu@apply@math@style{%
+  \ifgzu@math@style@TeX
+    \unimathsetup{
+      math-style = TeX,
+      bold-style = TeX,
+      partial    = italic,
+    }%
+  \else
+    \unimathsetup{
+      math-style = ISO,
+      bold-style = ISO,
+      partial    = upright,
+    }%
+  \fi
 }
 
-\def\gzu@math@font@xits{xits}
-\def\gzu@math@font@stix{stix}
-\def\gzu@math@font@lm{lm}
-\ifx\gzu@math@font\gzu@math@font@xits
-  \setmathfont{XITSMath-Regular.otf}[
-    BoldFont = XITSMath-Bold.otf,
-    StylisticSet = 8,
-  ]
-\else
-  \ifx\gzu@math@font\gzu@math@font@stix
-    \setmathfont{STIXTwoMath-Regular.otf}
+\newcommand\gzu@apply@math@symbols{%
+  \ifgzu@math@style@GB
+    \let\le\leqslant
+    \let\ge\geqslant
+    \let\leq\leqslant
+    \let\geq\geqslant
+    \addnolimits{\int\iint\iiint\oint}%
+    \def\mathellipsis{\mathinner{\unicodecdots}}%
   \else
-    \ifx\gzu@math@font\gzu@math@font@lm
-      \setmathfont{latinmodern-math.otf}
+    \let\le\leq
+    \let\ge\geq
+    \ifgzu@math@style@ISO
+      \removenolimits{\int\iint\iiint\oint}%
     \else
-      \ClassError{gzuthesis}
-        {Invalid math font `\gzu@math@font'}
-        {Use math-font=xits, stix or lm.}
+      \addnolimits{\int\iint\iiint\oint}%
     \fi
+    \def\mathellipsis{\mathinner{\unicodeellipsis}}%
   \fi
-\fi
-\newcommand\gzu@equation@separator{.}
+  \ifgzu@math@style@TeX\else
+    \def\Re{\operatorname{Re}}%
+    \def\Im{\operatorname{Im}}%
+  \fi
+}
+
+\AddToHook{begindocument/end}{%
+  \gzu@apply@math@symbols
+}
+
+\newcommand\gzu@apply@math@font{%
+  \ifgzu@math@font@lm
+    \def\gzu@math@load{%
+      \setmathfont{latinmodern-math.otf}%
+    }%
+  \else\ifgzu@math@font@stix
+    \ifgzu@math@style@TeX
+      \def\gzu@math@load{%
+        \setmathfont{STIXTwoMath-Regular.otf}%
+      }%
+    \else
+      \def\gzu@math@load{%
+        \setmathfont[
+          StylisticSet = 8
+        ]{STIXTwoMath-Regular.otf}%
+      }%
+    \fi
+  \else\ifgzu@math@font@xits
+    \ifgzu@math@style@TeX
+      \def\gzu@math@load{%
+        \setmathfont[
+          BoldFont = XITSMath-Bold.otf
+        ]{XITSMath-Regular.otf}%
+      }%
+    \else
+      \def\gzu@math@load{%
+        \setmathfont[
+          BoldFont = XITSMath-Bold.otf,
+          StylisticSet = 8
+        ]{XITSMath-Regular.otf}%
+      }%
+    \fi
+  \else\ifgzu@math@font@libertinus
+    \ifgzu@math@style@TeX
+      \def\gzu@math@load{%
+        \setmathfont[
+          StylisticSet = 8
+        ]{LibertinusMath-Regular.otf}%
+      }%
+    \else
+      \def\gzu@math@load{%
+        \setmathfont{LibertinusMath-Regular.otf}%
+      }%
+    \fi
+  \fi\fi\fi\fi
+
+  % 在全部条件结束后加载数学字体
+  \gzu@math@load
+  % STIX 模式下采用传统衬线黑板粗体
+  \ifgzu@math@font@stix
+    \setmathfont{latinmodern-math.otf}[range=bb]%
+  \fi
+}
+
+\newcommand\gzu@apply@math@settings{%
+  \gzu@apply@math@style
+  \gzu@apply@math@font
+}
+
+\AddToHook{begindocument/before}{%
+  \gzu@apply@math@settings
+  \gzu@option@classonly{math-style}%
+  \gzu@option@classonly{math-font}%
+}
+
 
 \renewcommand\theequation{%
   \ifnum\c@chapter>\z@
     \thechapter\gzu@equation@separator
   \fi
   \arabic{equation}%
-}
-\kv@define@key{gzuinfo}{equation-number-separator}{%
-  \def\gzu@equation@separator{#1}%
 }
 \def\tagform@#1{%
   \maketag@@@{%
@@ -726,10 +875,7 @@
 \renewcommand\bibname{参考文献}
 
 \newcommand\gzu@bib@heading[1]{%
-  \chapter*{#1}%
-  \markboth{#1}{#1}%
-  \@ifpackageloaded{hyperref}{\phantomsection}{}%
-  \addcontentsline{toc}{chapter}{#1}%
+  \gzu@unnumbered@chapter{#1}{#1}%
 }
 
 \newif\ifgzu@main@language@chinese
@@ -737,62 +883,37 @@
 \newif\ifgzu@language@chinese
 \gzu@language@chinesetrue
 
-\def\gzu@cite@style{auto}
-\def\gzu@cite@style@auto{auto}
-\def\gzu@cite@style@super{super}
-\def\gzu@cite@style@inline{inline}
-\def\gzu@cite@style@author@year{author-year}
-
 \newcommand\gzu@apply@cite@style{%
-  \ifx\gzu@cite@style\gzu@cite@style@auto
-  \else
-    \ifx\gzu@cite@style\gzu@cite@style@super
-      \citestyle{super}%
-    \else
-      \ifx\gzu@cite@style\gzu@cite@style@inline
-        \citestyle{inline}%
-      \else
-        \ifx\gzu@cite@style\gzu@cite@style@author@year
-          \citestyle{author-year}%
-        \else
-          \ClassError{gzuthesis}{Unknown cite-style `\gzu@cite@style'}%
-            {Use auto, super, inline, or author-year.}%
-        \fi
-      \fi
+  \@ifpackageloaded{natbib}{%
+    \ifgzu@cite@style@auto\else
+      \expandafter\citestyle\expandafter{\gzu@cite@style}%
     \fi
-  \fi
+  }{}%
 }
-\kv@define@key{gzuinfo}{cite-style}{\def\gzu@cite@style{#1}}
+\gzu@option@hook{cite-style}{\gzu@apply@cite@style}
 
 \PassOptionsToPackage{compress}{natbib}
+\PassOptionsToPackage{compress}{natbib}
+
 \AddToHook{package/natbib/after}{%
-  \newcommand\bibstyle@super{\bibpunct{[}{]}{,}{s}{,}{,}}%
-  \newcommand\bibstyle@inline{\bibpunct{[}{]}{,}{n}{,}{,}}%
-  \@namedef{bibstyle@author-year}{\bibpunct{(}{)}{;}{a}{,}{,}}%
-  \@namedef{bibstyle@gzuthesis-numeric}{\citestyle{super}}%
-  \@namedef{bibstyle@gzuthesis-author-year}{\citestyle{author-year}}%
-  \DeclareRobustCommand\inlinecite{\@inlinecite}%
-  \def\@inlinecite#1{\begingroup\let\@cite\NAT@citenum\citep{#1}\endgroup}%
-  \let\onlinecite\inlinecite
-  \renewcommand\bibsection{\gzu@bib@heading{\bibname}}%
-  \renewcommand\bibfont{\fontsize{10.5bp}{16bp}\selectfont}%
+  % 参考文献标题、目录及 PDF 书签
+  \renewcommand\bibsection{%
+    \gzu@bib@heading{\bibname}%
+  }%
+
+  % 参考文献正文格式
+  \renewcommand\bibfont{%
+    \fontsize{10.5bp}{16bp}\selectfont
+  }%
+
+  % 文献条目间距与悬挂缩进
   \setlength\bibsep{3bp plus 3bp minus 3bp}%
   \setlength\bibhang{21bp}%
-  \def\@biblabel#1{[#1]\hfill}%
-  \renewcommand\NAT@bibsetnum[1]{%
-    \setlength{\labelwidth}{1cm}%
-    \setlength{\leftmargin}{\labelwidth}%
-    \setlength{\labelsep}{0pt}%
-    \setlength{\itemsep}{\bibsep}%
-    \setlength{\parsep}{0pt}%
-    \ifNAT@openbib
-      \addtolength{\leftmargin}{\bibindent}%
-      \setlength{\itemindent}{-\bibindent}%
-      \setlength{\listparindent}{\itemindent}%
-      \setlength{\parsep}{0pt}%
-    \fi
+
+  % 应用 GZUThesis 引用配置
+  \AtBeginDocument{%
+    \gzu@apply@cite@style
   }%
-  \AtBeginDocument{\gzu@apply@cite@style}%
 }
 
 \AddToHook{package/biblatex/after}{%
@@ -995,18 +1116,11 @@
 
 \ExplSyntaxOn
 
-\tl_new:N \l__gzu_cover_degree_text_tl
-\dim_new:N \l__gzu_cover_degree_cell_dim
-
 \cs_new_protected:Npn \gzu_cover_degree_line:
   {
-    % 总宽度可以自己微调，115mm 比较合适，如果还不够宽可以改大
+    % 保留当前 100 mm 的学位论文名称宽度。
     \hbox to 100mm
       {
-        % \hfill % 最左侧弹簧
-        % \gzu@graduation@year % 2027 作为一个整体，绝不被拆开
-        % \hfill
-        % 届
         \hfill
         \ifgzu@degree@doctor
           博
@@ -1031,12 +1145,11 @@
 
 \ExplSyntaxOff
 
-
 \newcommand\gzu@cover@verso{%
   \thispagestyle{empty}%
   \null
 
-  \ifgzu@include@spine
+  \ifgzu@include@spine@true
     \begin{tikzpicture}[
       remember picture,
       overlay,
@@ -1061,6 +1174,17 @@
   \clearpage
 }
 
+\newlength\gzu@cover@heading@gap
+\setlength\gzu@cover@heading@gap{6mm}
+\def\gzu@cover@date@parse#1-#2-#3\@nil{%
+  #1\hspace{0.5em}年\hspace{0.5em}%
+  \number\numexpr#2\relax\hspace{0.5em}月%
+}
+
+\newcommand\gzu@cover@date{%
+  \expandafter\gzu@cover@date@parse
+  \gzu@date\@nil
+}
 \renewcommand\maketitle{%
   \begin{titlepage}%
     \thispagestyle{empty}%
@@ -1088,35 +1212,62 @@
       \gzu@cover@right@row{35}{学校代码}{\gzu@school@code}
       \gzu@cover@right@row{42}{密\hfill 级}{\gzu@secret@level}
 
-      \node[anchor=north]
-        at ([yshift=-74mm]current page.north)
-        {\gzu@cover@schoolfont\fontsize{29bp}{50bp}\selectfont
-          贵\hspace{1em}州\hspace{1em}大\hspace{1em}学};
+      % 三行标题共用已初始化的垂直间距。
 
-      \node[anchor=north]
-        at ([yshift=-90mm]current page.north)
+      % 第一行：贵州大学
+      \node[anchor=north] (gzuCoverSchool)
+        at ([yshift=-74mm]current page.north)
+        {%
+          \gzu@cover@schoolfont
+          \fontsize{29bp}{50bp}\selectfont
+          贵\hspace{1em}州\hspace{1em}大\hspace{1em}学
+        };
+
+      % 第二行：硕士学位论文
+      \node[anchor=north] (gzuCoverDegree)
+        at ([yshift=-\gzu@cover@heading@gap]gzuCoverSchool.south)
         {%
           \gzu@cover@song\gzu@cover@times
           \fontsize{20bp}{34bp}\selectfont
           \gzu@cover@degree@line
         };
 
-      \node[anchor=north]
-        at ([yshift=-104mm]current page.north)
-        {\gzu@cover@song\fontsize{16.5bp}{26bp}\selectfont
-          \gzu@cover@degree@type};
+      % 第三行：（专业学位）
+      \node[anchor=north] (gzuCoverDegreeType)
+        at ([yshift=-\gzu@cover@heading@gap]gzuCoverDegree.south)
+        {%
+          \gzu@cover@song
+          \fontsize{16.5bp}{26bp}\selectfont
+          \gzu@cover@degree@type
+        };
 
-      % Both thesis titles: 20 bp as specified in the Word reference.
-      \node[anchor=north,align=center,text width=183mm]
+      % 中文论文标题
+      \node[
+        anchor=north,
+        align=center,
+        text width=183mm
+      ] (gzuCoverTitleZh)
         at ([yshift=-117mm]current page.north)
-        {\gzu@cover@song\gzu@cover@times\fontsize{20bp}{27bp}\selectfont
-          \gzu@title};
-      \node[anchor=north,align=center,text width=183mm]
-        at ([yshift=-132mm]current page.north)
-        {\gzu@cover@times\fontsize{20bp}{27bp}\selectfont
-          \gzu@title@en};
+        {%
+          \gzu@cover@song\gzu@cover@times
+          \fontsize{20bp}{27bp}\selectfont
+          \gzu@title
+        };
 
-      % Six baselines, spaced by 9 mm; identical label/value columns.
+      % 英文论文标题
+      \node[
+        anchor=north,
+        align=center,
+        text width=183mm
+      ] (gzuCoverTitleEn)
+        at ([yshift=-5mm]gzuCoverTitleZh.south)
+        {%
+          \gzu@cover@times
+          \fontsize{20bp}{27bp}\selectfont
+          \gzu@title@en
+        };
+
+      % 六行信息的基线间距为 10 mm，标签列和填写列的宽度保持一致。
       \gzu@cover@info@row{180}{学\hfill 生\hfill 姓\hfill 名：}{\gzu@author}
       \gzu@cover@info@row{190}{学\hfill 号：}{\gzu@student@id}
       \gzu@cover@info@row{200}{导\hfill 师\hfill 姓\hfill 名\hfill 、\hfill 职\hfill 称：}{\gzu@cover@supervisor}
@@ -1124,7 +1275,7 @@
       \gzu@cover@info@row{220}{研\hfill 究\hfill 方\hfill 向：}{\gzu@research@direction}
       \gzu@cover@info@row{230}{培\hfill 养\hfill 单\hfill 位：}{\gzu@department}
 
-      % Location and date: SimHei 14 bp; Latin numbers in Times New Roman.
+      % 地点与日期均为 14 bp；日期中文使用黑体，西文使用无衬线字体。
       \node[anchor=north,align=center]
         at ([yshift=-251mm]current page.north)
         {%
@@ -1132,29 +1283,105 @@
           \fontsize{14bp}{20bp}\selectfont
           中国·贵州·贵阳\\[1.5mm]
           \gzu@cover@hei\sffamily
-          \gzu@date
+          \gzu@cover@date
         };
     \end{tikzpicture}%
   \end{titlepage}%
 
   % 自动处理中文封面的背页
-  \gzu@cover@verso
+  %\gzu@cover@verso
 
+  % 仅打印版生成封面背页
+  \ifgzu@output@print
+    \gzu@cover@verso
+  \else
+    % 电子版忽略书脊配置
+    \ifgzu@include@spine@true
+      \ClassWarningNoLine{gzuthesis}
+        {include-spine=true is ignored when output=electronic}%
+    \fi
+  \fi
 }
 
+
+\newcommand\gzu@abstract@heading[2]{%
+  \gzu@unnumbered@chapter{#1}{#2}%
+}
+
+\ExplSyntaxOn
+
+\clist_new:N \l__gzu_abstract_keywords_clist
+
+\cs_new_protected:Npn \gzu_abstract_keywords:nnn #1#2#3
+  {
+    \exp_args:NNo \clist_set:Nn
+      \l__gzu_abstract_keywords_clist {#1}
+
+    \clist_if_empty:NF \l__gzu_abstract_keywords_clist
+      {
+        \par\medskip\noindent
+        \textbf{#2}%
+        \clist_use:Nn
+          \l__gzu_abstract_keywords_clist {#3}%
+        \par
+      }
+  }
+
+\cs_new_eq:NN
+  \gzu@abstract@keywords
+  \gzu_abstract_keywords:nnn
+
+\ExplSyntaxOff
+
+\newenvironment{abstract}{%
+  \gzu@abstract@heading{摘\quad 要}{摘要}%
+  \ignorespaces
+}{%
+  \gzu@abstract@keywords
+    {\gzu@keywords}{关键词：}{；}%
+}
+
+\newenvironment{abstract*}{%
+  \gzu@abstract@heading{Abstract}{Abstract}%
+  \ignorespaces
+}{%
+  \gzu@abstract@keywords
+    {\gzu@keywords@en}{Keywords:~}{;~}%
+}
+
+\RequirePackage{enumitem}
+\newcommand\gzu@denotation@name{主要符号对照表}
+\newlist{gzu@denotation}{description}{1}
+
+\setlist[gzu@denotation]{%
+  nosep,
+  font=\normalfont,
+  align=left,
+  leftmargin=!,
+  labelindent=0pt,
+  labelwidth=2.5cm,
+  labelsep*=0.5cm,
+  itemindent=0pt,
+}
+\newenvironment{denotation}[1][2.5cm]{%
+  \gzu@unnumbered@chapter
+    {\gzu@denotation@name}
+    {\gzu@denotation@name}%
+  \begin{gzu@denotation}[labelwidth=#1]%
+}{%
+  \end{gzu@denotation}%
+}
 \newcommand\gzu@acknowledgements@name{致\quad 谢}
 \newcommand\gzu@acknowledgements@tocname{致谢}
 
 \newenvironment{acknowledgements}{%
-  \chapter*{\gzu@acknowledgements@name}%
-  \markboth
-    {\gzu@acknowledgements@tocname}
+  \gzu@unnumbered@chapter
+    {\gzu@acknowledgements@name}
     {\gzu@acknowledgements@tocname}%
-  \@ifpackageloaded{hyperref}{\phantomsection}{}%
-  \addcontentsline{toc}{chapter}{%
-    \gzu@acknowledgements@tocname}%
   \ignorespaces
-}{\par}
+}{%
+  \par
+}
 \g@addto@macro\appendix{%
   \@mainmattertrue
   \ctexset{
@@ -1169,7 +1396,16 @@
     }%
   }%
 }
+\gzu@option@classonly{degree}
+\gzu@option@classonly{degree-type}
+\gzu@option@classonly{fontset}
+\gzu@options@readytrue
 
+\DeclareRobustCommand\cs[1]{\texttt{\char`\\#1}}
+\DeclareRobustCommand\file{\nolinkurl}
+\DeclareRobustCommand\env{\textsf}
+\DeclareRobustCommand\pkg{\textsf}
+\DeclareRobustCommand\cls{\textsf}
 \endinput
 %%
 %% End of file `gzuthesis.cls'.
