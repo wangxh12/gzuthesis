@@ -65,9 +65,9 @@
   %
   % 姓名
   %
-  author     = {王小华},
-  author*    = {Wang Xiaohua},
-  student-id = {2024025084},
+  author     = {张三},
+  author*    = {Zhang San},
+  student-id = {2024000000},
   %
   % 学号
   % 仅当书写开题报告时需要（同时设置 `thesis-type = proposal'）
@@ -77,7 +77,7 @@
   % 指导教师
   %   中文姓名和职称之间以英文逗号“,”分开，下同
   %
-  supervisor  = {张安思, 副教授},
+  supervisor  = {李四, 副教授},
   supervisor* = {Professor Zhang Ansi},
   %
   % 副指导教师
@@ -149,36 +149,105 @@
 % 量和单位
 \usepackage{siunitx}
 
-% 参考文献使用 BibTeX + natbib 宏包
-% 顺序编码制
-% \usepackage[sort]{natbib}
-% \bibliographystyle{gzuthesis-numeric}
-% 使用 BibTeX + natbib
-% \usepackage[sort]{natbib}
-% \bibliographystyle{plainnat}
 
-% GB/T 7714—2025 参考文献格式
-% 顺序编码制
+% ==================================================
+% 参考文献：BibTeX + natbib
+% GB/T 7714—2025 顺序编码制
+% ==================================================
+
 \usepackage[sort]{gbt7714}
 
-% 贵州大学要求参考文献表列出全部作者
 \gbtsetup{
-  maxbibnames = 0,
-  minbibnames = 0,
-  inline      = true,
+  align = left,
+  maxbibnames = 99,
+  minbibnames = 99,
+  inline = true,
 }
 
 \bibliographystyle{gbt7714-2025-numeric}
 
+% 贵州大学参考文献排版
+\gzusetup{
+  bib-bst = {gbt7714-2025-numeric},
+  bib-title = {参考文献},
+  bib-appendix-title = {参考文献},
+  bib-font = {\songti},
+  bib-font-size = {9bp},
+  bib-line-height = {14bp},
+  bib-title-format = {
+    \centering\heiti
+    \fontsize{12bp}{18bp}\selectfont
+  },
+  bib-item-sep = {3bp plus 2bp minus 1bp},
+  bib-hang = {21bp},
+  bib-label-sep = {0.5em},
+  bib-heading = chapter,
+  bib-appendix-heading = section,
+  bib-page-style = plain,
+  bib-appendix-prefix = true,
+  cite-style = auto,
+}
 
-% 著者-出版年制
+
+
+
+% % ==================================================
+% % 参考文献配置：BibLaTeX + Biber
+% % 标准：GB/T 7714—2025
+% % ==================================================
+
+% \usepackage[
+%   backend = biber,
+%   style = gb7714-2025,
+%   sorting = none,
+%   natbib = true,
+%   defernumbers = true,
+%   maxbibnames = 999,
+%   gbalign = left
+% ]{biblatex}
+
+% % 参考文献数据库
+% \addbibresource{ref/refs.bib}
+
+% % 贵州大学参考文献版式
+% \gzusetup{
+%   bib-title = {参考文献},
+%   bib-appendix-title = {参考文献},
+%   bib-font = {\songti},
+%   bib-font-size = {9bp},
+%   bib-line-height = {14bp},
+%   bib-title-format = {
+%     \centering\heiti
+%     \fontsize{12bp}{18bp}\selectfont
+%   },
+%   bib-item-sep = {3bp plus 2bp minus 1bp},
+%   bib-hang = {21bp},
+%   bib-label-sep = {0.5em},
+%   bib-heading = chapter,
+%   bib-appendix-heading = section,
+%   bib-page-style = plain,
+%   bib-appendix-prefix = true,
+%   cite-style = auto,
+% }
+
+
+% % 著者-出版年制
+% \usepackage[
+%   backend = biber,
+%   style = gb7714-2025ay,
+%   sorting = nyt,
+%   natbib = true,
+%   maxbibnames = 999
+% ]{biblatex}
+
+% \addbibresource{ref/refs.bib}
+
+
+
+% 著者-出版年制 -- thuthesis 参考文献版式
 % \usepackage{natbib}
-% \bibliographystyle{gzuthesis-author-year}
+% \书目风格{gzuthesis-author-year}
 
-
-% 本科生参考文献的著录格式
-% \usepackage[sort]{natbib}
-% \bibliographystyle{gzuthesis-bachelor}
 
 % 参考文献使用 BibLaTeX 宏包
 % \usepackage[style=gzuthesis-numeric]{biblatex}

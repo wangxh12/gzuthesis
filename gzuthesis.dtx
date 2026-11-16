@@ -298,15 +298,19 @@
 %
 % 本模板提供以下参考文献样式：
 %
+% GZUThesis 不提供独立的 BST 样式文件，
+% 而是使用 gbt7714 宏包实现 GB/T 7714—2025。
+%
+% BibTeX 支持以下两种样式：
 % \begin{itemize}
-%   \item |gzuthesis-numeric|：顺序编码制；
-%   \item |gzuthesis-author-year|：著者—出版年制。
+%   \item |gbt7714-2025-numeric|：顺序编码制；
+%   \item |gbt7714-2025-authoryear|：著者—出版年制。
 % \end{itemize}
 %
 % 顺序编码制支持上标引用和正文引用。
 % 用户可以使用 \cs{inlinecite} 输出行内引用。
 %
-% 参考文献列表采用五号字，固定行距 16 bp，
+% 参考文献列表采用小五号宋体，默认行距 14 bp，行距可配置，
 % 文献条目间距为 3 bp，并允许适当伸缩。
 %
 % 参考文献标题不参与章节编号，
@@ -324,7 +328,7 @@
 %   title = {中文论文题目},
 %   title* = {English Thesis Title},
 %   author = {张三},
-%   date = {2026 年 10 月},
+%   date = {2026-10-01},
 % }
 %
 % \begin{document}
@@ -742,6 +746,78 @@
     name = cite@style,
     choices = {auto, super, inline, author-year},
     default = auto,
+  },
+  % 参考文献标题
+  bib-title = {
+    name = bib@title,
+    default = {参考文献},
+  },
+  bib-appendix-title = {
+    name = bib@appendix@title,
+    default = {参考文献},
+  },
+  % BibTeX 附录使用的 BST 样式
+  bib-bst = {
+    name = bib@bst,
+    default = {gbt7714-2025-numeric},
+  },
+  % 参考文献正文字体
+  bib-font = {
+    name = bib@font@family,
+    default = {\songti},
+  },
+  bib-font-size = {
+    name = bib@font@size,
+    default = {9bp},
+  },
+  bib-line-height = {
+    name = bib@line@height,
+    default = {14bp},
+  },
+  % 参考文献标题格式
+  bib-title-format = {
+    name = bib@title@format,
+    default = {
+      \centering\heiti
+      \fontsize{12bp}{18bp}\selectfont
+    },
+  },
+  % 条目间距和缩进
+  bib-item-sep = {
+    name = bib@item@sep,
+    default = {3bp plus 2bp minus 1bp},
+  },
+  bib-hang = {
+    name = bib@hang,
+    default = {21bp},
+  },
+  bib-label-sep = {
+    name = bib@label@sep,
+    default = {0.5em},
+  },
+  % 参考文献标题所在页面的页面样式
+  bib-page-style = {
+    name = bib@page@style,
+    choices = {plain, empty},
+    default = plain,
+  },
+  % 正文参考文献标题层级
+  bib-heading = {
+    name = bib@heading@level,
+    choices = {chapter, section, none},
+    default = chapter,
+  },
+  % 附录独立参考文献标题层级
+  bib-appendix-heading = {
+    name = bib@appendix@heading@level,
+    choices = {section, chapter, none},
+    default = section,
+  },
+  % 附录顺序编码是否添加 A.、B. 等前缀
+  bib-appendix-prefix = {
+    name = bib@appendix@prefix,
+    choices = {true, false},
+    default = true,
   },
   math-style = {
     name = math@style,
@@ -1229,7 +1305,6 @@
 %    \end{macrocode}
 % 
 % 
-
 % \subsubsection{未编号章节的统一处理}
 %
 % 用于摘要、致谢、符号对照表、参考文献等。
@@ -1923,74 +1998,334 @@
 % 
 % 
 % 
+%
 % \subsection{参考文献}
 % \label{sec:bibliography}
 %
-% 文献处理由用户选择 BibTeX + natbib 或 BibLaTeX + Biber。
-% 两套体系在同一文档内不可同时加载。
+% GZUThesis 支持 BibTeX + natbib 和
+% BibLaTeX + Biber 两种参考文献处理后端。
+% 支持顺序编码制、著者—出版年制，以及附录独立参考文献。
+%
+% 参考文献的著录规则由 GB/T 7714 样式实现；
+% 本文档类负责字体、行距、缩进、标题、
+% 页码、目录和 PDF 书签等排版功能。
 %
 %    \begin{macrocode}
+% 
+% 
+% 
+% 参考文献公共配置
 \RequirePackage{url}
-\renewcommand\bibname{参考文献}
+\RequirePackage{etoolbox}
 
-\newcommand\gzu@bib@heading[1]{%
-  \gzu@unnumbered@chapter{#1}{#1}%
+\renewcommand\bibname{\gzu@bib@title}
+
+% 是否处于附录
+\newif\ifgzu@in@appendix
+\gzu@in@appendixfalse
+
+\g@addto@macro\appendix{%
+  \gzu@in@appendixtrue
+}
+\g@addto@macro\backmatter{%
+  \gzu@in@appendixfalse
 }
 
-% For the Chinese graduate thesis only.
-\newif\ifgzu@main@language@chinese
-\gzu@main@language@chinesetrue
-\newif\ifgzu@language@chinese
-\gzu@language@chinesetrue
+% 参考文献正文字体
+\newcommand\gzu@bib@font{%
+  \gzu@bib@font@family
+  \fontsize
+    {\gzu@bib@font@size}
+    {\gzu@bib@line@height}\selectfont
+  \interlinepenalty=10000\relax
+  \clubpenalty=10000\relax
+  \widowpenalty=10000\relax
+}
+
+% section 层级的参考文献标题
+\newcommand\gzu@bib@section@heading[1]{%
+  \clearpage
+  \@ifpackageloaded{hyperref}{\phantomsection}{}%
+  \addcontentsline{toc}{section}{#1}%
+  \begingroup
+    \ctexset{section/format={\gzu@bib@title@format}}%
+    \section*{#1}%
+  \endgroup
+  \markboth{#1}{#1}%
+}
+
+% chapter 层级的参考文献标题
+\newcommand\gzu@bib@chapter@heading[1]{%
+  \begingroup
+    \ctexset{chapter/format={\gzu@bib@title@format}}%
+    \gzu@unnumbered@chapter{#1}{#1}%
+  \endgroup
+}
+
+% 正文参考文献标题
+\newcommand\gzu@bib@heading[1]{%
+  \ifgzu@in@appendix
+    \gzu@bib@appendix@heading{#1}%
+  \else
+    \ifgzu@bib@heading@level@chapter
+      \gzu@bib@chapter@heading{#1}%
+    \else\ifgzu@bib@heading@level@section
+      \gzu@bib@section@heading{#1}%
+    \fi\fi
+  \fi
+  \thispagestyle{\gzu@bib@page@style}%
+}
+
+% 附录独立参考文献标题
+\newcommand\gzu@bib@appendix@heading[1]{%
+  \ifgzu@bib@appendix@heading@level@chapter
+    \gzu@bib@chapter@heading{#1}%
+  \else\ifgzu@bib@appendix@heading@level@section
+    \par
+    \@ifpackageloaded{hyperref}{\phantomsection}{}%
+    \addcontentsline{toc}{section}{#1}%
+    \begingroup
+      \ctexset{section/format={\gzu@bib@title@format}}%
+      \section*{#1}%
+    \endgroup
+  \fi\fi
+  \thispagestyle{\gzu@bib@page@style}%
+}
+% 
+%
+% 
+% 
+
+% BibTeX + natbib 引用样式
+
+\def\gzu@bib@cite@super{super}
+\def\gzu@bib@cite@inline{inline}
+\def\gzu@bib@cite@author@year{author-year}
 
 \newcommand\gzu@apply@cite@style{%
   \@ifpackageloaded{natbib}{%
-    \ifgzu@cite@style@auto\else
-      \expandafter\citestyle\expandafter{\gzu@cite@style}%
-    \fi
+    \ifx\gzu@cite@style\gzu@bib@cite@super
+      \bibpunct{[}{]}{,}{s}{,}{,}%
+    \else\ifx\gzu@cite@style\gzu@bib@cite@inline
+      \bibpunct{[}{]}{,}{n}{,}{,}%
+    \else\ifx\gzu@cite@style\gzu@bib@cite@author@year
+      \bibpunct{(}{)}{;}{a}{,}{,}%
+    \fi\fi\fi
   }{}%
 }
-\gzu@option@hook{cite-style}{\gzu@apply@cite@style}
 
-% Applies only when natbib is loaded explicitly by the user.
-\PassOptionsToPackage{compress}{natbib}
-% natbib 参考文献排版
-% 引用格式由 gbt7714 管理
-% GZUThesis 只负责章节和版面格式
-\PassOptionsToPackage{compress}{natbib}
+\AddToHook{begindocument/end}{%
+  \gzu@apply@cite@style
+}
 
+% 贵州大学要求参考文献表列出全部作者
+% 使用新版 gbt7714 的配置接口
+\AddToHook{package/gbt7714/after}{%
+  \@ifundefined{gbtsetup}{}{%
+    \gbtsetup{%
+      maxbibnames=0,
+      minbibnames=0
+    }%
+  }%
+}
+
+% natbib 与附录独立文献支持
 \AddToHook{package/natbib/after}{%
-  % 参考文献标题、目录及 PDF 书签
+  \RequirePackage{bibunits}%
   \renewcommand\bibsection{%
     \gzu@bib@heading{\bibname}%
   }%
+  \renewcommand\bibfont{\gzu@bib@font}%
+}
 
-  % 参考文献正文格式
-  \renewcommand\bibfont{%
-    \fontsize{10.5bp}{16bp}\selectfont
+% 引用辅助命令
+\AddToHook{begindocument/end}{%
+  \@ifpackageloaded{natbib}{%
+    \providecommand\inlinecite[1]{%
+      \begingroup
+        \ifNAT@numbers
+          \textup{[\citealp{#1}]}%
+        \else
+          \citep{#1}%
+        \fi
+      \endgroup
+    }%
+    \providecommand\onlinecite[1]{%
+      \citet{#1}%
+    }%
+  }{}%
+}
+
+% 应用 natbib 参考文献版式
+\newcommand\gzu@apply@bib@natbib{%
+  \@ifpackageloaded{natbib}{%
+    \renewcommand\bibfont{\gzu@bib@font}%
+    \setlength\bibsep{\gzu@bib@item@sep}%
+    \setlength\bibhang{\gzu@bib@hang}%
+  }{}%
+}
+
+% 配置编号区域，不覆盖 gbt7714 的引用定义
+\newcommand\gzu@patch@bib@natbib{%
+  \@ifpackageloaded{natbib}{%
+    \@ifundefined{NAT@bibsetnum}{}{%
+      \pretocmd\NAT@bibsetnum{%
+        \setlength{\labelsep}{\gzu@bib@label@sep}%
+      }{}{%
+        \ClassWarningNoLine{gzuthesis}
+          {Unable to patch natbib bibliography spacing}%
+      }%
+    }%
+    \gzu@apply@bib@natbib
+  }{}%
+}
+% 
+% 
+% 
+% BibLaTeX + Biber
+\AddToHook{package/biblatex/after}{%
+  % 贵州大学参考文献表列出全部作者
+  \ExecuteBibliographyOptions{maxbibnames=999}%
+
+  % 正文参考文献标题
+  \defbibheading{bibliography}[\bibname]{%
+    \gzu@bib@heading{#1}%
   }%
 
-  % 文献条目间距与悬挂缩进
-  \setlength\bibsep{3bp plus 3bp minus 3bp}%
-  \setlength\bibhang{21bp}%
+  % 附录独立参考文献标题
+  \defbibheading{gzuappendix}[\gzu@bib@appendix@title]{%
+    \gzu@bib@appendix@heading{#1}%
+  }%
 
-  % 应用 GZUThesis 引用配置
-  \AtBeginDocument{%
-    \gzu@apply@cite@style
+  % 引用辅助命令
+  \providecommand\inlinecite[1]{\parencite{#1}}%
+  \providecommand\onlinecite[1]{\textcite{#1}}%
+
+  % 参考文献字体
+  \renewcommand\bibfont{\gzu@bib@font}%
+}
+
+% 应用 BibLaTeX 版式
+\newcommand\gzu@apply@bib@biblatex{%
+  \@ifpackageloaded{biblatex}{%
+    \renewcommand\bibfont{\gzu@bib@font}%
+    \setlength\bibitemsep{\gzu@bib@item@sep}%
+    \setlength\bibhang{\gzu@bib@hang}%
+    \setlength\biblabelsep{\gzu@bib@label@sep}%
+  }{}%
+}
+% 
+%
+% 
+% 附录独立参考文献
+% BibTeX: bibunits
+% BibLaTeX: refsection
+
+\newif\ifgzu@appendix@bib@printed
+
+\newenvironment{gzuappendixrefs}{%
+  % 必须在附录内部使用
+  \ifgzu@in@appendix\else
+    \ClassError{gzuthesis}
+      {gzuappendixrefs outside appendix}
+      {Use \string\appendix\space and
+       \string\chapter\space before this environment.}%
+  \fi
+
+  \gzu@appendix@bib@printedfalse
+
+  \@ifpackageloaded{biblatex}{%
+    % BibLaTeX 使用独立 refsection
+    \begin{refsection}%
+    \ifgzu@bib@appendix@prefix@true
+      \begin{refcontext}[labelprefix=\thechapter.]%
+    \fi
+  }{%
+    % BibTeX 使用独立 bibunit
+    \@ifpackageloaded{bibunits}{%
+      \begin{bibunit}[\gzu@bib@bst]%
+      \def\@bibunitname{%
+        \jobname-appendix-\@Alph\c@chapter
+      }%
+      \ifgzu@bib@appendix@prefix@true
+        \def\citenumfont##1{\thechapter.##1}%
+        \def\bibnumfmt##1{[\thechapter.##1]\hfill}%
+      \fi
+    }{%
+      \ClassError{gzuthesis}
+        {bibunits package required}
+        {Load bibunits for BibTeX appendix references.}%
+    }%
+  }%
+}{%
+  \ifgzu@appendix@bib@printed\else
+    \ClassWarningNoLine{gzuthesis}
+      {Appendix bibliography not printed}%
+  \fi
+
+  \@ifpackageloaded{biblatex}{%
+    \ifgzu@bib@appendix@prefix@true
+      \end{refcontext}%
+    \fi
+    \end{refsection}%
+  }{%
+    \@ifpackageloaded{bibunits}{%
+      \end{bibunit}%
+    }{}%
   }%
 }
 
-% Only runs if the user selected biblatex instead of natbib.
-\AddToHook{package/biblatex/after}{%
-  \DeclareRobustCommand\inlinecite{\parencite}%
-  \let\onlinecite\inlinecite
-  \defbibheading{bibliography}[\bibname]{\gzu@bib@heading{#1}}%
-  \renewcommand\bibfont{\fontsize{10.5bp}{16bp}\selectfont}%
-  \setlength\bibitemsep{3bp plus 3bp minus 3bp}%
-  \setlength\biblabelsep{0pt}%
-  \setlength\bibhang{21bp}%
+% 统一的附录参考文献输出命令
+\newcommand\gzuprintappendixbibliography[1]{%
+  \gzu@appendix@bib@printedtrue
+
+  \@ifpackageloaded{biblatex}{%
+    \printbibliography[heading=gzuappendix]%
+  }{%
+    \@ifpackageloaded{bibunits}{%
+      \begingroup
+        \renewcommand\bibsection{%
+          \gzu@bib@appendix@heading{%
+            \gzu@bib@appendix@title
+          }%
+        }%
+        \@ifpackageloaded{gbt7714}{%
+          % 使附录的 bibunit 也读取国标 BST 控制记录
+          \nocite{GBT7714:BSTcontrol}%
+          \putbib[\jobname-BSTcontrol,#1]%
+        }{%
+          \putbib[#1]%
+        }%
+      \endgroup
+    }{%
+      \ClassError{gzuthesis}
+        {bibunits package required}
+        {Load bibunits for appendix bibliographies.}%
+    }%
+  }%
+}
+
+% 文档初始化时应用参考文献版式
+\AddToHook{begindocument/before}{%
+  \@ifpackageloaded{biblatex}{%
+    \@ifpackageloaded{natbib}{%
+      \ClassError{gzuthesis}
+        {biblatex and natbib cannot coexist}
+        {Choose BibTeX or BibLaTeX, not both.}%
+    }{}%
+    \gzu@apply@bib@biblatex
+  }{%
+    \gzu@patch@bib@natbib
+  }%
 }
 %    \end{macrocode}
+% 
+% 
+% 
+% 
+% 
+% 
+% 
 % 
 % \subsection{封面与题名页}
 % \label{sec:cover}
