@@ -1,0 +1,88 @@
+\chapter{基础理论与问题定义}\label{chap:foundations}
+\section{多变量序列与滑动窗口}
+设第 $k$ 个架次的观测为
+$\mat{X}^{(k)}=[\vect{x}^{(k)}_0,\ldots,\vect{x}^{(k)}_{T_k-1}]^{\mathsf T}$，
+其中 $\vect{x}^{(k)}_t\in\Rset^C$。本例采用零起始下标，与 Python 数组索引一致。
+一个长度为 $L$ 的窗口只包含待预测时刻之前的观测：
+\begin{equation}
+ \mat{U}^{(k)}_t=
+ \begin{bmatrix}
+ (\vect{z}^{(k)}_{t-L})^{\mathsf T}\\
+ (\vect{z}^{(k)}_{t-L+1})^{\mathsf T}\\
+ \vdots\\
+ (\vect{z}^{(k)}_{t-1})^{\mathsf T}
+ \end{bmatrix}\in\Rset^{L\times C},\qquad t=L,\ldots,T_k-1.
+ \label{eq:window}
+\end{equation}
+式~\eqref{eq:window} 同时演示了矩阵换行和行内维度说明。
+窗口顺序展平后构成 $LC$ 维向量，附加常数项得到
+$\vect{u}_t\in\Rset^{LC+1}$。样本输入中不含 $\vect{z}_t$，
+因此这种组织方式可以用于一步因果预测。
+
+\begin{definition}[合法的架次内窗口]\label{def:window}
+若窗口中所有输入观测和目标观测均属于同一个架次，且输入时刻严格小于目标时刻，
+则称该窗口为合法的架次内预测窗口。
+\end{definition}
+
+\begin{proposition}[窗口数量]\label{prop:count}
+对于长度为 $T$ 的架次，在窗口长度为 $L$、步长为 1、预测长度为 1 且
+$T>L$ 的条件下，可生成 $T-L$ 个合法窗口。
+\end{proposition}
+\begin{proof}
+合法目标时刻从 $L$ 到 $T-1$，其整数个数为
+$(T-1)-L+1=T-L$。每个目标时刻唯一对应此前的 $L$ 个观测，故结论成立。
+\end{proof}
+
+\section{数据标准化与尺度}
+对于各变量的不同量纲，仅使用训练数据估计均值和标准差。
+令 $\mathcal{T}$ 为训练观测集合，则
+\begin{align}
+ \mu_c &= \frac{1}{|\mathcal{T}|}\sum_{(k,t)\in\mathcal{T}}x^{(k)}_{t,c},\label{eq:mu}\\
+ \sigma_c &= \sqrt{\frac{1}{|\mathcal{T}|}\sum_{(k,t)\in\mathcal{T}}
+       (x^{(k)}_{t,c}-\mu_c)^2},\label{eq:std}\\
+ z^{(k)}_{t,c} &= \frac{x^{(k)}_{t,c}-\mu_c}{\max(\sigma_c,\varepsilon)}.
+ \label{eq:normalize}
+\end{align}
+本例取 $\varepsilon=10^{-8}$。训练和标准化公式中的分母均使用总体形式，
+与脚本的 \texttt{ddof=0} 保持一致。校准集与测试集不重新拟合这两个统计量。
+
+\section{异常分数与决策}
+\subsection{残差分数}
+预测器输出 $\widehat{\vect{z}}_t$ 后，将各通道的平方误差平均：
+\begin{equation}
+ e_t=\frac{1}{C}\sum_{c=1}^{C}(z_{t,c}-\widehat z_{t,c})^2.
+ \label{eq:residual}
+\end{equation}
+该分数位于标准化空间，是非负标量。它不是概率，因而不应直接解释为
+“系统发生故障的概率”。对所有通道取平均还意味着不同变量拥有相同聚合权重，
+这种选择在真实应用中需要结合传感器噪声和安全重要性重新评估。
+
+\subsection{阈值与二值标签}
+给定平滑分数 $s_t$ 和阈值 $\tau$，预测标签为
+\begin{equation}
+ \widehat y_t=
+ \begin{cases}
+ 1,&s_t>\tau,\\
+ 0,&s_t\leq\tau.
+ \end{cases}\label{eq:decision}
+\end{equation}
+异常分数较高并不自动意味着模型已经定位故障部件。
+本例只报告异常点判断，不把通道误差大小等同于因果解释。
+
+\section{评价指标与实现约定}
+在对应窗口目标的测试时刻计算 TP、FP、TN 和 FN；每个架次的前 $L$ 个点
+没有对应预测，因而不计入评价。精确率、召回率、F1 和误报率分别为
+\begin{align}
+ P&=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FP}},&
+ R&=\frac{\mathrm{TP}}{\mathrm{TP}+\mathrm{FN}},\\
+ F_1&=\frac{2PR}{P+R},&
+ \mathrm{FAR}&=\frac{\mathrm{FP}}{\mathrm{FP}+\mathrm{TN}}.
+ \label{eq:metrics}
+\end{align}
+当分母为零时，脚本将相应的精确率、召回率或 F1 设为零。
+AUROC 则由正负样本分数的排序计算，并对并列分数采用平均秩。
+本例始终使用逐点标签，不以命中异常区间中的一个点替换整段预测。
+
+上述约定使数字结果可以追溯到明确的程序行为。
+但是，逐点指标不能完整描述报警延迟和重复报警成本。
+这些工程属性应在真实任务中单独报告，而不应通过修改逐点标签隐式表达。

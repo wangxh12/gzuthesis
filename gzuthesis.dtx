@@ -601,6 +601,7 @@
 \newcommand\gzu@author{}
 \newcommand\gzu@student@id{}
 \newcommand\gzu@supervisor{}
+\newcommand\gzu@supervisor@en{}
 \newcommand\gzu@discipline{}
 \newcommand\gzu@research@direction{}
 \newcommand\gzu@department{}
@@ -629,9 +630,14 @@
 \kv@define@key{gzuinfo}{student-id}{%
   \def\gzu@student@id{#1}%
 }
+% 指导教师
 \kv@define@key{gzuinfo}{supervisor}{%
   \def\gzu@supervisor{#1}%
 }
+\kv@define@key{gzuinfo}{supervisor*}{%
+  \def\gzu@supervisor@en{#1}%
+}
+
 \kv@define@key{gzuinfo}{discipline}{%
   \def\gzu@discipline{#1}%
 }
@@ -659,6 +665,29 @@
 \kv@define@key{gzuinfo}{secret-level}{%
   \def\gzu@secret@level{#1}%
 }
+
+% 是否在中文封面背页生成书脊（默认 false）
+\newif\ifgzu@include@spine
+\gzu@include@spinefalse
+
+\def\gzu@spine@true{true}
+\def\gzu@spine@false{false}
+
+\kv@define@key{gzuinfo}{include-spine}{%
+  \edef\gzu@spine@value{#1}%
+  \ifx\gzu@spine@value\gzu@spine@true
+    \gzu@include@spinetrue
+  \else
+    \ifx\gzu@spine@value\gzu@spine@false
+      \gzu@include@spinefalse
+    \else
+      \ClassError{gzuthesis}
+        {Invalid include-spine value `#1'}
+        {Use include-spine=true or include-spine=false.}%
+    \fi
+  \fi
+}
+
 %    \end{macrocode}
 % 
 % \subsection{页面布局}
@@ -1873,14 +1902,42 @@
 % 顶端信息为两列组。每组的标签宽度固定为 29 mm，
 % 因此“中图分类号”和“UDC 分类号”的取值对齐；右侧亦然。
 %    \begin{macrocode}
+% 左上角标签的统一宽度
+% 左上角标签统一宽度
+\newlength\gzu@cover@left@labelwidth
+\newlength\gzu@cover@left@tmpwidth
+
+\newcommand\gzu@cover@measure@left{%
+  % 测量中文标签
+  \settowidth\gzu@cover@left@labelwidth{%
+    {\gzu@cover@song\gzu@cover@times
+     \fontsize{12bp}{16bp}\selectfont
+     中图分类号}%
+  }%
+
+  % 测量 UDC 标签
+  \settowidth\gzu@cover@left@tmpwidth{%
+    {\gzu@cover@song\gzu@cover@times
+     \fontsize{12bp}{16bp}\selectfont
+     UDC分类号}%
+  }%
+
+  % 两个标签采用较大的宽度
+  \ifdim\gzu@cover@left@tmpwidth>
+         \gzu@cover@left@labelwidth
+    \setlength\gzu@cover@left@labelwidth{%
+      \gzu@cover@left@tmpwidth}%
+  \fi
+}
 % 左上角
 \newcommand\gzu@cover@top@row[4]{%
   \node[anchor=base west] at
     ([xshift=#1mm,yshift=-#2mm]current page.north west) {%
       \gzu@cover@song\gzu@cover@times
       \fontsize{12bp}{16bp}\selectfont
-      \makebox[29mm][l]{#3}%
-      \makebox[23mm][l]{#4}%
+      \makebox[\gzu@cover@left@labelwidth][s]{#3}%
+      ：\hspace{0.5\ccwd}%
+      #4%
     };%
 }
 % 右上角：标签统一按四个汉字宽度对齐
@@ -1909,6 +1966,41 @@
       \underline{\makebox[84mm][c]{\strut #3}}%
     };%
 }
+% 中文导师姓名和职称的封面排版
+\ExplSyntaxOn
+
+\clist_new:N \l__gzu_supervisor_parts_clist
+
+\cs_new_protected:Npn \gzu_cover_supervisor:
+  {
+    % 按逗号拆分姓名和职称
+    \exp_args:NNo \clist_set:Nn
+      \l__gzu_supervisor_parts_clist { \gzu@supervisor }
+
+    \int_compare:nNnTF
+      { \clist_count:N \l__gzu_supervisor_parts_clist } = { 2 }
+      {
+        % 导师姓名
+        \clist_item:Nn \l__gzu_supervisor_parts_clist { 1 }
+
+        % 姓名与职称之间空半个汉字宽度
+        \hspace{0.5\ccwd}
+
+        % 导师职称
+        \clist_item:Nn \l__gzu_supervisor_parts_clist { 2 }
+      }
+      {
+        \ClassError{gzuthesis}
+          {Invalid supervisor format}
+          {Use supervisor={Name, Title}.}
+      }
+  }
+
+\cs_new_eq:NN
+  \gzu@cover@supervisor
+  \gzu_cover_supervisor:
+
+\ExplSyntaxOff
 %    \end{macrocode}
 %
 % \subsubsection{学位类型文字}
@@ -1994,12 +2086,12 @@
 \cs_new_protected:Npn \gzu_cover_degree_line:
   {
     % 总宽度可以自己微调，115mm 比较合适，如果还不够宽可以改大
-    \hbox to 115mm
+    \hbox to 100mm
       {
-        \hfill % 最左侧弹簧
-        \gzu@graduation@year % 2027 作为一个整体，绝不被拆开
-        \hfill
-        届
+        % \hfill % 最左侧弹簧
+        % \gzu@graduation@year % 2027 作为一个整体，绝不被拆开
+        % \hfill
+        % 届
         \hfill
         \ifgzu@degree@doctor
           博
@@ -2025,12 +2117,50 @@
 \ExplSyntaxOff
 
 
+% 中文封面背页
+% 无论是否启用书脊，都保留这一页
+
+% 中文封面背页
+% include-spine=false 时保留空白页
+% include-spine=true 时绘制书脊
+\newcommand\gzu@cover@verso{%
+  \thispagestyle{empty}%
+  \null
+
+  \ifgzu@include@spine
+    \begin{tikzpicture}[
+      remember picture,
+      overlay,
+      every node/.style={
+        inner sep=0pt,
+        outer sep=0pt
+      }
+    ]
+      \node[
+        rotate=90,
+        anchor=center,
+        text width=235mm,
+        align=center
+      ] at ([xshift=-12mm]current page.east) {%
+        \gzu@cover@song
+        \fontsize{12bp}{18bp}\selectfont
+        \gzu@title\quad\gzu@author
+      };
+    \end{tikzpicture}%
+  \fi
+
+  \clearpage
+}
+
+
+
 \renewcommand\maketitle{%
   \begin{titlepage}%
     \thispagestyle{empty}%
     \null
 
     % 先测量宽度
+    \gzu@cover@measure@left
     \gzu@cover@measure@right
     
     \begin{tikzpicture}[
@@ -2038,8 +2168,13 @@
       every node/.style={inner sep=0pt,outer sep=0pt}
     ]
       % Top left: equal label widths.
-      \gzu@cover@top@row{26}{35}{中\hfill 图\hfill 分\hfill 类\hfill 号：}{\gzu@clc}
-      \gzu@cover@top@row{26}{42}{UDC\hfill 分\hfill 类\hfill 号：}{\gzu@udc}
+      \gzu@cover@top@row{26}{35}
+        {中\hfill 图\hfill 分\hfill 类\hfill 号}
+        {\gzu@clc}
+
+      \gzu@cover@top@row{26}{42}
+        {UDC\hfill 分\hfill 类\hfill 号}
+        {\gzu@udc}
       % Top right: equal label widths.
 
       % 学校代码和密级
@@ -2049,7 +2184,7 @@
       \node[anchor=north]
         at ([yshift=-74mm]current page.north)
         {\gzu@cover@schoolfont\fontsize{29bp}{50bp}\selectfont
-          贵\hspace{1.1em}州\hspace{1.1em}大\hspace{1.1em}学};
+          贵\hspace{1em}州\hspace{1em}大\hspace{1em}学};
 
       \node[anchor=north]
         at ([yshift=-90mm]current page.north)
@@ -2076,20 +2211,28 @@
 
       % Six baselines, spaced by 9 mm; identical label/value columns.
       \gzu@cover@info@row{180}{学\hfill 生\hfill 姓\hfill 名：}{\gzu@author}
-      \gzu@cover@info@row{189}{学\hfill 号：}{\gzu@student@id}
-      \gzu@cover@info@row{198}{导\hfill 师\hfill 姓\hfill 名\hfill 、\hfill 职\hfill 称：}{\gzu@supervisor}
-      \gzu@cover@info@row{207}{学\hfill 科\hfill 专\hfill 业：}{\gzu@discipline}
-      \gzu@cover@info@row{216}{研\hfill 究\hfill 方\hfill 向：}{\gzu@research@direction}
-      \gzu@cover@info@row{225}{培\hfill 养\hfill 单\hfill 位：}{\gzu@department}
+      \gzu@cover@info@row{190}{学\hfill 号：}{\gzu@student@id}
+      \gzu@cover@info@row{200}{导\hfill 师\hfill 姓\hfill 名\hfill 、\hfill 职\hfill 称：}{\gzu@cover@supervisor}
+      \gzu@cover@info@row{210}{学\hfill 科\hfill 专\hfill 业：}{\gzu@discipline}
+      \gzu@cover@info@row{220}{研\hfill 究\hfill 方\hfill 向：}{\gzu@research@direction}
+      \gzu@cover@info@row{230}{培\hfill 养\hfill 单\hfill 位：}{\gzu@department}
 
       % Location and date: SimHei 14 bp; Latin numbers in Times New Roman.
-      \node[anchor=north,align=center,text width=155mm]
+      \node[anchor=north,align=center]
         at ([yshift=-251mm]current page.north)
-        {\gzu@cover@hei\gzu@cover@times\fontsize{14bp}{20bp}\selectfont
+        {%
+          \gzu@cover@hei\gzu@cover@times
+          \fontsize{14bp}{20bp}\selectfont
           中国·贵州·贵阳\\[1.5mm]
-          \gzu@date};
+          \gzu@cover@hei\sffamily
+          \gzu@date
+        };
     \end{tikzpicture}%
   \end{titlepage}%
+
+  % 自动处理中文封面的背页
+  \gzu@cover@verso
+
 }
 %    \end{macrocode}
 % 

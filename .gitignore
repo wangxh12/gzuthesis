@@ -1,6 +1,9 @@
 ## 
 requirements/
 
+## vscode
+.vscode/
+
 ## .gitignore for thuthesis
 thuthesis/
 

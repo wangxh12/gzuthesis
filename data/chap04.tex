@@ -1,0 +1,140 @@
+\chapter{预测残差检测流程}\label{chap:method}
+\section{总体结构}
+图~\ref{fig:pipeline} 展示本例的处理流程。
+训练数据用于拟合预测器，正常校准数据用于估计阈值，测试数据仅通过固定流程输出结果。
+图中箭头表示数据依赖而非真实飞控系统中的控制指令。
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  box/.style={draw,align=center,minimum width=30mm,minimum height=13mm,
+    font=\fontsize{10bp}{13bp}\selectfont,inner sep=3pt},
+  arr/.style={-{Stealth[length=2mm]},semithick},
+  node distance=10mm and 8mm]
+\node[box] (train) {训练架次\\标准化统计};
+\node[box,right=of train] (window) {架次内滑窗\\$L=9$};
+\node[box,right=of window] (model) {岭回归预测\\固定参数};
+\node[box,right=of model] (score) {残差与平滑\\$e_t\rightarrow s_t$};
+\node[box,below=of model] (cal) {正常校准集\\分位数阈值 $\tau$};
+\node[box,below=of score] (out) {测试判断\\$s_t>\tau$};
+\draw[arr] (train)--(window);
+\draw[arr] (window)--(model);
+\draw[arr] (model)--(score);
+\draw[arr] (score)--(out);
+\draw[arr] (cal)--(out);
+\end{tikzpicture}
+\gzucaption{示例方法的数据处理流程}{Processing pipeline of the demonstration method}
+\label{fig:pipeline}
+\end{figure}
+
+\section{线性预测与正则化}
+\subsection{模型定义}
+将 $N$ 个训练窗口堆叠为 $\mat{A}\in\Rset^{N\times(LC+1)}$，
+对应目标组成 $\mat{Y}\in\Rset^{N\times C}$。
+模型参数为 $\mat{W}\in\Rset^{(LC+1)\times C}$，
+预测满足 $\widehat{\mat{Y}}=\mat{A}\mat{W}$。
+常数列对应截距项，训练目标为
+\begin{equation}
+ \min_{\mat{W}}\ \|\mat{A}\mat{W}-\mat{Y}\|_{\mathrm F}^{2}
+     +\lambda\operatorname{tr}(\mat{W}^{\mathsf T}\mat{D}\mat{W}),
+ \quad\mat{D}=\diag(1,\ldots,1,0).
+ \label{eq:ridge-objective}
+\end{equation}
+最后一个对角元素为零，表示不惩罚截距。
+本例使用残差平方和而不是残差均方作为优化目标，因此 $\lambda=1$
+的含义应与具体目标函数一同报告。
+
+\subsection{求解形式与数值实现}
+对应正规方程为
+\begin{equation}
+ (\mat{A}^{\mathsf T}\mat{A}+\lambda\mat{D})\mat{W}
+ =\mat{A}^{\mathsf T}\mat{Y}.
+ \label{eq:normal-equation}
+\end{equation}
+实现使用线性方程求解器，不显式计算矩阵逆。
+附录~\ref{app:proof} 给出唯一性条件及推导。
+这里的矩阵列数只有 $LC+1=55$，便于在普通 CPU 环境下复现。
+这不是对大规模神经模型训练成本的估计。
+
+\begin{assumption}[训练设计矩阵条件]\label{ass:ridge}
+至少存在一个训练窗口，$\lambda>0$，并且设计矩阵最后一列为全 1 截距列。
+\end{assumption}
+\begin{theorem}[本例正规方程的唯一解]\label{thm:ridge}
+在假设~\ref{ass:ridge} 下，式~\eqref{eq:normal-equation} 的系数矩阵正定，
+因此每个输出通道的岭回归解唯一。
+\end{theorem}
+\begin{proof}
+任取非零向量 $\vect{v}$，有
+$\vect{v}^{\mathsf T}(\mat{A}^{\mathsf T}\mat{A}+\lambda\mat{D})\vect{v}
+=\|\mat{A}\vect{v}\|_2^2+\lambda\sum_{j=1}^{LC}v_j^2$。
+若前 $LC$ 个分量中有非零值，则第二项为正；否则仅截距分量非零，
+第一项为 $Nv_{LC+1}^2>0$。故矩阵正定。
+\end{proof}
+
+\section{残差平滑与阈值}
+\subsection{指数加权移动平均}
+原始分数按式~\eqref{eq:residual} 计算。
+每个架次的第一个有效分数作为初始状态，其后递推为
+\begin{equation}
+ s_L=e_L,\qquad s_t=\rho e_t+(1-\rho)s_{t-1},\quad t>L.
+ \label{eq:ewma}
+\end{equation}
+$\rho=1$ 表示不平滑；减小 $\rho$ 会增加历史分数的权重。
+状态在架次开始时重新初始化，不能把上一次飞行结束时的残差带入新架次。
+
+\begin{lemma}[非负性与范围保持]\label{lem:ewma}
+若 $e_t\in[a,b]$，且 $s_L=e_L$、$0<\rho\leq1$，则所有 $s_t\in[a,b]$。
+\end{lemma}
+\begin{proof}
+初始结论成立。若 $s_{t-1}\in[a,b]$，则式~\eqref{eq:ewma}
+是 $e_t$ 与 $s_{t-1}$ 的凸组合，仍位于 $[a,b]$。由归纳法得到结论。
+\end{proof}
+
+\subsection{分位数校准}
+令 $\mathcal{S}_{\mathrm{cal}}$ 为校准架次全部有效平滑分数，设
+\begin{equation}
+ \tau=\Quantile_q(\mathcal{S}_{\mathrm{cal}}),\qquad q=0.99.
+ \label{eq:threshold}
+\end{equation}
+脚本使用线性插值定义的样本分位数。
+这个阈值使校准集尾部的一部分观测被判为高分，但不保证测试误报率等于 $1-q$。
+时间依赖、有限样本和不同架次之间的分布变化都会影响实际测试结果。
+
+\section{完整算法与实现细节}
+\begin{algorithm}[htbp]
+\caption{架次级训练、校准与因果检测}\label{alg:pipeline}
+\begin{algorithmic}[1]
+\Require 训练架次 $\mathcal{D}_{tr}$，校准架次 $\mathcal{D}_{cal}$，测试架次 $\mathcal{D}_{te}$
+\Require 窗口长度 $L$，正则化系数 $\lambda$，平滑系数 $\rho$，分位数 $q$
+\Ensure 与每个有效目标时刻对应的分数和预测标签
+\State 仅从 $\mathcal{D}_{tr}$ 估计 $\vect{\mu}$ 和 $\vect{\sigma}$
+\State 分别标准化三个子集，并在各架次内部构造窗口
+\State 由式~\eqref{eq:normal-equation} 求解 $\mat{W}$
+\For{每个校准架次}
+  \State 一步预测、计算残差并独立初始化 EWMA
+\EndFor
+\State 用式~\eqref{eq:threshold} 计算固定阈值 $\tau$
+\For{每个测试架次}
+  \State 仅使用过去 $L$ 个观测预测当前观测
+  \State 计算 $e_t$ 和 $s_t$，输出 $\widehat y_t=\mathbb{I}(s_t>\tau)$
+\EndFor
+\State 在预测完成后读取测试标签并计算指标
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{复杂度与状态}
+设 $d=LC+1$。构造正规方程的主要代价为 $O(Nd^2)$，
+求解规模为 $d$ 的线性系统通常需要 $O(d^3)$ 的计算。
+每个时刻的预测为 $O(dC)$，残差聚合为 $O(C)$，
+EWMA 更新只需要一个历史标量。
+上述量级针对稠密实现；不代表已测量的运行时间。
+
+\subsubsection{部署边界}
+模型使用历史观测预测当前目标，即异常进入历史窗口后也可能影响后续预测。
+因此，异常结束后的高分可能是窗口传播与平滑共同造成的，不应全部解释为新的异常。
+本例保留这些现象，以便在结果部分展示误报来源。
+
+\subsubsection{配置与内容分离}
+\nolinkurl{config/format.tex} 控制编号连接符、三线表线宽和题注语言。
+算法参数在生成脚本中定义，二者不混用同一套配置名。
+修改排版不应改变实验数值；修改实验参数后则应重新生成图表和统计量。

@@ -16,208 +16,33 @@
             Based on Large Time Series Models},
   author = {王小华},
   student-id = {2024025084},
-  supervisor = {张安思  副教授},
+  supervisor = {张安思, 副教授},
   discipline = {电子信息},
   research-direction = {大数据技术与工程},
   department = {省部共建公共大数据国家重点实验室},
   date = {2026 年 10 月},
+  include-spine = true,
 }
 
 \begin{document}
 
-% 生成学位论文封面
 \maketitle
 
-% 前置部分
-\frontmatter
 
-\chapter*{摘要}
-这是中文摘要。
-
-\chapter*{Abstract}
-This is the abstract.
-
-\tableofcontents
-\listoffigures
-\listoftables
-
-\mainmatter
-
-\chapter{绪论}
-
-\section{图表测试}
-
-这是正文内容。
-图~\ref{fig:example} 为测试图，
-表~\ref{tab:example} 为测试表格。
-
-% 测试图片
-\begin{figure}[htbp]
-  \centering
-  \rule{0.7\textwidth}{3cm}
-  \caption{无人机飞行状态变化示意图}
-  \label{fig:example}
-\end{figure}
-
-% 测试三线表
-\begin{table}[htbp]
-  \centering
-  \caption{无人机飞行数据统计}
-  \label{tab:example}
-  \begin{tabular}{lcc}
-    \toprule
-    变量名称 & 均值 & 标准差 \\
-    \midrule
-    横滚角 & 0.25 & 1.32 \\
-    俯仰角 & 0.18 & 0.96 \\
-    偏航角 & 1.42 & 2.15 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-% 测试子图
-\begin{figure}[htbp]
-  \centering
-
-  \begin{subfigure}{0.45\textwidth}
-    \centering
-    \rule{0.9\linewidth}{2cm}
-    \caption{正常飞行}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}{0.45\textwidth}
-    \centering
-    \rule{0.9\linewidth}{2cm}
-    \caption{异常飞行}
-  \end{subfigure}
-
-  \caption{不同飞行状态对比}
-  \label{fig:subfigures}
-\end{figure}
-
-
-
-\mainmatter
-
-\chapter{数学公式测试}
-
-\section{单行公式}
-
-根据质能关系，有
-\begin{equation}
-E = mc^2
-\label{eq:energy}
-\end{equation}
-
-式~\eqref{eq:energy} 为公式引用测试。
-
-\section{多行公式}
-
-\begin{align}
-  y_1 &= ax+b,\\
-  y_2 &= cx+d.
-\end{align}
-
-\section{积分与矩阵}
-
-\begin{equation}
-I = \int_0^1 x^2,\mathrm{d}x
-\end{equation}
-
-\begin{equation}
-\symbfit{x} =
-\begin{bmatrix}
-x_1\
-x_2\
-x_3
-\end{bmatrix}
-\end{equation}
-
-\chapter{第二章测试}
-
-\begin{equation}
-f(x)=x^2
-\end{equation}
-
-
-
-\chapter{数学理论测试}
-
-\section{定义与定理}
-
-\begin{definition}
-  \label{def:nonnegative}
-  若实数 $x$ 满足 $x \geq 0$，
-  则称 $x$ 为非负实数。
-\end{definition}
-
-\begin{theorem}[平方非负性]
-  \label{thm:square}
-  对任意实数 $x \in \mathbb{R}$，
-  均有
-  \begin{equation}
-    x^2 \geq 0.
-  \end{equation}
-\end{theorem}
-
-\begin{proof}
-  当 $x \geq 0$ 时，$x^2 \geq 0$；
-  当 $x < 0$ 时，$-x > 0$，
-  因此 $x^2=(-x)^2 \geq 0$。
-  故命题成立。
-\end{proof}
-
-\section{引理与交叉引用}
-
-\begin{lemma}
-  任意两个非负实数之和仍为非负实数。
-\end{lemma}
-
-根据定义~\ref{def:nonnegative} 和
-定理~\ref{thm:square}，可以进一步分析
-相关数学性质。
-
-
-
-
-% 致谢
-\begin{acknowledgements}
-
-感谢导师在研究工作中给予的指导。
-
-感谢实验室提供的研究条件。
-
-感谢参与本研究的相关人员。
-
-\end{acknowledgements}
-
-% 后置部分
 \backmatter
+\begin{acknowledgements}
+本页为致谢环境的排版示例，不代表真实的指导、资助或合作关系。
+正式论文应由作者依据实际经历撰写，不应将示例姓名、单位和感谢对象直接用于提交。
 
-% 参考文献
-% 在这里使用已有的 \bibliography 或
-% \printbibliography 命令，二者择一。
+感谢开源排版工具及其维护者为学术文档制作提供基础设施。
+本工程借助文档化源码、参考文献数据库和自动构建，
+将格式要求与论文内容分离，使重复编辑和交叉引用检查更加可控。
 
-% 附录
-\appendix
-
-\chapter{补充实验数据}
-\label{app:data}
-
-\section{数据集说明}
-
-本附录给出实验数据的补充统计结果。
-
-\begin{equation}
-  y = ax+b
-  \label{eq:appendix}
-\end{equation}
-
-\chapter{补充数学证明}
-\label{app:proof}
-
-本附录给出相关理论的补充推导。
-
-
+感谢在模板使用过程中提出问题并提供反馈的读者。
+有关字体缺失、跨页表格、题注语言和引用格式的测试，
+有助于识别单个最小示例难以覆盖的问题。
+上述文字仅用于展示致谢页面的标题、段落缩进、目录条目和页眉。
+\end{acknowledgements}
+% \ExamplePrintBibliography
 
 \end{document}

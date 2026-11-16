@@ -1,0 +1,25 @@
+\ExampleChapter{符号与缩略语说明}{符号与缩略语说明}
+本文采用粗斜体小写字母表示向量、粗体大写字母表示矩阵，
+普通斜体表示标量。下标 $t$ 表示时刻，$c$ 表示变量，$k$ 表示架次。
+符号的作用域在首次使用时说明，不将同一符号同时作为模型参数和数据集名称。
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+符号或缩略语 & 含义 \\
+\midrule
+$\vect{x}^{(k)}_t\in\Rset^C$ & 第 $k$ 个架次在时刻 $t$ 的多变量观测 \\
+$\vect{z}^{(k)}_t$ & 使用训练统计量标准化后的观测 \\
+$C,L,N$ & 变量数、输入窗口长度和训练窗口总数 \\
+$\mat{A},\mat{Y}$ & 设计矩阵与预测目标矩阵 \\
+$\mat{W},\lambda$ & 线性预测权重与正则化系数 \\
+$e_t,s_t$ & 原始残差分数与平滑分数 \\
+$\rho,\tau,q$ & 平滑系数、检测阈值与校准分位数 \\
+$y_t,\widehat y_t$ & 真实异常标签与预测标签 \\
+UAV & Unmanned Aerial Vehicle，无人机 \\
+EWMA & Exponentially Weighted Moving Average，指数加权移动平均 \\
+FAR & False Alarm Rate，正常点中的误报比例 \\
+AUROC & Area Under the ROC Curve，ROC 曲线下面积 \\
+\bottomrule
+\end{tabularx}
+\end{center}
