@@ -218,6 +218,10 @@
     name = equation@separator,
     default = {.},
   },
+  number-separator = {
+    name = number@separator,
+    default = {.},
+  },
   table-rule-width = {
     name = table@rule@width,
     default = {1.5bp},
@@ -897,6 +901,15 @@
     \thechapter\gzu@equation@separator
   \fi
   \arabic{equation}%
+}
+\newcommand\gzu@set@number@separator{%
+  \let\gzu@figure@separator\gzu@number@separator
+  \let\gzu@table@separator\gzu@number@separator
+  \let\gzu@equation@separator\gzu@number@separator
+}
+
+\gzu@option@hook{number-separator}{%
+  \gzu@set@number@separator
 }
 \def\tagform@#1{%
   \maketag@@@{%
