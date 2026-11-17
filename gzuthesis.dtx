@@ -17,7 +17,7 @@
 %
 % \iffalse
 %<*driver>
-\ProvidesFile{gzuthesis.dtx}[2026/11/16 0.2.0-dev Guizhou University Thesis Template]
+\ProvidesFile{gzuthesis.dtx}[2026/11/17 0.3.0-dev Guizhou University Thesis Template]
 \documentclass{ltxdoc}
 \usepackage{dtx-style}
 
@@ -136,23 +136,87 @@
 % 
 % 
 % 
-% \subsection{字体配置}
+% \subsection{字体与字号}
 %
-% GZUThesis 默认自动选择可用字体。
-% 也可以通过 |fontset| 选项指定字体库。
+% GZUThesis 参考 ThuThesis 的字体方案、函数分发与字号命令，
+% 同时保留贵州大学学位论文使用 Windows 原生字体的默认要求。
+% 西文字体默认 Times New Roman（无衬线为 Arial、等宽为 Courier New），
+% 中文正文默认 SimSun、标题使用 SimHei。
+% 缺少这些字体时必须安装字体，或在项目自己的字体文件目录中提供相应文件；
+% |auto| 不会暗中将默认字体换为外观相似的字体。
 %
-% 支持 |auto|、|windows|、|mac|、
-% |ubuntu| 和 |fandol|。
+% \begin{description}
+%   \item[fontset] 整体字体方案：|auto|（默认）、|windows|、
+%     |windows-local|、|mac|、|ubuntu|、|fandol|、|none|。
+%     |ubuntu|、|fandol| 仅在用户显式选择时生效。
+%   \item[font] 西文字体：|auto|（默认）、|times|、|times-local|、
+%     |termes|、|stix|、|xits|、|libertinus|、|newcm|、|lm|、|none|。
+%   \item[cjk-font] 中文字体：|auto|（默认）、|windows|、
+%     |windows-local|、|mac|、|mac-word|、|noto|、|fandol|、|none|。
+%   \item[windows-font-dir] Windows 字体文件目录；默认 |.|（当前编译目录）。
+%     这是用户指定的任意相对或绝对路径，模板不写死操作系统目录。
+%   \item[math-font] 数学字体：|auto|（默认为 XITS Math）、|xits|、
+%     |stix|、|libertinus|、|newcm|、|lm|、|none|。
+% \end{description}
 %
+% 例如，Windows 或已注册 Windows 字体的环境可使用：
+% \begin{verbatim}
+% \documentclass[degree=master, fontset=windows]{gzuthesis}
+% \end{verbatim}
+% 在项目自带 Windows 字体文件的环境中：
 % \begin{verbatim}
 % \documentclass[
-%   degree=master,
-%   degree-type=academic,
-%   fontset=auto
+%   fontset=windows-local,
+%   windows-font-dir={./fonts},
+%   math-font=xits
 % ]{gzuthesis}
 % \end{verbatim}
+% 也可以分别指定西文字体和中文字体，独立配置优先于整体方案。
+% 模板默认不自动下载任何字体，也不随模板分发受第三方许可保护的字体文件。
 %
-% 正文字号暂采用小四号（12 bp），固定行距为 20 bp。
+% \subsubsection{字号}
+%
+% Word 的中文字号单位相当于 bp（Big Point），而不是 TeX 原生 pt。
+% $1\,\mathrm{bp}=72.27/72\,\mathrm{pt}$。
+% 下表列出常见中文字号，参考 ThuThesis；|10.5bp| 的 pt 值已按公式修正。
+%
+% \begin{center}
+% \begin{tabular}{lrr}
+% \toprule
+% 中文字号 & bp & TeX pt \\
+% \midrule
+% 初号 & 42 & 42.1575 \\
+% 小初 & 36 & 36.1350 \\
+% 一号 & 26 & 26.0975 \\
+% 小一 & 24 & 24.0900 \\
+% 二号 & 22 & 22.0825 \\
+% 小二 & 18 & 18.0675 \\
+% 三号 & 16 & 16.0600 \\
+% 小三 & 15 & 15.05625 \\
+% 四号 & 14 & 14.0525 \\
+% 小四 & 12 & 12.0450 \\
+% 五号 & 10.5 & 10.539375 \\
+% 小五 & 9 & 9.03375 \\
+% \bottomrule
+% \end{tabular}
+% \end{center}
+%
+% 正文固定为 12bp、行距 20bp；其他字号提供 \cs{sanhao}、
+% \cs{sihao}、\cs{xiaosi}、\cs{wuhao} 等中文字号命令，
+% 可使用可选参数修改行距倍数（默认 1.3），例如 \verb|\sanhao[1.5]|。
+% 与学校规定不一致的任意行距应继续用 \cs{fontsize} 精确指定。
+%
+% \subsection{脚注、列表与浮动体}
+%
+% 参考 ThuThesis 为脚注、列表及图表浮动体提供统一的间距规则。
+% 脚注内容为小五号，采用悬挂缩进，并禁止单条脚注跨页。
+% |footnote-numbering| 支持 |chapter|（默认）、|page| 和 |global|，
+% |footnote-style| 支持 |plain|（默认）和 |circled|。
+% 这两个选项在 \cs{documentclass} 中设置。
+% 列表默认收紧垂直间距，图表默认尝试 |htbp| 位置。
+% 图、表、公式的 |figure-numbering|、|table-numbering|、
+% |equation-numbering| 可分别选 |chapter|（默认）或 |global|；
+% 学位论文建议使用学校默认的按章编号。
 %
 % \subsection{正文与章节标题}
 %
@@ -227,37 +291,44 @@
 %
 % 目录应至少编译两次，以正确更新目录内容及页码。
 % 
-% \subsection{数学公式}
+% \subsection{数学字体、数学符号和公式编号}
 %
-% GZUThesis 使用 |amsmath| 和 |unicode-math|
-% 实现数学公式排版。
+% GZUThesis 使用 |amsmath| 与 |unicode-math|。
+% 默认正文使用 Times New Roman，数学符号使用与其风格协调、支持完整数学字符的
+% XITS Math；并不是把每个运算符强制用 Times New Roman 绘制。
+% 字母的正斜体属于数学风格约定：如 \verb|$R$| 表示变量，
+% \verb|$\mathrm{R}$| 表示正体字母，
+% \verb|$\mathbb{R}$| 表示实数集合。后者使用数学字体中的衬线双线体。
 %
-% 默认数学字体为 XITS Math，
-% 可通过 |math-font| 选项选择数学字体。
+% |math-style| 支持 |GB|（默认，适用于中文学位论文）、|ISO| 和 |TeX|。
+% 以下七项可独立覆盖风格预设，默认 |auto| 表示遵循所选风格：
+% \begin{description}
+%   \item[uppercase-greek] 大写希腊字母：|italic|、|upright|。
+%   \item[less-than-or-equal] 小于等于号：|slanted|、|horizontal|。
+%   \item[integral] 积分号：|upright|、|slanted|。
+%   \item[integral-limits] 积分上下限位置：|true|、|false|。
+%   \item[partial] 偏微分符号：|upright|、|italic|。
+%   \item[math-ellipsis] 数学省略号：|centered|、|lower|、|AMS|。
+%   \item[real-part] 实部/虚部符号：|roman|、|fraktur|。
+% \end{description}
 %
-% \begin{verbatim}
-% \documentclass[
-%   math-font=xits
-% ]{gzuthesis}
-% \end{verbatim}
-%
-% 支持 |xits|、|stix| 和 |lm|。
-%
-% 公式默认按照章节编号，
-% 使用中文全角括号。
-%
-% 公式编号连接符可以通过以下方式设置：
-%
+% 全部数学选项可在文档类选项或导言区的 \cs{gzusetup} 中使用，
+% 只在正文开始前完成字体与符号的统一初始化；不允许在正文内重新加载数学字体。
+% 例如：
 % \begin{verbatim}
 % \gzusetup{
-%   equation-number-separator = {-},
+%   math-style = GB,
+%   integral = upright,
+%   partial = upright,
+%   math-ellipsis = centered,
 % }
 % \end{verbatim}
 %
-% 公式交叉引用使用 \cs{label} 和 \cs{eqref}。
-% 
-% 
-
+% 公式编号默认按章编排，如（1.1），使用中文全角括号。
+% 可通过 |eqn-paren-style=half| 使用半角括号；图表及公式的编号连接符
+% 可通过 |number-separator| 统一设置，也可以分别设置。
+% 交叉引用采用 \cs{label} 与 \cs{eqref}。
+%
 % \subsection{定理与证明环境}
 %
 % GZUThesis 使用 |amsthm| 宏包提供数学环境，
@@ -284,39 +355,40 @@
 % 证明结束时自动显示证明结束符号。
 % 
 % 
-% \subsection{参考文献}
+% \subsection{参考文献和附录独立文献表}
 %
-% GZUThesis 同时支持 BibTeX 和 BibLaTeX
-% 两种参考文献处理方式，并提供顺序编码制
-% 和著者—出版年制两种著录格式。
+% GZUThesis 保留已有参考文献版式：参考文献正文字体、字号、行距、
+% 条目间距及作者列表要求均可通过 \cs{gzusetup} 配置，
+% 默认优先采用 GB/T 7714---2025 顺序编码制。
+% 支持 BibTeX + natbib（含正文上标与行内引用）和 BibLaTeX + Biber。
+% 两套后端不能在同一文档中同时加载。
 %
-% 使用 BibTeX 时，应加载 |natbib| 宏包，
-% 并通过 \cs{bibliographystyle} 指定文献样式。
+% 对于 BibTeX + natbib，示例：
+% \begin{verbatim}
+% \usepackage[numbers,sort&compress]{natbib}
+% \usepackage{hyperref}
+% ...
+% \bibliographystyle{gbt7714-2025-numeric}
+% \bibliography{references}
+% \appendix
+% \chapter{补充实验}
+% \begin{gzuappendixrefs}
+%   附录中引用文献 \citep{example}。
+%   \gzuprintappendixbibliography{references}
+% \end{gzuappendixrefs}
+% \end{verbatim}
 %
-% 使用 BibLaTeX 时，应通过 |style| 选项
-% 指定文献样式，并使用 Biber 处理文献数据库。
+% 对于 BibLaTeX + Biber，先在导言区设置 \cs{addbibresource}，
+% 正文使用 \cs{printbibliography}，附录使用同样的
+% |gzuappendixrefs| 环境和 \cs{gzuprintappendixbibliography} 命令。
 %
-% 本模板提供以下参考文献样式：
+% 附录文献表在默认设置下采用 A.1、A.2 等编号。
+% |bib-appendix-prefix=false| 可以关闭该前缀。
+% \textbf{重要：} BibTeX + natbib 中，模板为每个附录 bibunit 隔离文献键数据和
+% PDF 超链接锚点，因此附录与正文使用同一个 BibTeX 键时，
+% 点击附录引用只会跳向该附录的文献条目，不再跳向正文同名条目。
+% 每个附录 bibunit 产生独立的辅助文件，编译时也必须运行对应的 BibTeX。
 %
-% GZUThesis 不提供独立的 BST 样式文件，
-% 而是使用 gbt7714 宏包实现 GB/T 7714—2025。
-%
-% BibTeX 支持以下两种样式：
-% \begin{itemize}
-%   \item |gbt7714-2025-numeric|：顺序编码制；
-%   \item |gbt7714-2025-authoryear|：著者—出版年制。
-% \end{itemize}
-%
-% 顺序编码制支持上标引用和正文引用。
-% 用户可以使用 \cs{inlinecite} 输出行内引用。
-%
-% 参考文献列表采用小五号宋体，默认行距 14 bp，行距可配置，
-% 文献条目间距为 3 bp，并允许适当伸缩。
-%
-% 参考文献标题不参与章节编号，
-% 但自动加入论文目录。
-% 
-% 
 % \subsection{生成封面}
 %
 % GZUThesis 使用 \cs{maketitle} 自动生成学位论文封面。
@@ -381,9 +453,7 @@
 %
 % \begin{verbatim}
 % \gzusetup{
-%   figure-number-separator = {-},
-%   table-number-separator = {-},
-%   equation-number-separator = {-},
+%   number-separator = {-},
 %   table-rule-width = {1.5bp},
 %   table-midrule-width = {0.75bp},
 %   table-cmidrule-width = {0.75bp},
@@ -391,7 +461,10 @@
 % }
 % \end{verbatim}
 %
-% 连接符分别影响图、表和公式及其交叉引用，不修改章节或定理编号。
+% |number-separator| 一次性控制图、表和公式编号连接符；
+% 仍可通过 |figure-number-separator|、|table-number-separator|、
+% |equation-number-separator| 分别覆盖。按配置出现顺序，后赋值者优先。
+% 不修改章节或定理编号。
 % |table-rule-width| 控制 \cs{toprule} 和 \cs{bottomrule}；
 % 另外两项分别控制 \cs{midrule} 和 \cs{cmidrule}。
 % 不改变普通 \cs{hline}，命令上的显式线宽参数仍有优先级。
@@ -466,13 +539,12 @@
 % 以下代码用于生成 |gzuthesis.cls|。
 %
 % \subsection{基本信息}
-%
 % 声明文档类的名称和版本。
 %
 %    \begin{macrocode}
 %<*cls>
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{gzuthesis}[2026/11/16 v0.2.0-dev Guizhou University Thesis Template]
+\ProvidesClass{gzuthesis}[2026/11/17 v0.3.0-dev Guizhou University Thesis Template]
 %    \end{macrocode}
 %
 % \subsection{统一配置系统}
@@ -500,7 +572,7 @@
 }
 
 \newcommand\gzuthesis{GZUThesis}
-\newcommand\gzuversion{0.2.0-dev}
+\newcommand\gzuversion{0.3.0-dev}
 % 保留已有示例中的版本命令；论文信息不依赖该别名。
 \providecommand\version{\gzuversion}
 
@@ -624,8 +696,10 @@
 %
 % \subsubsection{文档类初始化选项}
 %
-% 保持原版的默认学位、中文字体选择和数学字体。
-% 本版仅支持硕士、博士，以及学术学位、专业学位。
+% 仅支持硕士、博士学位论文。字体方案采用三个独立层次：整体方案、
+% 西文字体、中文字体。|auto| 优先使用 Word 常用原生字体，
+% 不会因为 Linux 缺少它们而自动替换为外观相近的自由字体。
+% 其他字体方案仅在用户显式选择时启用。
 %
 %    \begin{macrocode}
 \gzu@define@key{
@@ -639,13 +713,28 @@
     default = academic,
   },
   fontset = {
-    choices = {auto, windows, mac, ubuntu, fandol},
+    choices = {auto, windows, windows-local, mac, ubuntu, fandol, none},
     default = auto,
+  },
+  font = {
+    choices = {auto, times, times-local, termes, stix, xits,
+               libertinus, newcm, lm, none},
+    default = auto,
+  },
+  cjk-font = {
+    name = cjk@font,
+    choices = {auto, windows, windows-local, mac, mac-word,
+               noto, fandol, none},
+    default = auto,
+  },
+  windows-font-dir = {
+    name = windows@font@dir,
+    default = {.},
   },
   math-font = {
     name = math@font,
-    choices = {lm, stix, xits, libertinus},
-    default = xits,
+    choices = {auto, stix, xits, libertinus, newcm, lm, none},
+    default = auto,
   },
 }
 %    \end{macrocode}
@@ -728,6 +817,21 @@
   number-separator = {
     name = number@separator,
     default = {.},
+  },
+  figure-numbering = {
+    name = figure@numbering,
+    choices = {chapter, global},
+    default = chapter,
+  },
+  table-numbering = {
+    name = table@numbering,
+    choices = {chapter, global},
+    default = chapter,
+  },
+  equation-numbering = {
+    name = equation@numbering,
+    choices = {chapter, global},
+    default = chapter,
   },
   table-rule-width = {
     name = table@rule@width,
@@ -823,10 +927,61 @@
     choices = {true, false},
     default = true,
   },
+  % 中文学位论文默认采用 GB 数学排版风格。
   math-style = {
     name = math@style,
     choices = {GB, ISO, TeX},
-    default = ISO,
+    default = GB,
+  },
+  % 细分数学符号选项：auto 表示服从 math-style 预设。
+  uppercase-greek = {
+    name = uppercase@greek,
+    choices = {auto, italic, upright},
+    default = auto,
+  },
+  less-than-or-equal = {
+    name = leq,
+    choices = {auto, slanted, horizontal},
+    default = auto,
+  },
+  integral = {
+    choices = {auto, upright, slanted},
+    default = auto,
+  },
+  integral-limits = {
+    name = integral@limits,
+    choices = {auto, true, false},
+    default = auto,
+  },
+  partial = {
+    choices = {auto, upright, italic},
+    default = auto,
+  },
+  math-ellipsis = {
+    name = math@ellipsis,
+    choices = {auto, centered, lower, AMS},
+    default = auto,
+  },
+  real-part = {
+    name = real@part,
+    choices = {auto, roman, fraktur},
+    default = auto,
+  },
+  eqn-paren-style = {
+    name = eqn@paren@style,
+    choices = {full, half},
+    default = full,
+  },
+  % 默认保留当前的普通脚注行为，另提供清华式按页编号和带圈脚注。
+  footnote-numbering = {
+    name = footnote@numbering,
+    choices = {chapter, page, global},
+    default = chapter,
+  },
+  footnote-style = {
+    name = footnote@style,
+    choices = {plain, circled},
+    default = plain,
   },
 }
 %    \end{macrocode}
@@ -841,6 +996,12 @@
   \PassOptionsToClass{\CurrentOption}{ctexbook}%
 }
 \ProcessKeyvalOptions*
+
+% unicode-math 也有 math-style 键，但其可选值不包含 GB。
+% 移除已经由本模板解析的全局同名类选项，避免再次传递给宏包。
+\edef\gzu@math@style@classoption{math-style=\gzu@math@style}
+\@expandtwoargs\@removeelement
+  {\gzu@math@style@classoption}{\@classoptionslist}\@classoptionslist
 
 \LoadClass[
   a4paper,
@@ -880,6 +1041,8 @@
   bottom     = 2.5cm,
   left       = 2.5cm,
   right      = 2.5cm,
+  marginparwidth = 2cm,
+  marginparsep   = 0.5cm,
   headheight = 0.5cm,
   headsep    = 0.3cm,
   footskip   = 0.75cm,
@@ -889,168 +1052,380 @@
 % \subsection{字体设置}
 % \label{sec:font}
 %
-% GZUThesis 参考 ThuThesis 配置中西文字体。
-% 根据系统中可用的字体自动选择合适的字体库。
+% 字体模块借鉴 ThuThesis 的“方案解析 / 具体字体加载 / 统一分发”结构。
+% GZUThesis 的 |fontset=auto| 只搜索 Windows 原生中西文字体：
+% 系统中找不到时检查 |windows-font-dir|，而不静默改用克隆字体。
+% |ubuntu|、|fandol| 等作为用户显式选择的可选方案保留。
+% 所有字体目录都是用户提供的相对或绝对路径，模板不绑定 WSL 或系统目录。
 %
-% \subsubsection{西文字体}
-%
-% 在 XeLaTeX 下通过字体文件名加载 TeX Gyre 字体，
-% 避免依赖操作系统的字体名称检索机制。
-%
-% 正文字体采用 TeX Gyre Termes。
+% \subsubsection{字体方案解析与工具函数}
 %
 %    \begin{macrocode}
 \RequirePackage{fontspec}
 \RequirePackage{xeCJK}
 
-\setmainfont{texgyretermes-regular.otf}[
-  BoldFont       = texgyretermes-bold.otf,
-  ItalicFont     = texgyretermes-italic.otf,
-  BoldItalicFont = texgyretermes-bolditalic.otf,
-]
+\newcommand\gzu@font@require[1]{%
+  \IfFontExistsTF{#1}{}{%
+    \ClassError{gzuthesis}{Required font `#1' not found}%
+      {Install the requested font or select a file-based font scheme.}%
+  }%
+}
+\newcommand\gzu@font@require@file[1]{%
+  \IfFileExists{\gzu@windows@font@dir/#1}{}{%
+    \ClassError{gzuthesis}{Required font file `#1' not found}%
+      {Check windows-font-dir and the installed font file names.}%
+  }%
+}
+
+% 按“先检查系统字体，再检查用户提供的文件目录”分别解析中、西文。
+% 与中文字体方案不同，西文字体方案不依赖 cjk-font 的结果。
+\def\gzu@value@windows@local{windows-local}
+\def\gzu@value@times@local{times-local}
+\newcommand\gzu@resolve@font{%
+  \ifgzu@font@auto
+    \ifgzu@fontset@none
+      \gzu@set@key{font}{none}%
+    \else\ifgzu@fontset@ubuntu
+      \gzu@set@key{font}{termes}%
+    \else\ifgzu@fontset@fandol
+      \gzu@set@key{font}{termes}%
+    \else
+      \ifx\gzu@fontset\gzu@value@windows@local
+        \gzu@set@key{font}{times-local}%
+      \else
+        \IfFontExistsTF{Times New Roman}{%
+          \gzu@set@key{font}{times}%
+        }{%
+          \IfFileExists{\gzu@windows@font@dir/times.ttf}{%
+            \gzu@set@key{font}{times-local}%
+          }{%
+            \ClassError{gzuthesis}{Cannot find Times New Roman}%
+              {Install Times New Roman or set windows-font-dir.}%
+          }%
+        }%
+      \fi
+    \fi\fi\fi
+  \fi
+}
+\newcommand\gzu@resolve@cjk@font{%
+  \ifgzu@cjk@font@auto
+    \ifgzu@fontset@none
+      \gzu@set@key{cjk-font}{none}%
+    \else\ifgzu@fontset@mac
+      \gzu@set@key{cjk-font}{mac}%
+    \else\ifgzu@fontset@ubuntu
+      \gzu@set@key{cjk-font}{noto}%
+    \else\ifgzu@fontset@fandol
+      \gzu@set@key{cjk-font}{fandol}%
+    \else
+      \ifx\gzu@fontset\gzu@value@windows@local
+        \gzu@set@key{cjk-font}{windows-local}%
+      \else
+        \IfFontExistsTF{SimSun}{%
+          \gzu@set@key{cjk-font}{windows}%
+        }{%
+          \IfFileExists{\gzu@windows@font@dir/simsun.ttc}{%
+            \gzu@set@key{cjk-font}{windows-local}%
+          }{%
+            \IfFileExists{\gzu@windows@font@dir/Simsun.ttc}{%
+              \gzu@set@key{cjk-font}{windows-local}%
+            }{%
+              \ClassError{gzuthesis}{Cannot find SimSun}%
+                {Install Windows CJK fonts or set windows-font-dir.}%
+            }%
+          }%
+        }%
+      \fi
+    \fi\fi\fi\fi
+  \fi
+}
+\gzu@resolve@font
+\gzu@resolve@cjk@font
 %    \end{macrocode}
 %
-% 无衬线字体采用 TeX Gyre Heros。
+% \subsubsection{西文字体}
+%
+% 每一套字体方案封装为独立的加载函数，新增字体无需改动分发逻辑。
+% Times New Roman/Arial/Courier New 为默认，其他字体方案仅供显式选择。
 %
 %    \begin{macrocode}
-\setsansfont{texgyreheros-regular.otf}[
-  BoldFont       = texgyreheros-bold.otf,
-  ItalicFont     = texgyreheros-italic.otf,
-  BoldItalicFont = texgyreheros-bolditalic.otf,
-]
-%    \end{macrocode}
-%
-% 等宽字体采用 TeX Gyre Cursor。
-%
-%    \begin{macrocode}
-\setmonofont{texgyrecursor-regular.otf}[
-  BoldFont       = texgyrecursor-bold.otf,
-  ItalicFont     = texgyrecursor-italic.otf,
-  BoldItalicFont = texgyrecursor-bolditalic.otf,
-]
+\newcommand\gzu@set@font@times{%
+  \gzu@font@require{Times New Roman}%
+  \gzu@font@require{Arial}%
+  \gzu@font@require{Courier New}%
+  \setmainfont{Times New Roman}%
+  \setsansfont{Arial}%
+  \setmonofont{Courier New}[Scale=MatchLowercase]%
+}
+\@namedef{gzu@set@font@times-local}{%
+  \@for\gzu@font@file:=times.ttf,timesbd.ttf,timesi.ttf,timesbi.ttf,%
+    arial.ttf,arialbd.ttf,ariali.ttf,arialbi.ttf,%
+    cour.ttf,courbd.ttf,couri.ttf,courbi.ttf\do{%
+    \expandafter\gzu@font@require@file\expandafter{\gzu@font@file}%
+  }%
+  \setmainfont{times.ttf}[
+    Path=\gzu@windows@font@dir/,
+    BoldFont=timesbd.ttf,
+    ItalicFont=timesi.ttf,
+    BoldItalicFont=timesbi.ttf,
+  ]%
+  \setsansfont{arial.ttf}[
+    Path=\gzu@windows@font@dir/,
+    BoldFont=arialbd.ttf,
+    ItalicFont=ariali.ttf,
+    BoldItalicFont=arialbi.ttf,
+  ]%
+  \setmonofont{cour.ttf}[
+    Path=\gzu@windows@font@dir/,
+    BoldFont=courbd.ttf,
+    ItalicFont=couri.ttf,
+    BoldItalicFont=courbi.ttf,
+    Scale=MatchLowercase,
+  ]%
+}
+\newcommand\gzu@set@texgyre@sans@mono{%
+  \setsansfont{texgyreheros}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-italic,BoldItalicFont=*-bolditalic,
+  ]%
+  \setmonofont{texgyrecursor}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-italic,BoldItalicFont=*-bolditalic,
+    Scale=MatchLowercase,Ligatures=CommonOff,
+  ]%
+}
+\newcommand\gzu@set@font@termes{%
+  \setmainfont{texgyretermes}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-italic,BoldItalicFont=*-bolditalic,
+  ]%
+  \gzu@set@texgyre@sans@mono
+}
+\newcommand\gzu@set@windows@sans@mono{%
+  \gzu@font@require{Arial}%
+  \gzu@font@require{Courier New}%
+  \setsansfont{Arial}%
+  \setmonofont{Courier New}[Scale=MatchLowercase]%
+}
+\newcommand\gzu@set@font@stix{%
+  \setmainfont{STIXTwoText}[
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+    ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic,
+  ]%
+  \gzu@set@windows@sans@mono
+}
+\newcommand\gzu@set@font@xits{%
+  \setmainfont{XITS}[
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+    ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic,
+  ]%
+  \gzu@set@windows@sans@mono
+}
+\newcommand\gzu@set@font@libertinus{%
+  \setmainfont{LibertinusSerif}[
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+    ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic,
+  ]%
+  \setsansfont{LibertinusSans}[
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+    ItalicFont=*-Italic,
+  ]%
+  \setmonofont{lmmonolt10}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-oblique,BoldItalicFont=*-boldoblique,
+  ]%
+}
+\newcommand\gzu@set@font@newcm{%
+  \setmainfont{NewCM10}[
+    Extension=.otf,UprightFont=*-Book,BoldFont=*-Bold,
+    ItalicFont=*-BookItalic,BoldItalicFont=*-BoldItalic,
+  ]%
+  \setsansfont{NewCMSans10}[
+    Extension=.otf,UprightFont=*-Book,BoldFont=*-Bold,
+    ItalicFont=*-BookOblique,BoldItalicFont=*-BoldOblique,
+  ]%
+  \setmonofont{NewCMMono10}[
+    Extension=.otf,UprightFont=*-Book,BoldFont=*-Bold,
+    ItalicFont=*-BookItalic,BoldItalicFont=*-BoldOblique,
+  ]%
+}
+\newcommand\gzu@set@font@lm{%
+  \setmainfont{lmroman10}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-italic,BoldItalicFont=*-bolditalic,
+  ]%
+  \setsansfont{lmsans10}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-oblique,BoldItalicFont=*-boldoblique,
+  ]%
+  \setmonofont{lmmonolt10}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-oblique,BoldItalicFont=*-boldoblique,
+  ]%
+}
+\newcommand\gzu@set@font@none{}
+\newcommand\gzu@set@font{\@nameuse{gzu@set@font@\gzu@font}}
+\gzu@set@font
 %    \end{macrocode}
 %
 % \subsubsection{中文字体}
 %
-% 支持 Windows、macOS、思源和 Fandol 字体库。
-% 默认通过 |fontset=auto| 自动选择。
-%
+% 兼容系统安装字体及用户提供的 Windows 字体文件。
+% Windows-local 与 mac-word 使用相同的用户指定目录，不写入操作系统路径。
 %    \begin{macrocode}
-
-\ifgzu@fontset@auto
-  \IfFontExistsTF{SimSun}{
-    \gzu@set@key{fontset}{windows}
-  }{
-    \IfFontExistsTF{Songti SC}{
-      \gzu@set@key{fontset}{mac}
-    }{
-      \IfFontExistsTF{Noto Serif CJK SC}{
-        \gzu@set@key{fontset}{ubuntu}
-      }{
-        \gzu@set@key{fontset}{fandol}
-      }
-    }
-  }
+\newcommand\gzu@set@cjk@font@windows{%
+  \gzu@font@require{SimSun}%
+  \gzu@font@require{SimHei}%
+  \gzu@font@require{KaiTi}%
+  \gzu@font@require{FangSong}%
+  \setCJKmainfont{SimSun}[AutoFakeBold=3,ItalicFont=KaiTi]%
+  \setCJKsansfont{SimHei}[AutoFakeBold=3]%
+  \setCJKmonofont{FangSong}%
+  \setCJKfamilyfont{zhsong}{SimSun}[AutoFakeBold=3]%
+  \setCJKfamilyfont{zhhei}{SimHei}[AutoFakeBold=3]%
+  \setCJKfamilyfont{zhkai}{KaiTi}%
+  \setCJKfamilyfont{zhfs}{FangSong}%
+}
+\newcommand\gzu@set@windows@local@names{%
+  \IfFileExists{\gzu@windows@font@dir/simsun.ttc}{%
+    \def\gzu@local@simsun{simsun.ttc}%
+  }{%
+    \def\gzu@local@simsun{Simsun.ttc}%
+  }%
+  \expandafter\gzu@font@require@file\expandafter{\gzu@local@simsun}%
+  \IfFileExists{\gzu@windows@font@dir/simhei.ttf}{%
+    \def\gzu@local@simhei{simhei.ttf}%
+  }{%
+    \def\gzu@local@simhei{SimHei.ttf}%
+  }%
+  \expandafter\gzu@font@require@file\expandafter{\gzu@local@simhei}%
+  \IfFileExists{\gzu@windows@font@dir/Kaiti.ttf}{%
+    \def\gzu@local@simkai{Kaiti.ttf}%
+  }{%
+    \def\gzu@local@simkai{simkai.ttf}%
+  }%
+  \expandafter\gzu@font@require@file\expandafter{\gzu@local@simkai}%
+  \IfFileExists{\gzu@windows@font@dir/Fangsong.ttf}{%
+    \def\gzu@local@simfang{Fangsong.ttf}%
+  }{%
+    \def\gzu@local@simfang{simfang.ttf}%
+  }%
+  \expandafter\gzu@font@require@file\expandafter{\gzu@local@simfang}%
+}
+\@namedef{gzu@set@cjk@font@windows-local}{%
+  \gzu@set@windows@local@names
+  \setCJKmainfont{\gzu@local@simsun}[
+    Path=\gzu@windows@font@dir/,
+    AutoFakeBold=3,
+    ItalicFont=\gzu@local@simkai,
+    ItalicFeatures={Path=\gzu@windows@font@dir/},
+  ]%
+  \setCJKsansfont{\gzu@local@simhei}[
+    Path=\gzu@windows@font@dir/,AutoFakeBold=3,
+  ]%
+  \setCJKmonofont{\gzu@local@simfang}[
+    Path=\gzu@windows@font@dir/,
+  ]%
+  \setCJKfamilyfont{zhsong}{\gzu@local@simsun}[
+    Path=\gzu@windows@font@dir/,AutoFakeBold=3,
+  ]%
+  \setCJKfamilyfont{zhhei}{\gzu@local@simhei}[
+    Path=\gzu@windows@font@dir/,AutoFakeBold=3,
+  ]%
+  \setCJKfamilyfont{zhkai}{\gzu@local@simkai}[
+    Path=\gzu@windows@font@dir/,
+  ]%
+  \setCJKfamilyfont{zhfs}{\gzu@local@simfang}[
+    Path=\gzu@windows@font@dir/,
+  ]%
+}
+\@namedef{gzu@set@cjk@font@mac-word}{%
+  \@nameuse{gzu@set@cjk@font@windows-local}%
+}
+\newcommand\gzu@set@cjk@font@mac{%
+  \gzu@font@require{Songti SC}%
+  \gzu@font@require{Heiti SC}%
+  \gzu@font@require{Kaiti SC}%
+  \gzu@font@require{STFangsong}%
+  \setCJKmainfont{Songti SC}[
+    UprightFont=* Light,BoldFont=* Bold,
+    ItalicFont=Kaiti SC Regular,BoldItalicFont=Kaiti SC Bold,
+  ]%
+  \setCJKsansfont{Heiti SC}[
+    UprightFont=* Light,BoldFont=* Medium,
+  ]%
+  \setCJKmonofont{STFangsong}%
+  \setCJKfamilyfont{zhsong}{Songti SC}[
+    UprightFont=* Light,BoldFont=* Bold,
+  ]%
+  \setCJKfamilyfont{zhhei}{Heiti SC}[
+    UprightFont=* Light,BoldFont=* Medium,
+  ]%
+  \setCJKfamilyfont{zhkai}{Kaiti SC}[
+    UprightFont=* Regular,BoldFont=* Bold,
+  ]%
+  \setCJKfamilyfont{zhfs}{STFangsong}%
+}
+\newcommand\gzu@set@cjk@font@noto{%
+  \gzu@font@require{Noto Serif CJK SC}%
+  \gzu@font@require{Noto Sans CJK SC}%
+  \setCJKmainfont{Noto Serif CJK SC}[
+    UprightFont=* Light,BoldFont=* Bold,Script=CJK,
+  ]%
+  \setCJKsansfont{Noto Sans CJK SC}[
+    BoldFont=* Medium,Script=CJK,
+  ]%
+  \setCJKmonofont{Noto Sans CJK SC}[Script=CJK]%
+  \setCJKfamilyfont{zhsong}{Noto Serif CJK SC}[
+    UprightFont=* Light,BoldFont=* Bold,Script=CJK,
+  ]%
+  \setCJKfamilyfont{zhhei}{Noto Sans CJK SC}[
+    BoldFont=* Medium,Script=CJK,
+  ]%
+  % 楷体、仿宋字体需分别安装。用户显式选择了 noto 才使用本方案。
+  \setCJKfamilyfont{zhkai}{FandolKai-Regular.otf}%
+  \setCJKfamilyfont{zhfs}{FandolFang-Regular.otf}%
+}
+\newcommand\gzu@set@cjk@font@fandol{%
+  \setCJKmainfont{FandolSong}[
+    Extension=.otf,UprightFont=*-Regular,
+    BoldFont=*-Bold,ItalicFont=FandolKai-Regular,
+    ItalicFeatures={Extension=.otf},
+  ]%
+  \setCJKsansfont{FandolHei}[
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+  ]%
+  \setCJKmonofont{FandolFang}[
+    Extension=.otf,UprightFont=*-Regular,
+  ]%
+  \setCJKfamilyfont{zhsong}{FandolSong}[
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+  ]%
+  \setCJKfamilyfont{zhhei}{FandolHei}[
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+  ]%
+  \setCJKfamilyfont{zhkai}{FandolKai}[
+    Extension=.otf,UprightFont=*-Regular,
+  ]%
+  \setCJKfamilyfont{zhfs}{FandolFang}[
+    Extension=.otf,UprightFont=*-Regular,
+  ]%
+}
+\newcommand\gzu@set@cjk@font@none{}
+\newcommand\gzu@set@cjk@font{\@nameuse{gzu@set@cjk@font@\gzu@cjk@font}}
+\gzu@set@cjk@font
+\ifgzu@cjk@font@none\else
+  \providecommand\songti{\CJKfamily{zhsong}}
+  \providecommand\heiti{\CJKfamily{zhhei}}
+  \providecommand\kaishu{\CJKfamily{zhkai}}
+  \providecommand\fangsong{\CJKfamily{zhfs}}
 \fi
 %    \end{macrocode}
 %
-% Windows 中易字体。
+% \subsubsection{中文字号和行距}
 %
-%    \begin{macrocode}
-\ifgzu@fontset@windows
-  \setCJKmainfont{SimSun}[
-    AutoFakeBold = 3,
-    ItalicFont = KaiTi
-  ]
-  \setCJKsansfont{SimHei}[AutoFakeBold=3]
-  \setCJKmonofont{FangSong}
-  \setCJKfamilyfont{zhsong}{SimSun}[AutoFakeBold=3]
-  \setCJKfamilyfont{zhhei}{SimHei}[AutoFakeBold=3]
-  \setCJKfamilyfont{zhkai}{KaiTi}
-  \setCJKfamilyfont{zhfs}{FangSong}
-%    \end{macrocode}
-%
-% macOS 华文字体。
-%
-%    \begin{macrocode}
-\else\ifgzu@fontset@mac
-  \setCJKmainfont{Songti SC}
-  \setCJKsansfont{Heiti SC}
-  \setCJKmonofont{STFangsong}
-  \setCJKfamilyfont{zhsong}{Songti SC}
-  \setCJKfamilyfont{zhhei}{Heiti SC}
-  \setCJKfamilyfont{zhkai}{Kaiti SC}
-  \setCJKfamilyfont{zhfs}{STFangsong}
-%    \end{macrocode}
-%
-% Linux 环境中的思源字体。
-%
-%    \begin{macrocode}
-\else\ifgzu@fontset@ubuntu
-  \setCJKmainfont{Noto Serif CJK SC}[
-    ItalicFont = FandolKai-Regular.otf
-  ]
-  \setCJKsansfont{Noto Sans CJK SC}
-  \setCJKmonofont{FandolFang-Regular.otf}
-  \setCJKfamilyfont{zhsong}{Noto Serif CJK SC}
-  \setCJKfamilyfont{zhhei}{Noto Sans CJK SC}
-  \setCJKfamilyfont{zhkai}{FandolKai-Regular.otf}
-  \setCJKfamilyfont{zhfs}{FandolFang-Regular.otf}
-%    \end{macrocode}
-%
-% TeX Live 提供的 Fandol 字体。
-%
-%    \begin{macrocode}
-\else\ifgzu@fontset@fandol
-  \setCJKmainfont{FandolSong}[
-    Extension = .otf,
-    UprightFont = *-Regular,
-    BoldFont = *-Bold
-  ]
-  \setCJKsansfont{FandolHei}[
-    Extension = .otf,
-    UprightFont = *-Regular,
-    BoldFont = *-Bold
-  ]
-  \setCJKmonofont{FandolFang}[
-    Extension = .otf,
-    UprightFont = *-Regular
-  ]
-  \setCJKfamilyfont{zhsong}{FandolSong}[
-    Extension = .otf,
-    UprightFont = *-Regular,
-    BoldFont = *-Bold
-  ]
-  \setCJKfamilyfont{zhhei}{FandolHei}[
-    Extension = .otf,
-    UprightFont = *-Regular,
-    BoldFont = *-Bold
-  ]
-  \setCJKfamilyfont{zhkai}{FandolKai}[
-    Extension = .otf,
-    UprightFont = *-Regular
-  ]
-  \setCJKfamilyfont{zhfs}{FandolFang}[
-    Extension = .otf,
-    UprightFont = *-Regular
-  ]
-\else
-  \ClassError{gzuthesis}
-    {Invalid fontset `\gzu@fontset'}
-    {Use auto, windows, mac, ubuntu or fandol.}
-\fi\fi\fi\fi
-
-\providecommand\songti{\CJKfamily{zhsong}}
-\providecommand\heiti{\CJKfamily{zhhei}}
-\providecommand\kaishu{\CJKfamily{zhkai}}
-\providecommand\fangsong{\CJKfamily{zhfs}}
-%    \end{macrocode}
-%
-% \subsubsection{正文字号与行距}
-%
-% 参考 ThuThesis，将正文设置为小四号（12 bp），
-% 固定行距为 20 bp。
-%
+% 使用 bp 与 Word 磅值严格对应。正文小四（12 bp），固定行距 20 bp；
+% 其余字号命令支持可选行距倍率，参照 ThuThesis。
 %    \begin{macrocode}
 \renewcommand\normalsize{%
   \@setfontsize\normalsize{12bp}{20bp}%
@@ -1060,9 +1435,30 @@
   \belowdisplayskip \abovedisplayskip
 }
 \normalsize
+\ifx\MakeRobust\@undefined\else\MakeRobust\normalsize\fi
+
+\def\gzu@def@fontsize#1#2{%
+  \expandafter\newcommand\csname #1\endcsname[1][1.3]{%
+    \fontsize{#2}{##1\dimexpr #2}\selectfont}%
+}
+\gzu@def@fontsize{chuhao}{42bp}
+\gzu@def@fontsize{xiaochu}{36bp}
+\gzu@def@fontsize{yihao}{26bp}
+\gzu@def@fontsize{xiaoyi}{24bp}
+\gzu@def@fontsize{erhao}{22bp}
+\gzu@def@fontsize{xiaoer}{18bp}
+\gzu@def@fontsize{sanhao}{16bp}
+\gzu@def@fontsize{xiaosan}{15bp}
+\gzu@def@fontsize{sihao}{14bp}
+\gzu@def@fontsize{xiaosi}{12bp}
+\gzu@def@fontsize{wuhao}{10.5bp}
+\gzu@def@fontsize{xiaowu}{9bp}
+\gzu@def@fontsize{liuhao}{7.5bp}
+\gzu@def@fontsize{xiaoliu}{6.5bp}
+\gzu@def@fontsize{qihao}{5.5bp}
+\gzu@def@fontsize{bahao}{5bp}
 %    \end{macrocode}
-% 
-% 
+%
 % \subsection{正文段落}
 % \label{sec:paragraph}
 %
@@ -1073,6 +1469,79 @@
 \ctexset{
   punct      = quanjiao,
   autoindent = 2,
+}
+%    \end{macrocode}
+%
+% \subsection{列表、脚注与 URL}
+% \label{sec:lists-footnotes}
+%
+% 借鉴 ThuThesis 对中文论文脚注和列表的处理。
+% 为保持 GZUThesis 既有输出，脚注默认按章使用普通数字，
+% 亦可在文档类选项中启用按页编号或带圈数字。
+%
+%    \begin{macrocode}
+\RequirePackage{enumitem}
+\setlist{nosep}
+\RequirePackage{xurl}
+\urlstyle{same}
+\Urlmuskip=0mu plus 0.1mu
+\interfootnotelinepenalty=10000
+
+\ifgzu@footnote@numbering@page
+  \PassOptionsToPackage{perpage}{footmisc}%
+\fi
+\RequirePackage[hang]{footmisc}
+\ifgzu@footnote@numbering@global
+  \@removefromreset{footnote}{chapter}%
+\fi
+\newcommand\gzu@circled[1]{%
+  \ifnum#1>10\relax
+    \ClassWarningNoLine{gzuthesis}{More than ten circled footnotes on a page}%
+  \fi
+  \textcircled{#1}%
+}
+\ifgzu@footnote@style@circled
+  \renewcommand\thefootnote{\gzu@circled{\arabic{footnote}}}%
+  \renewcommand\thempfootnote{\gzu@circled{\arabic{mpfootnote}}}%
+\fi
+\def\footnoterule{%
+  \vskip-3\p@\hrule\@width0.3\textwidth\@height0.4\p@\vskip2.6\p@
+}
+\footnotemargin=13.5bp
+% 参考 ThuThesis：脚注正文小五号，悬挂式，编号不使用上标。
+\long\def\@makefntext#1{%
+  \begingroup
+    \def\@makefnmark{\hbox{\normalfont\@thefnmark}}%
+    \xiaowu
+    \ifFN@hangfoot
+      \bgroup
+      \setbox\@tempboxa\hbox{%
+        \ifdim\footnotemargin>\z@
+          \hb@xt@\footnotemargin{\@makefnmark\hss}%
+        \else
+          \@makefnmark
+        \fi
+      }%
+      \leftmargin\wd\@tempboxa
+      \rightmargin\z@
+      \linewidth\columnwidth
+      \advance\linewidth-\leftmargin
+      \parshape\@ne\leftmargin\linewidth
+      \xiaowu
+      \@setpar{{\@@par}}%
+      \leavevmode
+      \llap{\box\@tempboxa}%
+      \parskip\hangfootparskip\relax
+      \parindent\hangfootparindent\relax
+    \else
+      \parindent1em\noindent
+      \hb@xt@\footnotemargin{\hss\@makefnmark}%
+    \fi
+    \footnotelayout#1%
+    \ifFN@hangfoot
+      \par\egroup
+    \fi
+  \endgroup
 }
 %    \end{macrocode}
 %
@@ -1443,14 +1912,38 @@
 % 本模板在宏包加载完成后应用书签配置。
 %
 %    \begin{macrocode}
+\PassOptionsToPackage{
+  linktoc=all,
+  bookmarksnumbered=true,
+  bookmarksopen=true,
+  bookmarksopenlevel=2,
+  bookmarksdepth=2,
+  unicode=true,
+  psdextra=true,
+  breaklinks=true,
+  plainpages=false,
+  pdfdisplaydoctitle=true,
+  hidelinks,
+}{hyperref}
 \AddToHook{package/hyperref/after}{%
   \hypersetup{
-    unicode = true,
-    bookmarksnumbered = true,
-    bookmarksdepth = 2,
-    bookmarksopen = true,
-    bookmarksopenlevel = 2,
-    pdfpagemode = UseOutlines,
+    pdflang=zh-CN,
+    pdfpagemode=UseOutlines,
+  }%
+  \pdfstringdefDisableCommands{%
+    \let\\\relax
+    \let\quad\relax
+    \let\qquad\relax
+    \let\hspace\@gobble
+  }%
+  \AddToHook{begindocument/before}{%
+    \hypersetup{
+      pdftitle={\gzu@title},
+      pdfauthor={\gzu@author},
+      pdfsubject={\gzu@discipline},
+      pdfkeywords={\gzu@keywords},
+      pdfcreator={GZUThesis v\gzuversion},
+    }%
   }%
 }
 %    \end{macrocode}
@@ -1498,16 +1991,28 @@
 %
 %    \begin{macrocode}
 
+\newcommand\gzu@apply@float@numbering{%
+  \ifgzu@figure@numbering@global
+    \@removefromreset{figure}{chapter}%
+  \fi
+  \ifgzu@table@numbering@global
+    \@removefromreset{table}{chapter}%
+  \fi
+}
+\gzu@apply@float@numbering
 \renewcommand\thefigure{%
-  \ifnum\c@chapter>\z@
-    \thechapter\gzu@figure@separator
+  \ifgzu@figure@numbering@chapter
+    \ifnum\c@chapter>\z@
+      \thechapter\gzu@figure@separator
+    \fi
   \fi
   \arabic{figure}%
 }
-
 \renewcommand\thetable{%
-  \ifnum\c@chapter>\z@
-    \thechapter\gzu@table@separator
+  \ifgzu@table@numbering@chapter
+    \ifnum\c@chapter>\z@
+      \thechapter\gzu@table@separator
+    \fi
   \fi
   \arabic{table}%
 }
@@ -1667,7 +2172,21 @@
 %
 % \subsubsection{浮动体参数}
 %
-% 设置图表浮动时允许占据的页面比例。
+% 采用 ThuThesis 的默认浮动位置与正文/浮动体间距。
+% 在用户没有显式指定位置参数时依次尝试 here、top、bottom、page。
+%
+%    \begin{macrocode}
+\def\fps@figure{htbp}
+\def\fps@table{htbp}
+\setlength\floatsep{12\p@ \@plus 2\p@ \@minus 2\p@}
+\setlength\textfloatsep{12\p@ \@plus 2\p@ \@minus 2\p@}
+\setlength\intextsep{12\p@ \@plus 2\p@ \@minus 2\p@}
+\setlength\@fptop{0bp \@plus 1.0fil}
+\setlength\@fpsep{12bp \@plus 2.0fil}
+\setlength\@fpbot{0bp \@plus 1.0fil}
+%    \end{macrocode}
+%
+% 保留贵州大学模板现有的浮动区域比例。
 %
 %    \begin{macrocode}
 \renewcommand\textfraction{0.15}
@@ -1735,193 +2254,265 @@
 % \subsection{数学公式}
 % \label{sec:math}
 %
-% GZUThesis 参考 ThuThesis 的数学排版方案，
-% 使用 |amsmath| 提供公式环境，
-% 使用 |unicode-math| 配置数学字体和符号样式。
+% 数学字体与数学风格分开配置。Times New Roman 提供正文与罗马体，
+% XITS Math 提供完整数学字符，二者均为衬线 Times 风格。
+% GB/ISO/TeX 风格决定正斜体、积分号、偏微分等数学排版习惯，
+% 不负责字体名称的选择；细分设置支持覆盖风格预设。
 %
-% \subsubsection{数学字体与符号样式}
-%
-% 参考 ThuThesis，将数学字体与数学样式分开配置。
-% 数学字体支持 lm、stix、xits 和 libertinus。
-% 数学样式支持 GB、ISO 和 TeX，默认 ISO。
+% \subsubsection{加载宏包与风格预设}
 %
 %    \begin{macrocode}
 \RequirePackage{amsmath}
 \RequirePackage{unicode-math}
 
-% 数学风格的基本正斜体配置
-\newcommand\gzu@apply@math@style{%
-  \ifgzu@math@style@TeX
-    \unimathsetup{
-      math-style = TeX,
-      bold-style = TeX,
-      partial    = italic,
-    }%
-  \else
-    \unimathsetup{
-      math-style = ISO,
-      bold-style = ISO,
-      partial    = upright,
-    }%
+% 与清华同义的预设，只有 auto 子选项才随 math-style 改变。
+% GB: 斜体大写希腊字母、正体积分号、斜线 <= 等。
+% ISO: 斜体大写希腊字母、正体积分号、横线 <= 等。
+% TeX: 正体大写希腊字母、斜体积分号、TeX 传统符号。
+\newcommand\gzu@resolve@math@style{%
+  \ifgzu@math@font@auto
+    \gzu@set@key{math-font}{xits}%
+  \fi
+  \ifgzu@uppercase@greek@auto
+    \ifgzu@math@style@TeX
+      \gzu@set@key{uppercase-greek}{upright}%
+    \else
+      \gzu@set@key{uppercase-greek}{italic}%
+    \fi
+  \fi
+  \ifgzu@leq@auto
+    \ifgzu@math@style@GB
+      \gzu@set@key{less-than-or-equal}{slanted}%
+    \else
+      \gzu@set@key{less-than-or-equal}{horizontal}%
+    \fi
+  \fi
+  \ifgzu@integral@auto
+    \ifgzu@math@style@TeX
+      \gzu@set@key{integral}{slanted}%
+    \else
+      \gzu@set@key{integral}{upright}%
+    \fi
+  \fi
+  \ifgzu@integral@limits@auto
+    \ifgzu@math@style@ISO
+      \gzu@set@key{integral-limits}{true}%
+    \else
+      \gzu@set@key{integral-limits}{false}%
+    \fi
+  \fi
+  \ifgzu@partial@auto
+    \ifgzu@math@style@TeX
+      \gzu@set@key{partial}{italic}%
+    \else
+      \gzu@set@key{partial}{upright}%
+    \fi
+  \fi
+  \ifgzu@math@ellipsis@auto
+    \ifgzu@math@style@GB
+      \gzu@set@key{math-ellipsis}{centered}%
+    \else\ifgzu@math@style@ISO
+      \gzu@set@key{math-ellipsis}{lower}%
+    \else
+      \gzu@set@key{math-ellipsis}{AMS}%
+    \fi\fi
+  \fi
+  \ifgzu@real@part@auto
+    \ifgzu@math@style@TeX
+      \gzu@set@key{real-part}{fraktur}%
+    \else
+      \gzu@set@key{real-part}{roman}%
+    \fi
   \fi
 }
 
-% 补充不同数学风格下的符号规则
-% 在文档开始时应用，确保 unicode-math 符号已经定义
+% 保留默认 unicode-math 符号以便在设置之间正确切换。
 \newcommand\gzu@apply@math@symbols{%
-  \ifgzu@math@style@GB
+  \ifgzu@uppercase@greek@upright
+    \unimathsetup{math-style=TeX}%
+  \else
+    \unimathsetup{math-style=ISO}%
+  \fi
+  \ifgzu@math@style@TeX
+    \unimathsetup{bold-style=TeX}%
+  \else
+    \unimathsetup{bold-style=ISO}%
+  \fi
+  \ifgzu@partial@upright
+    \unimathsetup{partial=upright}%
+  \else
+    \unimathsetup{partial=italic}%
+  \fi
+  \ifgzu@leq@slanted
     \let\le\leqslant
     \let\ge\geqslant
     \let\leq\leqslant
     \let\geq\geqslant
-    \addnolimits{\int\iint\iiint\oint}%
-    \def\mathellipsis{\mathinner{\unicodecdots}}%
   \else
-    \let\le\leq
-    \let\ge\geq
-    \ifgzu@math@style@ISO
-      \removenolimits{\int\iint\iiint\oint}%
-    \else
-      \addnolimits{\int\iint\iiint\oint}%
-    \fi
-    \def\mathellipsis{\mathinner{\unicodeellipsis}}%
+    \let\le\gzu@save@leq
+    \let\ge\gzu@save@geq
+    \let\leq\gzu@save@leq
+    \let\geq\gzu@save@geq
   \fi
-  \ifgzu@math@style@TeX\else
+  \ifgzu@integral@limits@true
+    \removenolimits{\int\iint\iiint\oint}%
+  \else
+    \addnolimits{\int\iint\iiint\oint}%
+  \fi
+  \ifgzu@math@ellipsis@centered
+    \def\mathellipsis{\mathinner{\unicodecdots}}%
+  \else\ifgzu@math@ellipsis@lower
+    \def\mathellipsis{\mathinner{\unicodeellipsis}}%
+  \else
+    \def\mathellipsis{\mathinner{\cdots}}%
+  \fi\fi
+  \ifgzu@real@part@roman
     \def\Re{\operatorname{Re}}%
     \def\Im{\operatorname{Im}}%
+  \else
+    \let\Re\gzu@save@Re
+    \let\Im\gzu@save@Im
   \fi
 }
-
-\AddToHook{begindocument/end}{%
-  \gzu@apply@math@symbols
-}
-
-
-% 根据配置选择数学字体
-% 先完成条件判断，再统一执行字体加载
-\newcommand\gzu@apply@math@font{%
-  \ifgzu@math@font@lm
-    \def\gzu@math@load{%
-      \setmathfont{latinmodern-math.otf}%
-    }%
-  \else\ifgzu@math@font@stix
-    \ifgzu@math@style@TeX
-      \def\gzu@math@load{%
-        \setmathfont{STIXTwoMath-Regular.otf}%
-      }%
-    \else
-      \def\gzu@math@load{%
-        \setmathfont[
-          StylisticSet = 8
-        ]{STIXTwoMath-Regular.otf}%
-      }%
-    \fi
-  \else\ifgzu@math@font@xits
-    \ifgzu@math@style@TeX
-      \def\gzu@math@load{%
-        \setmathfont[
-          BoldFont = XITSMath-Bold.otf
-        ]{XITSMath-Regular.otf}%
-      }%
-    \else
-      \def\gzu@math@load{%
-        \setmathfont[
-          BoldFont = XITSMath-Bold.otf,
-          StylisticSet = 8
-        ]{XITSMath-Regular.otf}%
-      }%
-    \fi
-  \else\ifgzu@math@font@libertinus
-    \ifgzu@math@style@TeX
-      \def\gzu@math@load{%
-        \setmathfont[
-          StylisticSet = 8
-        ]{LibertinusMath-Regular.otf}%
-      }%
-    \else
-      \def\gzu@math@load{%
-        \setmathfont{LibertinusMath-Regular.otf}%
-      }%
-    \fi
-  \fi\fi\fi\fi
-
-  % 在全部条件结束后加载数学字体
-  \gzu@math@load
-  % STIX 模式下采用传统衬线黑板粗体
-  \ifgzu@math@font@stix
-    \setmathfont{latinmodern-math.otf}[range=bb]%
-  \fi
-}
-
-
-% 统一应用数学配置
-\newcommand\gzu@apply@math@settings{%
-  \gzu@apply@math@style
-  \gzu@apply@math@font
-}
-
-% 导言区结束后统一应用数学字体及样式
-% 避免在 \gzusetup 解析过程中反复加载数学字体
-\AddToHook{begindocument/before}{%
-  \gzu@apply@math@settings
-  \gzu@option@classonly{math-style}%
-  \gzu@option@classonly{math-font}%
-}
-
 %    \end{macrocode}
 %
-% \subsubsection{公式编号}
+% \subsubsection{数学字体选择}
 %
-% 公式按照章节编号，默认连接符为句点。
-% 例如，第一章第一条公式编号为 1.1。
-%
+% Times New Roman 不是完整的 OpenType 数学字体，因此默认 XITS Math。
+% 与正文独立的数学字体保持符号覆盖完整；正体文本 \cs{mathrm} 在
+% Times 模式下使用同一 Times New Roman 字体家族。
 %    \begin{macrocode}
-
+\newcommand\gzu@set@math@font@xits{%
+  \ifgzu@integral@upright
+    \setmathfont{XITSMath-Regular.otf}[BoldFont=XITSMath-Bold.otf,StylisticSet=8]%
+  \else
+    \setmathfont{XITSMath-Regular.otf}[BoldFont=XITSMath-Bold.otf]%
+  \fi
+  \setmathfont{XITSMath-Regular.otf}[
+    StylisticSet=1,range={cal,bfcal},
+  ]%
+}
+\newcommand\gzu@set@math@font@stix{%
+  \ifgzu@integral@upright
+    \setmathfont{STIXTwoMath-Regular.otf}[StylisticSet=8]%
+  \else
+    \setmathfont{STIXTwoMath-Regular.otf}%
+  \fi
+  \setmathfont{STIXTwoMath-Regular.otf}[
+    StylisticSet=1,range={scr,bfscr},
+  ]%
+}
+\newcommand\gzu@set@math@font@libertinus{%
+  \ifgzu@integral@slanted
+    \setmathfont{LibertinusMath-Regular.otf}[StylisticSet=8]%
+  \else
+    \setmathfont{LibertinusMath-Regular.otf}%
+  \fi
+}
+\newcommand\gzu@set@math@font@newcm{%
+  \ifgzu@integral@upright
+    \setmathfont{NewCMMath-Book.otf}[StylisticSet=2]%
+  \else
+    \setmathfont{NewCMMath-Book.otf}%
+  \fi
+  \setmathfont{NewCMMath-Book.otf}[
+    StylisticSet=1,range={scr,bfscr},
+  ]%
+}
+\newcommand\gzu@set@math@font@lm{%
+  \setmathfont{latinmodern-math.otf}%
+}
+\newcommand\gzu@set@math@font@none{}
+\newcommand\gzu@set@math@roman{%
+  \ifgzu@font@times
+    \setmathrm{Times New Roman}%
+  \else
+    \ifx\gzu@font\gzu@value@times@local
+      \setmathrm{times.ttf}[
+        Path=\gzu@windows@font@dir/,
+        BoldFont=timesbd.ttf,
+        ItalicFont=timesi.ttf,
+        BoldItalicFont=timesbi.ttf,
+      ]%
+    \fi
+  \fi
+}
+\newcommand\gzu@apply@math@settings{%
+  \gzu@resolve@math@style
+  \ifgzu@math@font@none\else
+    \@nameuse{gzu@set@math@font@\gzu@math@font}%
+    \gzu@set@math@roman
+  \fi
+}
+% 数学风格只在导言区配置；先加载数学字体，后应用符号宏覆盖。
+\AddToHook{begindocument/end}{%
+  % unicode-math 在 begindocument 中可能重新定义这些符号；
+  % 必须等其完成后才保存原始命令，不能在载入包时提前保存。
+  \let\gzu@save@leq\leq
+  \let\gzu@save@geq\geq
+  \let\gzu@save@Re\Re
+  \let\gzu@save@Im\Im
+  \gzu@apply@math@symbols
+}
+\AddToHook{begindocument/before}{%
+  \gzu@apply@math@settings
+  \gzu@option@classonly{math-font}%
+  \gzu@option@classonly{math-style}%
+  \gzu@option@classonly{uppercase-greek}%
+  \gzu@option@classonly{less-than-or-equal}%
+  \gzu@option@classonly{integral}%
+  \gzu@option@classonly{integral-limits}%
+  \gzu@option@classonly{partial}%
+  \gzu@option@classonly{math-ellipsis}%
+  \gzu@option@classonly{real-part}%
+}%
+%    \end{macrocode}
+%
+% \subsubsection{公式编号与引用}
+%
+% 图、表、公式默认按章编号，并允许分别或统一修改编号连接符。
+%    \begin{macrocode}
+\ifgzu@equation@numbering@global
+  \@removefromreset{equation}{chapter}%
+\fi
 \renewcommand\theequation{%
-  \ifnum\c@chapter>\z@
-    \thechapter\gzu@equation@separator
+  \ifgzu@equation@numbering@chapter
+    \ifnum\c@chapter>\z@
+      \thechapter\gzu@equation@separator
+    \fi
   \fi
   \arabic{equation}%
 }
-% 统一设置图、表和公式的编号连接符
 \newcommand\gzu@set@number@separator{%
   \let\gzu@figure@separator\gzu@number@separator
   \let\gzu@table@separator\gzu@number@separator
   \let\gzu@equation@separator\gzu@number@separator
 }
-
-\gzu@option@hook{number-separator}{%
+\gzu@option@hook{number-separator}{\gzu@set@number@separator}
+% 兼容导言区的 class option：显式使用非默认连接符时应用一次。
+\def\gzu@default@separator{.}
+\ifx\gzu@number@separator\gzu@default@separator\else
   \gzu@set@number@separator
+\fi
+
+\newcommand\gzu@put@parentheses[1]{%
+  \ifgzu@eqn@paren@style@full
+    \kern0pt（#1）%
+  \else
+    (#1)%
+  \fi
 }
-%    \end{macrocode}
-%
-% 提供公式编号连接符的配置接口。
-%
-%    \begin{macrocode}
-% 配置项已在统一配置系统中声明。
-%    \end{macrocode}
-%
-% \subsubsection{公式编号括号}
-%
-% 中文论文中的公式编号使用全角括号。
-%
-%    \begin{macrocode}
 \def\tagform@#1{%
-  \maketag@@@{%
-    \kern0pt（\ignorespaces#1\unskip\@@italiccorr）%
-  }%
+  \maketag@@@{\gzu@put@parentheses{\ignorespaces#1\unskip\@@italiccorr}}%
 }
-%    \end{macrocode}
-%
-% \subsubsection{多行公式}
-%
-% 允许多行公式在适当位置跨页。
-%
-%    \begin{macrocode}
+\renewcommand\eqref[1]{%
+  \ifgzu@eqn@paren@style@full\unskip\fi
+  \textup{\tagform@{\ref{#1}}}%
+  \ifgzu@eqn@paren@style@full\ignorespaces\fi
+}
 \allowdisplaybreaks[4]
 %    \end{macrocode}
-% 
-
+%
 % \subsection{定理与证明环境}
 % \label{sec:theorem}
 %
@@ -2199,7 +2790,7 @@
 % BibLaTeX + Biber
 \AddToHook{package/biblatex/after}{%
   % 贵州大学参考文献表列出全部作者
-  \ExecuteBibliographyOptions{maxbibnames=999}%
+  \ExecuteBibliographyOptions{maxbibnames=999,defernumbers=true}%
 
   % 正文参考文献标题
   \defbibheading{bibliography}[\bibname]{%
@@ -2232,9 +2823,16 @@
 %
 % 
 % 附录独立参考文献
-% BibTeX: bibunits
+% BibTeX: bibunits / natbib
 % BibLaTeX: refsection
-
+%
+% natbib/hyperref 使用 cite.<bibkey> 作为目的地名称。
+% 正文与附录重复引用同一 bibkey 时，若未改变其命名空间，
+% PDF 链接会跳到正文首次建立的 cite.<bibkey> 锚点。
+% 解决办法是让每个 bibunit 的 \@extra@binfo 与 \@extra@b@citeb
+% 使用相同、稳定、全局唯一的后缀；前者隔离文献数据，后者
+% 同时作用于引用链接和文献项锚点。
+\newcounter{gzu@appendix@bib@unit}
 \newif\ifgzu@appendix@bib@printed
 
 \newenvironment{gzuappendixrefs}{%
@@ -2247,6 +2845,9 @@
   \fi
 
   \gzu@appendix@bib@printedfalse
+  \stepcounter{gzu@appendix@bib@unit}%
+  \edef\gzu@appendix@bib@namespace{%
+    gzuappendix.\arabic{gzu@appendix@bib@unit}.}%
 
   \@ifpackageloaded{biblatex}{%
     % BibLaTeX 使用独立 refsection
@@ -2255,11 +2856,13 @@
       \begin{refcontext}[labelprefix=\thechapter.]%
     \fi
   }{%
-    % BibTeX 使用独立 bibunit
+    % 不覆盖 natbib/hyperref 的实现，只为当前 bibunit 隔离 key 与锚点。
     \@ifpackageloaded{bibunits}{%
+      \let\@extra@binfo\gzu@appendix@bib@namespace
+      \let\@extra@b@citeb\gzu@appendix@bib@namespace
       \begin{bibunit}[\gzu@bib@bst]%
-      \def\@bibunitname{%
-        \jobname-appendix-\@Alph\c@chapter
+      \edef\@bibunitname{%
+        \jobname-appendix-\arabic{gzu@appendix@bib@unit}%
       }%
       \ifgzu@bib@appendix@prefix@true
         \def\citenumfont##1{\thechapter.##1}%
@@ -2346,56 +2949,80 @@
 %
 % 封面采用 A4 纸张绝对定位，各信息行以统一基线和固定列宽排版。
 % 页眉和正文几何参数不影响封面元素的位置。
-% 中文宋体、黑体与 Times New Roman 分别加载，不依赖正文字体选项。
-% 在 WSL 中优先读取 Windows 字体，未找到时使用 TeX Live 的替代字体。
+% 中文宋体、黑体与 Times New Roman 分别加载，避免影响定稿封面的字体与排版。
+% 封面专用字体通过名称或用户指定的文件目录加载，不使用替代字体。
 %
+% 
 % \subsubsection{封面专用字体}
+%
+% 封面由贵州大学现有 Word 样式定稿；不改变任何 TikZ 坐标、字号、行距。
+% 只把字体加载延迟到 \cs{maketitle} 执行时，避免未使用封面时强制依赖
+% 华文行楷字体。封面继续明确使用宋体、黑体、Times New Roman、华文行楷。
+% 系统字体与用户指定目录中的文件均可，不写死 Windows/WSL 路径。
+% 缺少所需字体时报错，不使用克隆字体替代。
 %
 %    \begin{macrocode}
 \RequirePackage{tikz}
-
-% Windows fonts are normally accessible at this path from WSL.
-% Keep the cover fonts independent from the body fontset.
-\IfFileExists{/mnt/c/Windows/Fonts/simsun.ttc}{%
-  \newCJKfontfamily\gzu@cover@song[
-    Path=/mnt/c/Windows/Fonts/
-  ]{simsun.ttc}%
-}{%
-  \newCJKfontfamily\gzu@cover@song{FandolSong-Regular.otf}%
-}
-\IfFileExists{/mnt/c/Windows/Fonts/simhei.ttf}{%
-  \newCJKfontfamily\gzu@cover@hei[
-    Path=/mnt/c/Windows/Fonts/
-  ]{simhei.ttf}%
-}{%
-  \newCJKfontfamily\gzu@cover@hei{FandolHei-Regular.otf}%
-}
-\IfFileExists{/mnt/c/Windows/Fonts/times.ttf}{%
-  \newfontfamily\gzu@cover@times[
-    Path=/mnt/c/Windows/Fonts/,
-    UprightFont=times.ttf,
-    BoldFont=timesbd.ttf,
-    ItalicFont=timesi.ttf,
-    BoldItalicFont=timesbi.ttf
-  ]{times.ttf}%
-}{%
-  \IfFileExists{texgyretermes-regular.otf}{%
-    \newfontfamily\gzu@cover@times{texgyretermes-regular.otf}[
-      BoldFont=texgyretermes-bold.otf,
-      ItalicFont=texgyretermes-italic.otf,
-      BoldItalicFont=texgyretermes-bolditalic.otf
-    ]%
-  }{%
-    \newfontfamily\gzu@cover@times{Liberation Serif}%
-  }%
-}
-% School name is kept separate; replace with the official lettering if available.
-\IfFileExists{/mnt/c/Windows/Fonts/STXINGKA.TTF}{%
-  \newCJKfontfamily\gzu@cover@schoolfont[
-    Path=/mnt/c/Windows/Fonts/
-  ]{STXINGKA.TTF}%
-}{%
-  \newCJKfontfamily\gzu@cover@schoolfont{FandolKai-Regular.otf}%
+\newif\ifgzu@cover@fonts@ready
+\gzu@cover@fonts@readyfalse
+\newcommand\gzu@init@cover@fonts{%
+  \ifgzu@cover@fonts@ready\else
+    % 宋体
+    \IfFileExists{\gzu@windows@font@dir/simsun.ttc}{%
+      \newCJKfontfamily\gzu@cover@song[
+        Path=\gzu@windows@font@dir/,
+      ]{simsun.ttc}%
+    }{%
+      \IfFileExists{\gzu@windows@font@dir/Simsun.ttc}{%
+        \newCJKfontfamily\gzu@cover@song[
+          Path=\gzu@windows@font@dir/,
+        ]{Simsun.ttc}%
+      }{%
+        \gzu@font@require{SimSun}%
+        \newCJKfontfamily\gzu@cover@song{SimSun}%
+      }%
+    }%
+    % 黑体
+    \IfFileExists{\gzu@windows@font@dir/simhei.ttf}{%
+      \newCJKfontfamily\gzu@cover@hei[
+        Path=\gzu@windows@font@dir/,
+      ]{simhei.ttf}%
+    }{%
+      \gzu@font@require{SimHei}%
+      \newCJKfontfamily\gzu@cover@hei{SimHei}%
+    }%
+    % 西文封面字体
+    \IfFileExists{\gzu@windows@font@dir/times.ttf}{%
+      \gzu@font@require@file{timesbd.ttf}%
+      \gzu@font@require@file{timesi.ttf}%
+      \gzu@font@require@file{timesbi.ttf}%
+      \newfontfamily\gzu@cover@times[
+        Path=\gzu@windows@font@dir/,
+        BoldFont=timesbd.ttf,
+        ItalicFont=timesi.ttf,
+        BoldItalicFont=timesbi.ttf,
+      ]{times.ttf}%
+    }{%
+      \gzu@font@require{Times New Roman}%
+      \newfontfamily\gzu@cover@times{Times New Roman}%
+    }%
+    % 学校名专用华文行楷
+    \IfFileExists{\gzu@windows@font@dir/STXINGKA.TTF}{%
+      \newCJKfontfamily\gzu@cover@schoolfont[
+        Path=\gzu@windows@font@dir/,
+      ]{STXINGKA.TTF}%
+    }{%
+      \IfFileExists{\gzu@windows@font@dir/stxingka.ttf}{%
+        \newCJKfontfamily\gzu@cover@schoolfont[
+          Path=\gzu@windows@font@dir/,
+        ]{stxingka.ttf}%
+      }{%
+        \gzu@font@require{STXingkai}%
+        \newCJKfontfamily\gzu@cover@schoolfont{STXingkai}%
+      }%
+    }%
+    \global\gzu@cover@fonts@readytrue
+  \fi
 }
 %    \end{macrocode}
 %
@@ -2672,6 +3299,7 @@
 %    
 %    \begin{macrocode}
 \renewcommand\maketitle{%
+  \gzu@init@cover@fonts
   \begin{titlepage}%
     \thispagestyle{empty}%
     \null
@@ -2970,7 +3598,18 @@
 %    \begin{macrocode}
 \gzu@option@classonly{degree}
 \gzu@option@classonly{degree-type}
+
+% 字体选项仅允许在文档类加载时设置
 \gzu@option@classonly{fontset}
+\gzu@option@classonly{font}
+\gzu@option@classonly{cjk-font}
+\gzu@option@classonly{windows-font-dir}
+\gzu@option@classonly{footnote-numbering}
+\gzu@option@classonly{footnote-style}
+\gzu@option@classonly{figure-numbering}
+\gzu@option@classonly{table-numbering}
+\gzu@option@classonly{equation-numbering}
+
 \gzu@options@readytrue
 %    \end{macrocode}
 
@@ -3016,9 +3655,10 @@
 %<*dtx-style>
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{dtx-style}
-  [2026/11/16 v0.2.0-dev GZUThesis documentation style]
+  [2026/11/17 v0.3.0-dev GZUThesis documentation style]
 \RequirePackage[UTF8]{ctex}
 \RequirePackage{siunitx}
+\RequirePackage{booktabs}
 %</dtx-style>
 %    \end{macrocode}
 %

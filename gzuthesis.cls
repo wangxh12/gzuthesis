@@ -30,9 +30,8 @@
 %% 
 
 
-
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{gzuthesis}[2026/11/16 v0.2.0-dev Guizhou University Thesis Template]
+\ProvidesClass{gzuthesis}[2026/11/17 v0.3.0-dev Guizhou University Thesis Template]
 \RequirePackage{kvdefinekeys}
 \RequirePackage{kvsetkeys}
 \RequirePackage{kvoptions}
@@ -44,7 +43,7 @@
 }
 
 \newcommand\gzuthesis{GZUThesis}
-\newcommand\gzuversion{0.2.0-dev}
+\newcommand\gzuversion{0.3.0-dev}
 \providecommand\version{\gzuversion}
 
 \newcommand\gzu@error[2]{\ClassError{gzuthesis}{#1}{#2}}
@@ -153,13 +152,28 @@
     default = academic,
   },
   fontset = {
-    choices = {auto, windows, mac, ubuntu, fandol},
+    choices = {auto, windows, windows-local, mac, ubuntu, fandol, none},
     default = auto,
+  },
+  font = {
+    choices = {auto, times, times-local, termes, stix, xits,
+               libertinus, newcm, lm, none},
+    default = auto,
+  },
+  cjk-font = {
+    name = cjk@font,
+    choices = {auto, windows, windows-local, mac, mac-word,
+               noto, fandol, none},
+    default = auto,
+  },
+  windows-font-dir = {
+    name = windows@font@dir,
+    default = {.},
   },
   math-font = {
     name = math@font,
-    choices = {lm, stix, xits, libertinus},
-    default = xits,
+    choices = {auto, stix, xits, libertinus, newcm, lm, none},
+    default = auto,
   },
 }
 \gzu@define@key{
@@ -221,6 +235,21 @@
   number-separator = {
     name = number@separator,
     default = {.},
+  },
+  figure-numbering = {
+    name = figure@numbering,
+    choices = {chapter, global},
+    default = chapter,
+  },
+  table-numbering = {
+    name = table@numbering,
+    choices = {chapter, global},
+    default = chapter,
+  },
+  equation-numbering = {
+    name = equation@numbering,
+    choices = {chapter, global},
+    default = chapter,
   },
   table-rule-width = {
     name = table@rule@width,
@@ -316,16 +345,71 @@
     choices = {true, false},
     default = true,
   },
+  % 中文学位论文默认采用 GB 数学排版风格。
   math-style = {
     name = math@style,
     choices = {GB, ISO, TeX},
-    default = ISO,
+    default = GB,
+  },
+  % 细分数学符号选项：auto 表示服从 math-style 预设。
+  uppercase-greek = {
+    name = uppercase@greek,
+    choices = {auto, italic, upright},
+    default = auto,
+  },
+  less-than-or-equal = {
+    name = leq,
+    choices = {auto, slanted, horizontal},
+    default = auto,
+  },
+  integral = {
+    choices = {auto, upright, slanted},
+    default = auto,
+  },
+  integral-limits = {
+    name = integral@limits,
+    choices = {auto, true, false},
+    default = auto,
+  },
+  partial = {
+    choices = {auto, upright, italic},
+    default = auto,
+  },
+  math-ellipsis = {
+    name = math@ellipsis,
+    choices = {auto, centered, lower, AMS},
+    default = auto,
+  },
+  real-part = {
+    name = real@part,
+    choices = {auto, roman, fraktur},
+    default = auto,
+  },
+  eqn-paren-style = {
+    name = eqn@paren@style,
+    choices = {full, half},
+    default = full,
+  },
+  % 默认保留当前的普通脚注行为，另提供清华式按页编号和带圈脚注。
+  footnote-numbering = {
+    name = footnote@numbering,
+    choices = {chapter, page, global},
+    default = chapter,
+  },
+  footnote-style = {
+    name = footnote@style,
+    choices = {plain, circled},
+    default = plain,
   },
 }
 \DeclareDefaultOption{%
   \PassOptionsToClass{\CurrentOption}{ctexbook}%
 }
 \ProcessKeyvalOptions*
+
+\edef\gzu@math@style@classoption{math-style=\gzu@math@style}
+\@expandtwoargs\@removeelement
+  {\gzu@math@style@classoption}{\@classoptionslist}\@classoptionslist
 
 \LoadClass[
   a4paper,
@@ -343,6 +427,8 @@
   bottom     = 2.5cm,
   left       = 2.5cm,
   right      = 2.5cm,
+  marginparwidth = 2cm,
+  marginparsep   = 0.5cm,
   headheight = 0.5cm,
   headsep    = 0.3cm,
   footskip   = 0.75cm,
@@ -350,109 +436,345 @@
 \RequirePackage{fontspec}
 \RequirePackage{xeCJK}
 
-\setmainfont{texgyretermes-regular.otf}[
-  BoldFont       = texgyretermes-bold.otf,
-  ItalicFont     = texgyretermes-italic.otf,
-  BoldItalicFont = texgyretermes-bolditalic.otf,
-]
-\setsansfont{texgyreheros-regular.otf}[
-  BoldFont       = texgyreheros-bold.otf,
-  ItalicFont     = texgyreheros-italic.otf,
-  BoldItalicFont = texgyreheros-bolditalic.otf,
-]
-\setmonofont{texgyrecursor-regular.otf}[
-  BoldFont       = texgyrecursor-bold.otf,
-  ItalicFont     = texgyrecursor-italic.otf,
-  BoldItalicFont = texgyrecursor-bolditalic.otf,
-]
+\newcommand\gzu@font@require[1]{%
+  \IfFontExistsTF{#1}{}{%
+    \ClassError{gzuthesis}{Required font `#1' not found}%
+      {Install the requested font or select a file-based font scheme.}%
+  }%
+}
+\newcommand\gzu@font@require@file[1]{%
+  \IfFileExists{\gzu@windows@font@dir/#1}{}{%
+    \ClassError{gzuthesis}{Required font file `#1' not found}%
+      {Check windows-font-dir and the installed font file names.}%
+  }%
+}
 
-\ifgzu@fontset@auto
-  \IfFontExistsTF{SimSun}{
-    \gzu@set@key{fontset}{windows}
-  }{
-    \IfFontExistsTF{Songti SC}{
-      \gzu@set@key{fontset}{mac}
-    }{
-      \IfFontExistsTF{Noto Serif CJK SC}{
-        \gzu@set@key{fontset}{ubuntu}
-      }{
-        \gzu@set@key{fontset}{fandol}
-      }
-    }
-  }
-\fi
-\ifgzu@fontset@windows
-  \setCJKmainfont{SimSun}[
-    AutoFakeBold = 3,
-    ItalicFont = KaiTi
-  ]
-  \setCJKsansfont{SimHei}[AutoFakeBold=3]
-  \setCJKmonofont{FangSong}
-  \setCJKfamilyfont{zhsong}{SimSun}[AutoFakeBold=3]
-  \setCJKfamilyfont{zhhei}{SimHei}[AutoFakeBold=3]
-  \setCJKfamilyfont{zhkai}{KaiTi}
-  \setCJKfamilyfont{zhfs}{FangSong}
-\else\ifgzu@fontset@mac
-  \setCJKmainfont{Songti SC}
-  \setCJKsansfont{Heiti SC}
-  \setCJKmonofont{STFangsong}
-  \setCJKfamilyfont{zhsong}{Songti SC}
-  \setCJKfamilyfont{zhhei}{Heiti SC}
-  \setCJKfamilyfont{zhkai}{Kaiti SC}
-  \setCJKfamilyfont{zhfs}{STFangsong}
-\else\ifgzu@fontset@ubuntu
+\def\gzu@value@windows@local{windows-local}
+\def\gzu@value@times@local{times-local}
+\newcommand\gzu@resolve@font{%
+  \ifgzu@font@auto
+    \ifgzu@fontset@none
+      \gzu@set@key{font}{none}%
+    \else\ifgzu@fontset@ubuntu
+      \gzu@set@key{font}{termes}%
+    \else\ifgzu@fontset@fandol
+      \gzu@set@key{font}{termes}%
+    \else
+      \ifx\gzu@fontset\gzu@value@windows@local
+        \gzu@set@key{font}{times-local}%
+      \else
+        \IfFontExistsTF{Times New Roman}{%
+          \gzu@set@key{font}{times}%
+        }{%
+          \IfFileExists{\gzu@windows@font@dir/times.ttf}{%
+            \gzu@set@key{font}{times-local}%
+          }{%
+            \ClassError{gzuthesis}{Cannot find Times New Roman}%
+              {Install Times New Roman or set windows-font-dir.}%
+          }%
+        }%
+      \fi
+    \fi\fi\fi
+  \fi
+}
+\newcommand\gzu@resolve@cjk@font{%
+  \ifgzu@cjk@font@auto
+    \ifgzu@fontset@none
+      \gzu@set@key{cjk-font}{none}%
+    \else\ifgzu@fontset@mac
+      \gzu@set@key{cjk-font}{mac}%
+    \else\ifgzu@fontset@ubuntu
+      \gzu@set@key{cjk-font}{noto}%
+    \else\ifgzu@fontset@fandol
+      \gzu@set@key{cjk-font}{fandol}%
+    \else
+      \ifx\gzu@fontset\gzu@value@windows@local
+        \gzu@set@key{cjk-font}{windows-local}%
+      \else
+        \IfFontExistsTF{SimSun}{%
+          \gzu@set@key{cjk-font}{windows}%
+        }{%
+          \IfFileExists{\gzu@windows@font@dir/simsun.ttc}{%
+            \gzu@set@key{cjk-font}{windows-local}%
+          }{%
+            \IfFileExists{\gzu@windows@font@dir/Simsun.ttc}{%
+              \gzu@set@key{cjk-font}{windows-local}%
+            }{%
+              \ClassError{gzuthesis}{Cannot find SimSun}%
+                {Install Windows CJK fonts or set windows-font-dir.}%
+            }%
+          }%
+        }%
+      \fi
+    \fi\fi\fi\fi
+  \fi
+}
+\gzu@resolve@font
+\gzu@resolve@cjk@font
+\newcommand\gzu@set@font@times{%
+  \gzu@font@require{Times New Roman}%
+  \gzu@font@require{Arial}%
+  \gzu@font@require{Courier New}%
+  \setmainfont{Times New Roman}%
+  \setsansfont{Arial}%
+  \setmonofont{Courier New}[Scale=MatchLowercase]%
+}
+\@namedef{gzu@set@font@times-local}{%
+  \@for\gzu@font@file:=times.ttf,timesbd.ttf,timesi.ttf,timesbi.ttf,%
+    arial.ttf,arialbd.ttf,ariali.ttf,arialbi.ttf,%
+    cour.ttf,courbd.ttf,couri.ttf,courbi.ttf\do{%
+    \expandafter\gzu@font@require@file\expandafter{\gzu@font@file}%
+  }%
+  \setmainfont{times.ttf}[
+    Path=\gzu@windows@font@dir/,
+    BoldFont=timesbd.ttf,
+    ItalicFont=timesi.ttf,
+    BoldItalicFont=timesbi.ttf,
+  ]%
+  \setsansfont{arial.ttf}[
+    Path=\gzu@windows@font@dir/,
+    BoldFont=arialbd.ttf,
+    ItalicFont=ariali.ttf,
+    BoldItalicFont=arialbi.ttf,
+  ]%
+  \setmonofont{cour.ttf}[
+    Path=\gzu@windows@font@dir/,
+    BoldFont=courbd.ttf,
+    ItalicFont=couri.ttf,
+    BoldItalicFont=courbi.ttf,
+    Scale=MatchLowercase,
+  ]%
+}
+\newcommand\gzu@set@texgyre@sans@mono{%
+  \setsansfont{texgyreheros}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-italic,BoldItalicFont=*-bolditalic,
+  ]%
+  \setmonofont{texgyrecursor}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-italic,BoldItalicFont=*-bolditalic,
+    Scale=MatchLowercase,Ligatures=CommonOff,
+  ]%
+}
+\newcommand\gzu@set@font@termes{%
+  \setmainfont{texgyretermes}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-italic,BoldItalicFont=*-bolditalic,
+  ]%
+  \gzu@set@texgyre@sans@mono
+}
+\newcommand\gzu@set@windows@sans@mono{%
+  \gzu@font@require{Arial}%
+  \gzu@font@require{Courier New}%
+  \setsansfont{Arial}%
+  \setmonofont{Courier New}[Scale=MatchLowercase]%
+}
+\newcommand\gzu@set@font@stix{%
+  \setmainfont{STIXTwoText}[
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+    ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic,
+  ]%
+  \gzu@set@windows@sans@mono
+}
+\newcommand\gzu@set@font@xits{%
+  \setmainfont{XITS}[
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+    ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic,
+  ]%
+  \gzu@set@windows@sans@mono
+}
+\newcommand\gzu@set@font@libertinus{%
+  \setmainfont{LibertinusSerif}[
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+    ItalicFont=*-Italic,BoldItalicFont=*-BoldItalic,
+  ]%
+  \setsansfont{LibertinusSans}[
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+    ItalicFont=*-Italic,
+  ]%
+  \setmonofont{lmmonolt10}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-oblique,BoldItalicFont=*-boldoblique,
+  ]%
+}
+\newcommand\gzu@set@font@newcm{%
+  \setmainfont{NewCM10}[
+    Extension=.otf,UprightFont=*-Book,BoldFont=*-Bold,
+    ItalicFont=*-BookItalic,BoldItalicFont=*-BoldItalic,
+  ]%
+  \setsansfont{NewCMSans10}[
+    Extension=.otf,UprightFont=*-Book,BoldFont=*-Bold,
+    ItalicFont=*-BookOblique,BoldItalicFont=*-BoldOblique,
+  ]%
+  \setmonofont{NewCMMono10}[
+    Extension=.otf,UprightFont=*-Book,BoldFont=*-Bold,
+    ItalicFont=*-BookItalic,BoldItalicFont=*-BoldOblique,
+  ]%
+}
+\newcommand\gzu@set@font@lm{%
+  \setmainfont{lmroman10}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-italic,BoldItalicFont=*-bolditalic,
+  ]%
+  \setsansfont{lmsans10}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-oblique,BoldItalicFont=*-boldoblique,
+  ]%
+  \setmonofont{lmmonolt10}[
+    Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,
+    ItalicFont=*-oblique,BoldItalicFont=*-boldoblique,
+  ]%
+}
+\newcommand\gzu@set@font@none{}
+\newcommand\gzu@set@font{\@nameuse{gzu@set@font@\gzu@font}}
+\gzu@set@font
+\newcommand\gzu@set@cjk@font@windows{%
+  \gzu@font@require{SimSun}%
+  \gzu@font@require{SimHei}%
+  \gzu@font@require{KaiTi}%
+  \gzu@font@require{FangSong}%
+  \setCJKmainfont{SimSun}[AutoFakeBold=3,ItalicFont=KaiTi]%
+  \setCJKsansfont{SimHei}[AutoFakeBold=3]%
+  \setCJKmonofont{FangSong}%
+  \setCJKfamilyfont{zhsong}{SimSun}[AutoFakeBold=3]%
+  \setCJKfamilyfont{zhhei}{SimHei}[AutoFakeBold=3]%
+  \setCJKfamilyfont{zhkai}{KaiTi}%
+  \setCJKfamilyfont{zhfs}{FangSong}%
+}
+\newcommand\gzu@set@windows@local@names{%
+  \IfFileExists{\gzu@windows@font@dir/simsun.ttc}{%
+    \def\gzu@local@simsun{simsun.ttc}%
+  }{%
+    \def\gzu@local@simsun{Simsun.ttc}%
+  }%
+  \expandafter\gzu@font@require@file\expandafter{\gzu@local@simsun}%
+  \IfFileExists{\gzu@windows@font@dir/simhei.ttf}{%
+    \def\gzu@local@simhei{simhei.ttf}%
+  }{%
+    \def\gzu@local@simhei{SimHei.ttf}%
+  }%
+  \expandafter\gzu@font@require@file\expandafter{\gzu@local@simhei}%
+  \IfFileExists{\gzu@windows@font@dir/Kaiti.ttf}{%
+    \def\gzu@local@simkai{Kaiti.ttf}%
+  }{%
+    \def\gzu@local@simkai{simkai.ttf}%
+  }%
+  \expandafter\gzu@font@require@file\expandafter{\gzu@local@simkai}%
+  \IfFileExists{\gzu@windows@font@dir/Fangsong.ttf}{%
+    \def\gzu@local@simfang{Fangsong.ttf}%
+  }{%
+    \def\gzu@local@simfang{simfang.ttf}%
+  }%
+  \expandafter\gzu@font@require@file\expandafter{\gzu@local@simfang}%
+}
+\@namedef{gzu@set@cjk@font@windows-local}{%
+  \gzu@set@windows@local@names
+  \setCJKmainfont{\gzu@local@simsun}[
+    Path=\gzu@windows@font@dir/,
+    AutoFakeBold=3,
+    ItalicFont=\gzu@local@simkai,
+    ItalicFeatures={Path=\gzu@windows@font@dir/},
+  ]%
+  \setCJKsansfont{\gzu@local@simhei}[
+    Path=\gzu@windows@font@dir/,AutoFakeBold=3,
+  ]%
+  \setCJKmonofont{\gzu@local@simfang}[
+    Path=\gzu@windows@font@dir/,
+  ]%
+  \setCJKfamilyfont{zhsong}{\gzu@local@simsun}[
+    Path=\gzu@windows@font@dir/,AutoFakeBold=3,
+  ]%
+  \setCJKfamilyfont{zhhei}{\gzu@local@simhei}[
+    Path=\gzu@windows@font@dir/,AutoFakeBold=3,
+  ]%
+  \setCJKfamilyfont{zhkai}{\gzu@local@simkai}[
+    Path=\gzu@windows@font@dir/,
+  ]%
+  \setCJKfamilyfont{zhfs}{\gzu@local@simfang}[
+    Path=\gzu@windows@font@dir/,
+  ]%
+}
+\@namedef{gzu@set@cjk@font@mac-word}{%
+  \@nameuse{gzu@set@cjk@font@windows-local}%
+}
+\newcommand\gzu@set@cjk@font@mac{%
+  \gzu@font@require{Songti SC}%
+  \gzu@font@require{Heiti SC}%
+  \gzu@font@require{Kaiti SC}%
+  \gzu@font@require{STFangsong}%
+  \setCJKmainfont{Songti SC}[
+    UprightFont=* Light,BoldFont=* Bold,
+    ItalicFont=Kaiti SC Regular,BoldItalicFont=Kaiti SC Bold,
+  ]%
+  \setCJKsansfont{Heiti SC}[
+    UprightFont=* Light,BoldFont=* Medium,
+  ]%
+  \setCJKmonofont{STFangsong}%
+  \setCJKfamilyfont{zhsong}{Songti SC}[
+    UprightFont=* Light,BoldFont=* Bold,
+  ]%
+  \setCJKfamilyfont{zhhei}{Heiti SC}[
+    UprightFont=* Light,BoldFont=* Medium,
+  ]%
+  \setCJKfamilyfont{zhkai}{Kaiti SC}[
+    UprightFont=* Regular,BoldFont=* Bold,
+  ]%
+  \setCJKfamilyfont{zhfs}{STFangsong}%
+}
+\newcommand\gzu@set@cjk@font@noto{%
+  \gzu@font@require{Noto Serif CJK SC}%
+  \gzu@font@require{Noto Sans CJK SC}%
   \setCJKmainfont{Noto Serif CJK SC}[
-    ItalicFont = FandolKai-Regular.otf
-  ]
-  \setCJKsansfont{Noto Sans CJK SC}
-  \setCJKmonofont{FandolFang-Regular.otf}
-  \setCJKfamilyfont{zhsong}{Noto Serif CJK SC}
-  \setCJKfamilyfont{zhhei}{Noto Sans CJK SC}
-  \setCJKfamilyfont{zhkai}{FandolKai-Regular.otf}
-  \setCJKfamilyfont{zhfs}{FandolFang-Regular.otf}
-\else\ifgzu@fontset@fandol
+    UprightFont=* Light,BoldFont=* Bold,Script=CJK,
+  ]%
+  \setCJKsansfont{Noto Sans CJK SC}[
+    BoldFont=* Medium,Script=CJK,
+  ]%
+  \setCJKmonofont{Noto Sans CJK SC}[Script=CJK]%
+  \setCJKfamilyfont{zhsong}{Noto Serif CJK SC}[
+    UprightFont=* Light,BoldFont=* Bold,Script=CJK,
+  ]%
+  \setCJKfamilyfont{zhhei}{Noto Sans CJK SC}[
+    BoldFont=* Medium,Script=CJK,
+  ]%
+  % 楷体、仿宋字体需分别安装。用户显式选择了 noto 才使用本方案。
+  \setCJKfamilyfont{zhkai}{FandolKai-Regular.otf}%
+  \setCJKfamilyfont{zhfs}{FandolFang-Regular.otf}%
+}
+\newcommand\gzu@set@cjk@font@fandol{%
   \setCJKmainfont{FandolSong}[
-    Extension = .otf,
-    UprightFont = *-Regular,
-    BoldFont = *-Bold
-  ]
+    Extension=.otf,UprightFont=*-Regular,
+    BoldFont=*-Bold,ItalicFont=FandolKai-Regular,
+    ItalicFeatures={Extension=.otf},
+  ]%
   \setCJKsansfont{FandolHei}[
-    Extension = .otf,
-    UprightFont = *-Regular,
-    BoldFont = *-Bold
-  ]
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+  ]%
   \setCJKmonofont{FandolFang}[
-    Extension = .otf,
-    UprightFont = *-Regular
-  ]
+    Extension=.otf,UprightFont=*-Regular,
+  ]%
   \setCJKfamilyfont{zhsong}{FandolSong}[
-    Extension = .otf,
-    UprightFont = *-Regular,
-    BoldFont = *-Bold
-  ]
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+  ]%
   \setCJKfamilyfont{zhhei}{FandolHei}[
-    Extension = .otf,
-    UprightFont = *-Regular,
-    BoldFont = *-Bold
-  ]
+    Extension=.otf,UprightFont=*-Regular,BoldFont=*-Bold,
+  ]%
   \setCJKfamilyfont{zhkai}{FandolKai}[
-    Extension = .otf,
-    UprightFont = *-Regular
-  ]
+    Extension=.otf,UprightFont=*-Regular,
+  ]%
   \setCJKfamilyfont{zhfs}{FandolFang}[
-    Extension = .otf,
-    UprightFont = *-Regular
-  ]
-\else
-  \ClassError{gzuthesis}
-    {Invalid fontset `\gzu@fontset'}
-    {Use auto, windows, mac, ubuntu or fandol.}
-\fi\fi\fi\fi
-
-\providecommand\songti{\CJKfamily{zhsong}}
-\providecommand\heiti{\CJKfamily{zhhei}}
-\providecommand\kaishu{\CJKfamily{zhkai}}
-\providecommand\fangsong{\CJKfamily{zhfs}}
+    Extension=.otf,UprightFont=*-Regular,
+  ]%
+}
+\newcommand\gzu@set@cjk@font@none{}
+\newcommand\gzu@set@cjk@font{\@nameuse{gzu@set@cjk@font@\gzu@cjk@font}}
+\gzu@set@cjk@font
+\ifgzu@cjk@font@none\else
+  \providecommand\songti{\CJKfamily{zhsong}}
+  \providecommand\heiti{\CJKfamily{zhhei}}
+  \providecommand\kaishu{\CJKfamily{zhkai}}
+  \providecommand\fangsong{\CJKfamily{zhfs}}
+\fi
 \renewcommand\normalsize{%
   \@setfontsize\normalsize{12bp}{20bp}%
   \abovedisplayskip 6bp%
@@ -461,9 +783,93 @@
   \belowdisplayskip \abovedisplayskip
 }
 \normalsize
+\ifx\MakeRobust\@undefined\else\MakeRobust\normalsize\fi
+
+\def\gzu@def@fontsize#1#2{%
+  \expandafter\newcommand\csname #1\endcsname[1][1.3]{%
+    \fontsize{#2}{##1\dimexpr #2}\selectfont}%
+}
+\gzu@def@fontsize{chuhao}{42bp}
+\gzu@def@fontsize{xiaochu}{36bp}
+\gzu@def@fontsize{yihao}{26bp}
+\gzu@def@fontsize{xiaoyi}{24bp}
+\gzu@def@fontsize{erhao}{22bp}
+\gzu@def@fontsize{xiaoer}{18bp}
+\gzu@def@fontsize{sanhao}{16bp}
+\gzu@def@fontsize{xiaosan}{15bp}
+\gzu@def@fontsize{sihao}{14bp}
+\gzu@def@fontsize{xiaosi}{12bp}
+\gzu@def@fontsize{wuhao}{10.5bp}
+\gzu@def@fontsize{xiaowu}{9bp}
+\gzu@def@fontsize{liuhao}{7.5bp}
+\gzu@def@fontsize{xiaoliu}{6.5bp}
+\gzu@def@fontsize{qihao}{5.5bp}
+\gzu@def@fontsize{bahao}{5bp}
 \ctexset{
   punct      = quanjiao,
   autoindent = 2,
+}
+\RequirePackage{enumitem}
+\setlist{nosep}
+\RequirePackage{xurl}
+\urlstyle{same}
+\Urlmuskip=0mu plus 0.1mu
+\interfootnotelinepenalty=10000
+
+\ifgzu@footnote@numbering@page
+  \PassOptionsToPackage{perpage}{footmisc}%
+\fi
+\RequirePackage[hang]{footmisc}
+\ifgzu@footnote@numbering@global
+  \@removefromreset{footnote}{chapter}%
+\fi
+\newcommand\gzu@circled[1]{%
+  \ifnum#1>10\relax
+    \ClassWarningNoLine{gzuthesis}{More than ten circled footnotes on a page}%
+  \fi
+  \textcircled{#1}%
+}
+\ifgzu@footnote@style@circled
+  \renewcommand\thefootnote{\gzu@circled{\arabic{footnote}}}%
+  \renewcommand\thempfootnote{\gzu@circled{\arabic{mpfootnote}}}%
+\fi
+\def\footnoterule{%
+  \vskip-3\p@\hrule\@width0.3\textwidth\@height0.4\p@\vskip2.6\p@
+}
+\footnotemargin=13.5bp
+\long\def\@makefntext#1{%
+  \begingroup
+    \def\@makefnmark{\hbox{\normalfont\@thefnmark}}%
+    \xiaowu
+    \ifFN@hangfoot
+      \bgroup
+      \setbox\@tempboxa\hbox{%
+        \ifdim\footnotemargin>\z@
+          \hb@xt@\footnotemargin{\@makefnmark\hss}%
+        \else
+          \@makefnmark
+        \fi
+      }%
+      \leftmargin\wd\@tempboxa
+      \rightmargin\z@
+      \linewidth\columnwidth
+      \advance\linewidth-\leftmargin
+      \parshape\@ne\leftmargin\linewidth
+      \xiaowu
+      \@setpar{{\@@par}}%
+      \leavevmode
+      \llap{\box\@tempboxa}%
+      \parskip\hangfootparskip\relax
+      \parindent\hangfootparindent\relax
+    \else
+      \parindent1em\noindent
+      \hb@xt@\footnotemargin{\hss\@makefnmark}%
+    \fi
+    \footnotelayout#1%
+    \ifFN@hangfoot
+      \par\egroup
+    \fi
+  \endgroup
 }
 \ctexset{
   chapter = {
@@ -625,14 +1031,38 @@
   {\contentspush{\thecontentslabel\quad}}
   {}
   {\gzu@toc@leaders\thecontentspage}
+\PassOptionsToPackage{
+  linktoc=all,
+  bookmarksnumbered=true,
+  bookmarksopen=true,
+  bookmarksopenlevel=2,
+  bookmarksdepth=2,
+  unicode=true,
+  psdextra=true,
+  breaklinks=true,
+  plainpages=false,
+  pdfdisplaydoctitle=true,
+  hidelinks,
+}{hyperref}
 \AddToHook{package/hyperref/after}{%
   \hypersetup{
-    unicode = true,
-    bookmarksnumbered = true,
-    bookmarksdepth = 2,
-    bookmarksopen = true,
-    bookmarksopenlevel = 2,
-    pdfpagemode = UseOutlines,
+    pdflang=zh-CN,
+    pdfpagemode=UseOutlines,
+  }%
+  \pdfstringdefDisableCommands{%
+    \let\\\relax
+    \let\quad\relax
+    \let\qquad\relax
+    \let\hspace\@gobble
+  }%
+  \AddToHook{begindocument/before}{%
+    \hypersetup{
+      pdftitle={\gzu@title},
+      pdfauthor={\gzu@author},
+      pdfsubject={\gzu@discipline},
+      pdfkeywords={\gzu@keywords},
+      pdfcreator={GZUThesis v\gzuversion},
+    }%
   }%
 }
 
@@ -648,16 +1078,28 @@
 \renewcommand\listfigurename{插图清单}
 \renewcommand\listtablename{附表清单}
 
+\newcommand\gzu@apply@float@numbering{%
+  \ifgzu@figure@numbering@global
+    \@removefromreset{figure}{chapter}%
+  \fi
+  \ifgzu@table@numbering@global
+    \@removefromreset{table}{chapter}%
+  \fi
+}
+\gzu@apply@float@numbering
 \renewcommand\thefigure{%
-  \ifnum\c@chapter>\z@
-    \thechapter\gzu@figure@separator
+  \ifgzu@figure@numbering@chapter
+    \ifnum\c@chapter>\z@
+      \thechapter\gzu@figure@separator
+    \fi
   \fi
   \arabic{figure}%
 }
-
 \renewcommand\thetable{%
-  \ifnum\c@chapter>\z@
-    \thechapter\gzu@table@separator
+  \ifgzu@table@numbering@chapter
+    \ifnum\c@chapter>\z@
+      \thechapter\gzu@table@separator
+    \fi
   \fi
   \arabic{table}%
 }
@@ -751,6 +1193,14 @@
 \gzu@option@hook{table-cmidrule-width}{%
   \setlength\cmidrulewidth{\gzu@table@cmidrule@width}%
 }
+\def\fps@figure{htbp}
+\def\fps@table{htbp}
+\setlength\floatsep{12\p@ \@plus 2\p@ \@minus 2\p@}
+\setlength\textfloatsep{12\p@ \@plus 2\p@ \@minus 2\p@}
+\setlength\intextsep{12\p@ \@plus 2\p@ \@minus 2\p@}
+\setlength\@fptop{0bp \@plus 1.0fil}
+\setlength\@fpsep{12bp \@plus 2.0fil}
+\setlength\@fpbot{0bp \@plus 1.0fil}
 \renewcommand\textfraction{0.15}
 \renewcommand\topfraction{0.85}
 \renewcommand\bottomfraction{0.65}
@@ -786,119 +1236,201 @@
 \RequirePackage{amsmath}
 \RequirePackage{unicode-math}
 
-\newcommand\gzu@apply@math@style{%
-  \ifgzu@math@style@TeX
-    \unimathsetup{
-      math-style = TeX,
-      bold-style = TeX,
-      partial    = italic,
-    }%
-  \else
-    \unimathsetup{
-      math-style = ISO,
-      bold-style = ISO,
-      partial    = upright,
-    }%
+\newcommand\gzu@resolve@math@style{%
+  \ifgzu@math@font@auto
+    \gzu@set@key{math-font}{xits}%
+  \fi
+  \ifgzu@uppercase@greek@auto
+    \ifgzu@math@style@TeX
+      \gzu@set@key{uppercase-greek}{upright}%
+    \else
+      \gzu@set@key{uppercase-greek}{italic}%
+    \fi
+  \fi
+  \ifgzu@leq@auto
+    \ifgzu@math@style@GB
+      \gzu@set@key{less-than-or-equal}{slanted}%
+    \else
+      \gzu@set@key{less-than-or-equal}{horizontal}%
+    \fi
+  \fi
+  \ifgzu@integral@auto
+    \ifgzu@math@style@TeX
+      \gzu@set@key{integral}{slanted}%
+    \else
+      \gzu@set@key{integral}{upright}%
+    \fi
+  \fi
+  \ifgzu@integral@limits@auto
+    \ifgzu@math@style@ISO
+      \gzu@set@key{integral-limits}{true}%
+    \else
+      \gzu@set@key{integral-limits}{false}%
+    \fi
+  \fi
+  \ifgzu@partial@auto
+    \ifgzu@math@style@TeX
+      \gzu@set@key{partial}{italic}%
+    \else
+      \gzu@set@key{partial}{upright}%
+    \fi
+  \fi
+  \ifgzu@math@ellipsis@auto
+    \ifgzu@math@style@GB
+      \gzu@set@key{math-ellipsis}{centered}%
+    \else\ifgzu@math@style@ISO
+      \gzu@set@key{math-ellipsis}{lower}%
+    \else
+      \gzu@set@key{math-ellipsis}{AMS}%
+    \fi\fi
+  \fi
+  \ifgzu@real@part@auto
+    \ifgzu@math@style@TeX
+      \gzu@set@key{real-part}{fraktur}%
+    \else
+      \gzu@set@key{real-part}{roman}%
+    \fi
   \fi
 }
 
 \newcommand\gzu@apply@math@symbols{%
-  \ifgzu@math@style@GB
+  \ifgzu@uppercase@greek@upright
+    \unimathsetup{math-style=TeX}%
+  \else
+    \unimathsetup{math-style=ISO}%
+  \fi
+  \ifgzu@math@style@TeX
+    \unimathsetup{bold-style=TeX}%
+  \else
+    \unimathsetup{bold-style=ISO}%
+  \fi
+  \ifgzu@partial@upright
+    \unimathsetup{partial=upright}%
+  \else
+    \unimathsetup{partial=italic}%
+  \fi
+  \ifgzu@leq@slanted
     \let\le\leqslant
     \let\ge\geqslant
     \let\leq\leqslant
     \let\geq\geqslant
-    \addnolimits{\int\iint\iiint\oint}%
-    \def\mathellipsis{\mathinner{\unicodecdots}}%
   \else
-    \let\le\leq
-    \let\ge\geq
-    \ifgzu@math@style@ISO
-      \removenolimits{\int\iint\iiint\oint}%
-    \else
-      \addnolimits{\int\iint\iiint\oint}%
-    \fi
-    \def\mathellipsis{\mathinner{\unicodeellipsis}}%
+    \let\le\gzu@save@leq
+    \let\ge\gzu@save@geq
+    \let\leq\gzu@save@leq
+    \let\geq\gzu@save@geq
   \fi
-  \ifgzu@math@style@TeX\else
+  \ifgzu@integral@limits@true
+    \removenolimits{\int\iint\iiint\oint}%
+  \else
+    \addnolimits{\int\iint\iiint\oint}%
+  \fi
+  \ifgzu@math@ellipsis@centered
+    \def\mathellipsis{\mathinner{\unicodecdots}}%
+  \else\ifgzu@math@ellipsis@lower
+    \def\mathellipsis{\mathinner{\unicodeellipsis}}%
+  \else
+    \def\mathellipsis{\mathinner{\cdots}}%
+  \fi\fi
+  \ifgzu@real@part@roman
     \def\Re{\operatorname{Re}}%
     \def\Im{\operatorname{Im}}%
+  \else
+    \let\Re\gzu@save@Re
+    \let\Im\gzu@save@Im
   \fi
 }
-
+\newcommand\gzu@set@math@font@xits{%
+  \ifgzu@integral@upright
+    \setmathfont{XITSMath-Regular.otf}[BoldFont=XITSMath-Bold.otf,StylisticSet=8]%
+  \else
+    \setmathfont{XITSMath-Regular.otf}[BoldFont=XITSMath-Bold.otf]%
+  \fi
+  \setmathfont{XITSMath-Regular.otf}[
+    StylisticSet=1,range={cal,bfcal},
+  ]%
+}
+\newcommand\gzu@set@math@font@stix{%
+  \ifgzu@integral@upright
+    \setmathfont{STIXTwoMath-Regular.otf}[StylisticSet=8]%
+  \else
+    \setmathfont{STIXTwoMath-Regular.otf}%
+  \fi
+  \setmathfont{STIXTwoMath-Regular.otf}[
+    StylisticSet=1,range={scr,bfscr},
+  ]%
+}
+\newcommand\gzu@set@math@font@libertinus{%
+  \ifgzu@integral@slanted
+    \setmathfont{LibertinusMath-Regular.otf}[StylisticSet=8]%
+  \else
+    \setmathfont{LibertinusMath-Regular.otf}%
+  \fi
+}
+\newcommand\gzu@set@math@font@newcm{%
+  \ifgzu@integral@upright
+    \setmathfont{NewCMMath-Book.otf}[StylisticSet=2]%
+  \else
+    \setmathfont{NewCMMath-Book.otf}%
+  \fi
+  \setmathfont{NewCMMath-Book.otf}[
+    StylisticSet=1,range={scr,bfscr},
+  ]%
+}
+\newcommand\gzu@set@math@font@lm{%
+  \setmathfont{latinmodern-math.otf}%
+}
+\newcommand\gzu@set@math@font@none{}
+\newcommand\gzu@set@math@roman{%
+  \ifgzu@font@times
+    \setmathrm{Times New Roman}%
+  \else
+    \ifx\gzu@font\gzu@value@times@local
+      \setmathrm{times.ttf}[
+        Path=\gzu@windows@font@dir/,
+        BoldFont=timesbd.ttf,
+        ItalicFont=timesi.ttf,
+        BoldItalicFont=timesbi.ttf,
+      ]%
+    \fi
+  \fi
+}
+\newcommand\gzu@apply@math@settings{%
+  \gzu@resolve@math@style
+  \ifgzu@math@font@none\else
+    \@nameuse{gzu@set@math@font@\gzu@math@font}%
+    \gzu@set@math@roman
+  \fi
+}
 \AddToHook{begindocument/end}{%
+  % unicode-math 在 begindocument 中可能重新定义这些符号；
+  % 必须等其完成后才保存原始命令，不能在载入包时提前保存。
+  \let\gzu@save@leq\leq
+  \let\gzu@save@geq\geq
+  \let\gzu@save@Re\Re
+  \let\gzu@save@Im\Im
   \gzu@apply@math@symbols
 }
-
-\newcommand\gzu@apply@math@font{%
-  \ifgzu@math@font@lm
-    \def\gzu@math@load{%
-      \setmathfont{latinmodern-math.otf}%
-    }%
-  \else\ifgzu@math@font@stix
-    \ifgzu@math@style@TeX
-      \def\gzu@math@load{%
-        \setmathfont{STIXTwoMath-Regular.otf}%
-      }%
-    \else
-      \def\gzu@math@load{%
-        \setmathfont[
-          StylisticSet = 8
-        ]{STIXTwoMath-Regular.otf}%
-      }%
-    \fi
-  \else\ifgzu@math@font@xits
-    \ifgzu@math@style@TeX
-      \def\gzu@math@load{%
-        \setmathfont[
-          BoldFont = XITSMath-Bold.otf
-        ]{XITSMath-Regular.otf}%
-      }%
-    \else
-      \def\gzu@math@load{%
-        \setmathfont[
-          BoldFont = XITSMath-Bold.otf,
-          StylisticSet = 8
-        ]{XITSMath-Regular.otf}%
-      }%
-    \fi
-  \else\ifgzu@math@font@libertinus
-    \ifgzu@math@style@TeX
-      \def\gzu@math@load{%
-        \setmathfont[
-          StylisticSet = 8
-        ]{LibertinusMath-Regular.otf}%
-      }%
-    \else
-      \def\gzu@math@load{%
-        \setmathfont{LibertinusMath-Regular.otf}%
-      }%
-    \fi
-  \fi\fi\fi\fi
-
-  % 在全部条件结束后加载数学字体
-  \gzu@math@load
-  % STIX 模式下采用传统衬线黑板粗体
-  \ifgzu@math@font@stix
-    \setmathfont{latinmodern-math.otf}[range=bb]%
-  \fi
-}
-
-\newcommand\gzu@apply@math@settings{%
-  \gzu@apply@math@style
-  \gzu@apply@math@font
-}
-
 \AddToHook{begindocument/before}{%
   \gzu@apply@math@settings
-  \gzu@option@classonly{math-style}%
   \gzu@option@classonly{math-font}%
-}
-
-
+  \gzu@option@classonly{math-style}%
+  \gzu@option@classonly{uppercase-greek}%
+  \gzu@option@classonly{less-than-or-equal}%
+  \gzu@option@classonly{integral}%
+  \gzu@option@classonly{integral-limits}%
+  \gzu@option@classonly{partial}%
+  \gzu@option@classonly{math-ellipsis}%
+  \gzu@option@classonly{real-part}%
+}%
+\ifgzu@equation@numbering@global
+  \@removefromreset{equation}{chapter}%
+\fi
 \renewcommand\theequation{%
-  \ifnum\c@chapter>\z@
-    \thechapter\gzu@equation@separator
+  \ifgzu@equation@numbering@chapter
+    \ifnum\c@chapter>\z@
+      \thechapter\gzu@equation@separator
+    \fi
   \fi
   \arabic{equation}%
 }
@@ -907,17 +1439,28 @@
   \let\gzu@table@separator\gzu@number@separator
   \let\gzu@equation@separator\gzu@number@separator
 }
-
-\gzu@option@hook{number-separator}{%
+\gzu@option@hook{number-separator}{\gzu@set@number@separator}
+\def\gzu@default@separator{.}
+\ifx\gzu@number@separator\gzu@default@separator\else
   \gzu@set@number@separator
+\fi
+
+\newcommand\gzu@put@parentheses[1]{%
+  \ifgzu@eqn@paren@style@full
+    \kern0pt（#1）%
+  \else
+    (#1)%
+  \fi
 }
 \def\tagform@#1{%
-  \maketag@@@{%
-    \kern0pt（\ignorespaces#1\unskip\@@italiccorr）%
-  }%
+  \maketag@@@{\gzu@put@parentheses{\ignorespaces#1\unskip\@@italiccorr}}%
+}
+\renewcommand\eqref[1]{%
+  \ifgzu@eqn@paren@style@full\unskip\fi
+  \textup{\tagform@{\ref{#1}}}%
+  \ifgzu@eqn@paren@style@full\ignorespaces\fi
 }
 \allowdisplaybreaks[4]
-
 \RequirePackage{amsthm}
 \newcommand\gzu@theorem@separator{：}
 
@@ -1104,7 +1647,7 @@
 }
 \AddToHook{package/biblatex/after}{%
   % 贵州大学参考文献表列出全部作者
-  \ExecuteBibliographyOptions{maxbibnames=999}%
+  \ExecuteBibliographyOptions{maxbibnames=999,defernumbers=true}%
 
   % 正文参考文献标题
   \defbibheading{bibliography}[\bibname]{%
@@ -1132,7 +1675,7 @@
     \setlength\biblabelsep{\gzu@bib@label@sep}%
   }{}%
 }
-
+\newcounter{gzu@appendix@bib@unit}
 \newif\ifgzu@appendix@bib@printed
 
 \newenvironment{gzuappendixrefs}{%
@@ -1145,6 +1688,9 @@
   \fi
 
   \gzu@appendix@bib@printedfalse
+  \stepcounter{gzu@appendix@bib@unit}%
+  \edef\gzu@appendix@bib@namespace{%
+    gzuappendix.\arabic{gzu@appendix@bib@unit}.}%
 
   \@ifpackageloaded{biblatex}{%
     % BibLaTeX 使用独立 refsection
@@ -1153,11 +1699,13 @@
       \begin{refcontext}[labelprefix=\thechapter.]%
     \fi
   }{%
-    % BibTeX 使用独立 bibunit
+    % 不覆盖 natbib/hyperref 的实现，只为当前 bibunit 隔离 key 与锚点。
     \@ifpackageloaded{bibunits}{%
+      \let\@extra@binfo\gzu@appendix@bib@namespace
+      \let\@extra@b@citeb\gzu@appendix@bib@namespace
       \begin{bibunit}[\gzu@bib@bst]%
-      \def\@bibunitname{%
-        \jobname-appendix-\@Alph\c@chapter
+      \edef\@bibunitname{%
+        \jobname-appendix-\arabic{gzu@appendix@bib@unit}%
       }%
       \ifgzu@bib@appendix@prefix@true
         \def\citenumfont##1{\thechapter.##1}%
@@ -1229,46 +1777,66 @@
   }%
 }
 \RequirePackage{tikz}
-
-\IfFileExists{/mnt/c/Windows/Fonts/simsun.ttc}{%
-  \newCJKfontfamily\gzu@cover@song[
-    Path=/mnt/c/Windows/Fonts/
-  ]{simsun.ttc}%
-}{%
-  \newCJKfontfamily\gzu@cover@song{FandolSong-Regular.otf}%
-}
-\IfFileExists{/mnt/c/Windows/Fonts/simhei.ttf}{%
-  \newCJKfontfamily\gzu@cover@hei[
-    Path=/mnt/c/Windows/Fonts/
-  ]{simhei.ttf}%
-}{%
-  \newCJKfontfamily\gzu@cover@hei{FandolHei-Regular.otf}%
-}
-\IfFileExists{/mnt/c/Windows/Fonts/times.ttf}{%
-  \newfontfamily\gzu@cover@times[
-    Path=/mnt/c/Windows/Fonts/,
-    UprightFont=times.ttf,
-    BoldFont=timesbd.ttf,
-    ItalicFont=timesi.ttf,
-    BoldItalicFont=timesbi.ttf
-  ]{times.ttf}%
-}{%
-  \IfFileExists{texgyretermes-regular.otf}{%
-    \newfontfamily\gzu@cover@times{texgyretermes-regular.otf}[
-      BoldFont=texgyretermes-bold.otf,
-      ItalicFont=texgyretermes-italic.otf,
-      BoldItalicFont=texgyretermes-bolditalic.otf
-    ]%
-  }{%
-    \newfontfamily\gzu@cover@times{Liberation Serif}%
-  }%
-}
-\IfFileExists{/mnt/c/Windows/Fonts/STXINGKA.TTF}{%
-  \newCJKfontfamily\gzu@cover@schoolfont[
-    Path=/mnt/c/Windows/Fonts/
-  ]{STXINGKA.TTF}%
-}{%
-  \newCJKfontfamily\gzu@cover@schoolfont{FandolKai-Regular.otf}%
+\newif\ifgzu@cover@fonts@ready
+\gzu@cover@fonts@readyfalse
+\newcommand\gzu@init@cover@fonts{%
+  \ifgzu@cover@fonts@ready\else
+    % 宋体
+    \IfFileExists{\gzu@windows@font@dir/simsun.ttc}{%
+      \newCJKfontfamily\gzu@cover@song[
+        Path=\gzu@windows@font@dir/,
+      ]{simsun.ttc}%
+    }{%
+      \IfFileExists{\gzu@windows@font@dir/Simsun.ttc}{%
+        \newCJKfontfamily\gzu@cover@song[
+          Path=\gzu@windows@font@dir/,
+        ]{Simsun.ttc}%
+      }{%
+        \gzu@font@require{SimSun}%
+        \newCJKfontfamily\gzu@cover@song{SimSun}%
+      }%
+    }%
+    % 黑体
+    \IfFileExists{\gzu@windows@font@dir/simhei.ttf}{%
+      \newCJKfontfamily\gzu@cover@hei[
+        Path=\gzu@windows@font@dir/,
+      ]{simhei.ttf}%
+    }{%
+      \gzu@font@require{SimHei}%
+      \newCJKfontfamily\gzu@cover@hei{SimHei}%
+    }%
+    % 西文封面字体
+    \IfFileExists{\gzu@windows@font@dir/times.ttf}{%
+      \gzu@font@require@file{timesbd.ttf}%
+      \gzu@font@require@file{timesi.ttf}%
+      \gzu@font@require@file{timesbi.ttf}%
+      \newfontfamily\gzu@cover@times[
+        Path=\gzu@windows@font@dir/,
+        BoldFont=timesbd.ttf,
+        ItalicFont=timesi.ttf,
+        BoldItalicFont=timesbi.ttf,
+      ]{times.ttf}%
+    }{%
+      \gzu@font@require{Times New Roman}%
+      \newfontfamily\gzu@cover@times{Times New Roman}%
+    }%
+    % 学校名专用华文行楷
+    \IfFileExists{\gzu@windows@font@dir/STXINGKA.TTF}{%
+      \newCJKfontfamily\gzu@cover@schoolfont[
+        Path=\gzu@windows@font@dir/,
+      ]{STXINGKA.TTF}%
+    }{%
+      \IfFileExists{\gzu@windows@font@dir/stxingka.ttf}{%
+        \newCJKfontfamily\gzu@cover@schoolfont[
+          Path=\gzu@windows@font@dir/,
+        ]{stxingka.ttf}%
+      }{%
+        \gzu@font@require{STXingkai}%
+        \newCJKfontfamily\gzu@cover@schoolfont{STXingkai}%
+      }%
+    }%
+    \global\gzu@cover@fonts@readytrue
+  \fi
 }
 \newlength\gzu@cover@left@labelwidth
 \newlength\gzu@cover@left@tmpwidth
@@ -1489,6 +2057,7 @@
   \gzu@date\@nil
 }
 \renewcommand\maketitle{%
+  \gzu@init@cover@fonts
   \begin{titlepage}%
     \thispagestyle{empty}%
     \null
@@ -1701,7 +2270,17 @@
 }
 \gzu@option@classonly{degree}
 \gzu@option@classonly{degree-type}
+
 \gzu@option@classonly{fontset}
+\gzu@option@classonly{font}
+\gzu@option@classonly{cjk-font}
+\gzu@option@classonly{windows-font-dir}
+\gzu@option@classonly{footnote-numbering}
+\gzu@option@classonly{footnote-style}
+\gzu@option@classonly{figure-numbering}
+\gzu@option@classonly{table-numbering}
+\gzu@option@classonly{equation-numbering}
+
 \gzu@options@readytrue
 
 \DeclareRobustCommand\cs[1]{\texttt{\char`\\#1}}
