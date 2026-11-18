@@ -25,13 +25,15 @@
 % 封面
 \maketitle
 
-% 学位论文指导小组、公开评阅人和答辩委员会名单
-% \input{data/committee}
+% 答辩委员会名单
+\input{data/committee}
 
 % 使用授权的说明
 % \copyrightpage
 % 将签字扫描后授权文件 scan-copyright.pdf 替换原始页面
 % \copyrightpage[file=scan-copyright.pdf]
+
+\statement
 
 \frontmatter
 \input{data/abstracts}
@@ -55,6 +57,7 @@
 \input{data/chap03}
 \input{data/chap04}
 \input{data/chap05}
+\input{data/chap-font-test}
 
 % 参考文献
 \bibliography{ref/refs}  % 参考文献使用 BibTeX 编译

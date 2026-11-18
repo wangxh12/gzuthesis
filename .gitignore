@@ -4,6 +4,7 @@ requirements/
 ## vscode
 .vscode/
 versions
+*-BSTcontrol.bib
 
 ## distribution files
 .DS_Store

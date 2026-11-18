@@ -1,0 +1,138 @@
+\chapter{正文字体测试}
+\label{chap:font-test}
+
+\section{中文与英文混排测试}
+
+无人机（Unmanned Aerial Vehicle, UAV）是一种能够通过自主控制
+或远程操纵完成飞行任务的航空器。
+随着人工智能（Artificial Intelligence, AI）和
+深度学习（Deep Learning, DL）技术的发展，
+无人机飞行数据异常检测（UAV Flight Data Anomaly Detection）
+逐渐成为智能健康监测领域的重要研究方向。
+
+目前，Transformer、PatchTST、TimesNet、DLinear 和
+Time Series Foundation Model 等模型已经广泛应用于时间序列分析任务。
+这些方法能够从多变量时间序列（Multivariate Time Series）
+中提取复杂的时序依赖关系（Temporal Dependencies）
+和变量间关联关系（Cross-Variate Correlations）。
+
+\section{纯英文正文测试}
+
+The quick brown fox jumps over the lazy dog.
+ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz.
+0123456789.
+
+Time series anomaly detection plays a crucial role in ensuring
+the reliability and safety of unmanned aerial vehicles.
+Existing methods typically rely on historical flight data
+collected from specific UAV platforms to train detection models.
+However, such platform-dependent approaches often exhibit
+limited generalization capabilities when deployed on previously
+unseen UAV systems.
+
+To address these limitations, recent studies have investigated
+self-supervised learning and time series foundation models.
+By learning generalizable temporal representations from
+large-scale heterogeneous datasets, these models provide
+a promising solution for cross-platform anomaly detection.
+
+\section{英文字符与数字测试}
+
+大写字母：
+ABCDEFGHIJKLMNOPQRSTUVWXYZ。
+
+小写字母：
+abcdefghijklmnopqrstuvwxyz。
+
+阿拉伯数字：
+0123456789。
+
+英文缩写：
+UAV、NASA、IEEE、CNN、LSTM、GRU、MLP、FFN、RoPE。
+
+模型名称：
+Transformer、PatchTST、TimesNet、DLinear、iTransformer、
+TimeMixer、TimeMoE、MOMENT。
+
+英文与数字混排：
+UAV-ADFM、GPT-4、ResNet-50、IEEE 2026、Version 2.5。
+
+\section{英文粗体与斜体测试}
+
+普通字体（Regular）：
+
+The quick brown fox jumps over the lazy dog.
+
+粗体（Bold）：
+
+\textbf{The quick brown fox jumps over the lazy dog.}
+
+斜体（Italic）：
+
+\textit{The quick brown fox jumps over the lazy dog.}
+
+粗斜体（Bold Italic）：
+
+\textbf{\textit{The quick brown fox jumps over the lazy dog.}}
+
+\section{Times New Roman 字体对照测试}
+
+以下两段英文使用完全相同的内容，
+第一段采用模板默认的正文英文字体，
+第二段显式指定 Times New Roman。
+
+\subsection{模板默认英文字体}
+
+The quick brown fox jumps over the lazy dog.
+Time Series Foundation Models for UAV Anomaly Detection.
+ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789.
+
+\subsection{显式指定 Times New Roman}
+
+\begingroup
+\fontspec{Times New Roman}
+
+The quick brown fox jumps over the lazy dog.
+Time Series Foundation Models for UAV Anomaly Detection.
+ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789.
+
+\par
+\endgroup
+
+\section{数学符号与正文对照}
+
+在多变量时间序列异常检测任务中，
+设输入序列为 $X \in \mathbb{R}^{T \times C}$，
+其中 $T$ 表示时间序列长度，
+$C$ 表示变量数量。
+
+The input sequence contains $T$ time steps and $C$ variables.
+The reconstruction error is calculated as follows:
+\begin{equation}
+    \mathcal{L}
+    = \frac{1}{TC}
+    \sum_{t=1}^{T}
+    \sum_{c=1}^{C}
+    (x_{t,c}-\hat{x}_{t,c})^2.
+\end{equation}
+
+其中，$x_{t,c}$ 和 $\hat{x}_{t,c}$ 分别表示
+原始观测值与模型重构值。
+
+
+\subsection{双线体数学符号测试}
+
+实数集：
+\[
+  \mathbb{R},\qquad
+  \mathbb{R}^{m\times n}
+\]
+
+常见数集：
+\[
+  \mathbb{N},\quad
+  \mathbb{Z},\quad
+  \mathbb{Q},\quad
+  \mathbb{R},\quad
+  \mathbb{C}
+\]

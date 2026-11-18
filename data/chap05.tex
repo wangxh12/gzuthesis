@@ -406,4 +406,354 @@
 
 在式\eqref{eq:test-long-derive-a}—\eqref{eq:test-long-derive-e}之间，应检查所有带编号行的基线对齐、未编号行的间距、矩阵转置上标与负指数的高度。若上述公式整体无法容纳在一页中，应观察模板对跨页的具体策略是否满足论文规范，并避免通过任意缩小公式字号来掩盖潜在的版面问题。
 
+
+
+
+
+\section{数学符号与字体测试}
+\label{sec:formula-symbols}
+
+本节集中测试数学符号在学位论文模板中的显示效果，
+重点检查不同数学字母体、希腊字母、集合符号、
+关系运算符、逻辑符号、箭头及特殊标记的字形与排版。
+测试时应关注数学符号是否存在缺字、字体替换、
+笔画粗细不一致、上下标位置异常以及符号间距不协调等问题。
+
+\subsection{数学字母体与字体样式}
+\label{subsec:symbol-fonts}
+
+数学模式下的字母可根据语义采用不同的字体样式。
+例如，普通变量通常使用数学斜体，向量和矩阵可采用粗体，
+集合可采用双线体，函数空间可采用花体。
+不同字母体应具有清晰的视觉区分。
+
+首先测试常规数学斜体与直立体：
+\begin{equation}
+  \begin{aligned}
+    \text{数学斜体：}\quad
+      & ABCDEFGHIJKLMNOPQRSTUVWXYZ,\\
+      & abcdefghijklmnopqrstuvwxyz,\\
+    \text{数学直立体：}\quad
+      & \mathrm{ABCDEFGHIJKLMNOPQRSTUVWXYZ},\\
+      & \mathrm{abcdefghijklmnopqrstuvwxyz}.
+  \end{aligned}
+\end{equation}
+
+下面比较常见的数学字体命令：
+\begin{equation}
+  \label{eq:test-symbol-alphabets}
+  \begin{aligned}
+    \text{默认数学字体：}\quad
+      & ABCXYZ,\quad abcxyz,\\
+    \text{直立体：}\quad
+      & \mathrm{ABCXYZ},\quad \mathrm{abcxyz},\\
+    \text{粗体：}\quad
+      & \mathbf{ABCXYZ},\quad \mathbf{abcxyz},\\
+    \text{无衬线体：}\quad
+      & \mathsf{ABCXYZ},\quad \mathsf{abcxyz},\\
+    \text{等宽体：}\quad
+      & \mathtt{ABCXYZ},\quad \mathtt{abcxyz},\\
+    \text{花体：}\quad
+      & \mathcal{ABCXYZ},\\
+    \text{双线体：}\quad
+      & \mathbb{ABCXYZ},\\
+    \text{哥特体：}\quad
+      & \mathfrak{ABCXYZ},\quad \mathfrak{abcxyz}.
+  \end{aligned}
+\end{equation}
+
+对于实数集符号，重点比较不同字体命令的输出。
+下式中的各个字母均表示实数集符号的字体测试，
+并不意味着这些字形在数学语义上可以相互替代：
+\begin{equation}
+  \label{eq:test-symbol-real}
+  \begin{aligned}
+    \text{普通斜体：}\quad & R,\\
+    \text{直立体：}\quad & \mathrm{R},\\
+    \text{数学粗体：}\quad & \mathbf{R},\\
+    \text{双线体：}\quad & \mathbb{R},\\
+    \text{花体：}\quad & \mathcal{R},\\
+    \text{哥特体：}\quad & \mathfrak{R}.
+  \end{aligned}
+\end{equation}
+
+如果模板加载了 \texttt{dsfont} 宏包，
+还可以测试另一种双线体字形：
+\ifdefined\mathds
+\begin{equation}
+  \label{eq:test-symbol-dsfont}
+  \mathbb{R},\qquad
+  \mathds{R},\qquad
+  \mathbb{R}^{m\times n},\qquad
+  \mathds{R}^{m\times n}.
+\end{equation}
+\else
+当前未定义 \texttt{\textbackslash mathds} 命令，
+因此跳过 \texttt{dsfont} 字体测试。
+如需启用，可在导言区加载 \texttt{dsfont} 宏包。
+\fi
+
+常见数集采用以下符号表示：
+\begin{equation}
+  \label{eq:test-symbol-number-sets}
+  \mathbb{N},\qquad
+  \mathbb{Z},\qquad
+  \mathbb{Q},\qquad
+  \mathbb{R},\qquad
+  \mathbb{C}.
+\end{equation}
+
+结合时间序列建模中的常用记号，
+进一步测试不同字母体与上下标的组合：
+\begin{equation}
+  \label{eq:test-symbol-model}
+  \begin{aligned}
+    &\boldsymbol{X}\in\mathbb{R}^{T\times C},\\
+    &\boldsymbol{x}_t\in\mathbb{R}^{C},\\
+    &\mathcal{X}=\{\boldsymbol{X}_1,\ldots,\boldsymbol{X}_N\},\\
+    &\mathcal{L}_{\mathrm{rec}}
+      =\frac{1}{TC}
+       \left\|\boldsymbol{X}-\widehat{\boldsymbol{X}}\right\|_F^2.
+  \end{aligned}
+\end{equation}
+
+\subsection{希腊字母与粗体符号}
+\label{subsec:symbol-greek}
+
+希腊字母广泛用于表示模型参数、统计量、
+角度以及物理量。首先测试常见的小写希腊字母：
+\begin{equation}
+  \begin{gathered}
+    \alpha,\ \beta,\ \gamma,\ \delta,\ \epsilon,\ \zeta,\ \eta,\\
+    \theta,\ \iota,\ \kappa,\ \lambda,\ \mu,\ \nu,\ \xi,\\
+    \pi,\ \rho,\ \sigma,\ \tau,\ \upsilon,\ \phi,\ \chi,\\
+    \psi,\ \omega.
+  \end{gathered}
+\end{equation}
+
+测试大写希腊字母：
+\begin{equation}
+  \Gamma,\ \Delta,\ \Theta,\ \Lambda,\ \Xi,\ \Pi,\ 
+  \Sigma,\ \Upsilon,\ \Phi,\ \Psi,\ \Omega.
+\end{equation}
+
+部分希腊字母具有不同字形，应检查其视觉区别：
+\begin{equation}
+  \label{eq:test-symbol-greek-variant}
+  \begin{aligned}
+    &\epsilon,\ \varepsilon,\qquad
+     \theta,\ \vartheta,\qquad
+     \pi,\ \varpi,\\
+    &\rho,\ \varrho,\qquad
+     \sigma,\ \varsigma,\qquad
+     \phi,\ \varphi.
+  \end{aligned}
+\end{equation}
+
+进一步测试粗体希腊字母、上下标与重音组合：
+\begin{equation}
+  \label{eq:test-symbol-bold-greek}
+  \begin{aligned}
+    &\alpha,\quad \boldsymbol{\alpha},\qquad
+     \beta,\quad \boldsymbol{\beta},\\
+    &\theta,\quad \boldsymbol{\theta},\qquad
+     \mu,\quad \boldsymbol{\mu},\\
+    &\Sigma,\quad \boldsymbol{\Sigma},\qquad
+     \Omega,\quad \boldsymbol{\Omega},\\
+    &\theta_i^{(k)},\quad
+     \hat{\theta},\quad
+     \widehat{\boldsymbol{\theta}},\quad
+     \boldsymbol{\theta}^{\star}.
+  \end{aligned}
+\end{equation}
+
+\subsection{集合符号与关系运算符}
+\label{subsec:symbol-relations}
+
+集合论与线性代数中包含大量具有相似字形的符号，
+应检查符号之间的区别以及二元关系两侧的间距。
+
+集合及其运算符测试如下：
+\begin{equation}
+  \label{eq:test-symbol-set}
+  \begin{gathered}
+    \in,\ \notin,\ \ni,\ \subset,\ \supset,\ 
+    \subseteq,\ \supseteq,\\
+    \nsubseteq,\ \subsetneq,\ \cup,\ \cap,\ 
+    \bigcup,\ \bigcap,\\
+    \emptyset,\ \varnothing,\ \setminus.
+  \end{gathered}
+\end{equation}
+
+使用具有实际数学语义的表达式进行组合测试：
+\begin{equation}
+  \label{eq:test-symbol-set-expression}
+  \begin{aligned}
+    &x\in A,\qquad x\notin B,\\
+    &A\subseteq B,\qquad A\subsetneq B,\\
+    &A\cup B,\qquad A\cap B,\qquad A\setminus B,\\
+    &\bigcup_{i=1}^{n}A_i,\qquad
+     \bigcap_{i=1}^{n}A_i.
+  \end{aligned}
+\end{equation}
+
+比较关系符号及其否定形式：
+\begin{equation}
+  \label{eq:test-symbol-relations}
+  \begin{gathered}
+    =,\ \neq,\ <,\ >,\ \le,\ \ge,\ \ll,\ \gg,\\
+    \approx,\ \sim,\ \simeq,\ \cong,\ \equiv,\ \propto,\\
+    \prec,\ \succ,\ \preceq,\ \succeq,\\
+    \perp,\ \parallel,\ \nparallel.
+  \end{gathered}
+\end{equation}
+
+常见的代数运算符测试如下：
+\begin{equation}
+  \label{eq:test-symbol-binary}
+  \begin{gathered}
+    +,\ -,\ \pm,\ \mp,\ \times,\ \div,\ \cdot,\\
+    \ast,\ \star,\ \circ,\ \bullet,\ \oplus,\ \ominus,\\
+    \otimes,\ \oslash,\ \odot,\ \bigoplus,\ \bigotimes.
+  \end{gathered}
+\end{equation}
+
+\subsection{逻辑符号与箭头}
+\label{subsec:symbol-logic}
+
+逻辑符号常用于数学证明、条件约束和算法描述。
+下面分别测试基本逻辑关系与量词：
+\begin{equation}
+  \label{eq:test-symbol-logic}
+  \begin{gathered}
+    \forall,\ \exists,\ \nexists,\ \neg,\ 
+    \land,\ \lor,\\
+    \implies,\ \impliedby,\ \iff,\ 
+    \therefore,\ \because.
+  \end{gathered}
+\end{equation}
+
+组合表达式用于检查符号间距：
+\begin{equation}
+  \label{eq:test-symbol-logic-expression}
+  \begin{aligned}
+    &\forall x\in\mathbb{R},\quad x^2\ge 0,\\
+    &x>0\implies x^2>0,\\
+    &x=0\iff x^2=0,\\
+    &A\subseteq B\land B\subseteq C
+      \implies A\subseteq C.
+  \end{aligned}
+\end{equation}
+
+箭头符号测试如下：
+\begin{equation}
+  \label{eq:test-symbol-arrows}
+  \begin{gathered}
+    \leftarrow,\ \rightarrow,\ \leftrightarrow,\\
+    \Leftarrow,\ \Rightarrow,\ \Leftrightarrow,\\
+    \longleftarrow,\ \longrightarrow,\ \longleftrightarrow,\\
+    \mapsto,\ \longmapsto,\ \hookrightarrow,\\
+    \uparrow,\ \downarrow,\ \updownarrow,\\
+    \nearrow,\ \searrow,\ \swarrow,\ \nwarrow.
+  \end{gathered}
+\end{equation}
+
+带有文字和数学标记的箭头用于测试
+箭头长度、上下标位置及对齐效果：
+\begin{equation}
+  \label{eq:test-symbol-arrow-label}
+  \begin{aligned}
+    \boldsymbol{x}^{(k)}
+      &\xrightarrow{k\to k+1}
+       \boldsymbol{x}^{(k+1)},\\
+    \boldsymbol{\theta}_0
+      &\xrightarrow[\text{参数更新}]{\text{优化算法}}
+       \boldsymbol{\theta}^{\star}.
+  \end{aligned}
+\end{equation}
+
+\subsection{微积分与特殊数学符号}
+\label{subsec:symbol-calculus}
+
+微积分、概率统计以及工程建模中还涉及多种特殊符号，
+需要检查其字形、大小和垂直位置。
+
+基本微积分符号测试如下：
+\begin{equation}
+  \label{eq:test-symbol-calculus}
+  \begin{gathered}
+    \partial,\ \nabla,\ \infty,\ \prime,\ \int,\ \oint,\\
+    \sum,\ \prod,\ \coprod,\ \lim,\ 
+    \sup,\ \inf,\ \max,\ \min.
+  \end{gathered}
+\end{equation}
+
+几何与其他特殊符号测试如下：
+\begin{equation}
+  \label{eq:test-symbol-special}
+  \begin{gathered}
+    \angle,\ \triangle,\ \mdlgwhtsquare,\ \diamond,\\
+    \triangleleft,\ \triangleright,\ \top,\ \bot,\\
+    \ell,\ \hbar,\ \Re,\ \Im,\ \aleph,\\
+    \dagger,\ \ddagger,\ \S,\ \P.
+  \end{gathered}
+\end{equation}
+
+进一步比较普通变量与带重音的数学变量：
+\begin{equation}
+  \label{eq:test-symbol-accents}
+  \begin{aligned}
+    &x,\quad \hat{x},\quad \widehat{x},\\
+    &x,\quad \tilde{x},\quad \widetilde{x},\\
+    &x,\quad \bar{x},\quad \overline{x},\\
+    &x,\quad \dot{x},\quad \ddot{x},\\
+    &\boldsymbol{x},\quad \vec{x},\quad
+      \hat{\boldsymbol{x}},\\
+    &\boldsymbol{X},\quad
+      \widehat{\boldsymbol{X}},\quad
+      \widetilde{\boldsymbol{X}}.
+  \end{aligned}
+\end{equation}
+
+最后，将常用符号组合到时间序列异常检测的数学表达式中，
+用于检查数学字体在实际公式中的协调性：
+\begin{equation}
+  \label{eq:test-symbol-anomaly}
+  \begin{aligned}
+    \boldsymbol{X}
+      &\in\mathbb{R}^{T\times C},\\
+    \widehat{\boldsymbol{X}}
+      &=f_{\boldsymbol{\theta}}(\boldsymbol{X}),\\
+    e_t
+      &=\frac{1}{C}
+        \sum_{c=1}^{C}
+        \left(x_{t,c}-\hat{x}_{t,c}\right)^2,\\
+    \hat{y}_t
+      &=
+      \begin{cases}
+        1, & e_t>\tau,\\
+        0, & e_t\le\tau.
+      \end{cases}
+  \end{aligned}
+\end{equation}
+
+
+指数恒等式
+
+\begin{equation}
+  e^{i\pi}+1=0
+\end{equation}
+
+
+本节测试完成后，应重点检查不同数学字母体是否
+正确加载，双线体和花体是否符合预期，
+粗体希腊字母是否存在字体替换，
+以及复杂数学符号是否具有一致的字重和清晰的字形。
+
+
+
+
+
+
+
 本章的测试重点不在于数学推导本身，而在于不同公式环境与论文整体排版规则能否协同工作。完成测试后，应检查编译日志是否出现 \texttt{Overfull \textbackslash hbox}、\texttt{Underfull \textbackslash hbox}、未定义引用或字体替换等警告，再结合输出 PDF 逐页检查公式的实际视觉效果。

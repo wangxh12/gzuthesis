@@ -1,42 +1,48 @@
-\begin{committee}[name={学位论文指导小组、公开评阅人和答辩委员会名单}]
-
-  \newcolumntype{C}[1]{@{}>{\centering\arraybackslash}p{#1}}
-
-  \section*{指导小组名单}
-
-  \begin{center}
-    \begin{tabular}{C{3cm}C{3cm}C{9cm}@{}}
-      李XX & 教授     & 清华大学 \\
-      王XX & 副教授   & 清华大学 \\
-      张XX & 助理教授 & 清华大学 \\
-    \end{tabular}
-  \end{center}
+% 参数	默认值	控制内容
+% body-width	0.86\textwidth	整个红框内的信息区域宽度
+% line-height	24bp	正文信息的基线间距
+% row-sep	2mm	委员、秘书、时间、地点之间的附加间距
+% role-width	4\ccwd	右侧主席/委员的预留宽度
+% role-gap	0.5\ccwd	下划线终点与角色之间的距离
+% name-align	column	姓名采用统一中心线还是逐条居中, line
+% name-position	0.63	统一姓名中心线距信息区域左端的比例，仅 column 模式使用
 
 
-  \section*{公开评阅人名单}
 
-  \begin{center}
-    \begin{tabular}{C{3cm}C{3cm}C{9cm}@{}}
-      刘XX & 教授   & 清华大学                    \\
-      陈XX & 副教授 & XXXX大学                    \\
-      杨XX & 研究员 & 中国XXXX科学院XXXXXXX研究所 \\
-    \end{tabular}
-  \end{center}
+% 模式	行为
+% name-align=column（默认）	所有姓名的中心在同一竖直线上，适合你提供的 Word 样式
+% name-align=line	每个姓名严格位于自己所在横线的正中，但不同姓名可能不在同一竖直线上
+
+%
+% name-align = column,
+% name-position = 0.65,
+% 表示所有姓名的中心位置设在信息区域宽度的 65% 处，姓名整体比默认位置略靠右。所有名字仍然处在同一竖直线上。
 
 
-  \section*{答辩委员会名单}
 
-  \begin{center}
-    \begin{tabular}{C{2.75cm}C{2.98cm}C{4.63cm}C{4.63cm}@{}}
-      主席 & 赵XX                  & 教授                    & 清华大学       \\
-      委员 & 刘XX                  & 教授                    & 清华大学       \\
-          & \multirow{2}{*}{杨XX} & \multirow{2}{*}{研究员} & 中国XXXX科学院 \\
-          &                       &                         & XXXXXXX研究所  \\
-          & 黄XX                  & 教授                    & XXXX大学       \\
-          & 周XX                  & 副教授                  & XXXX大学       \\
-      秘书 & 吴XX                  & 助理研究员              & 清华大学       \\
-    \end{tabular}
-  \end{center}
+
+\begin{committee}[
+  name = {硕士学位论文答辩委员会名单},
+  body-width = 0.8\textwidth,
+  line-height = 34bp,
+  row-sep = 0mm,
+  name-align = column,
+  name-position = 0.63,
+  role-gap = 0.5\ccwd
+]
+
+\committeemember{XXXX大学XXX教授}{xxx}{主席}
+\committeemember{XXXX大学XXX教授}{xxx}{委员}
+\committeemember{贵州大学教授/博导}{xxx}{委员}
+\committeemember{贵州大学教授/博导}{xxx}{委员}
+
+\committeesecretary[
+  before-name = 1\ccwd,
+  before-title = 1\ccwd
+]{XXX}{副教授/博士研究生}
+
+\committeedate{XXXX年XX月XX日}
+\committeeplace{贵州大学西校区崇厚楼XXXX}
 
 \end{committee}
 

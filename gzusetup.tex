@@ -18,8 +18,8 @@
   % 标题
   %   可使用“\\”命令手动控制换行
   %
-  title  = {贵州大学学位论文 \LaTeX{} 模板},
-  title* = {An Introduction to \LaTeX{} Thesis Template of \\ Guizhou
+  title  = {贵州大学学位论文 \LaTeX{} 模板v\version},
+  title* = {An Introduction to \LaTeX{} Thesis Template of Guizhou\\
             University v\version},
   %
   % 学科门类
@@ -67,23 +67,22 @@
   %
   author     = {张三},
   author*    = {Zhang San},
-  student-id = {2024000000},
   %
   % 学号
   % 仅当书写开题报告时需要（同时设置 `thesis-type = proposal'）
   %
-  % student-id = {2000310000},
+  student-id = {2024000000},
   %
   % 指导教师
   %   中文姓名和职称之间以英文逗号“,”分开，下同
   %
-  supervisor  = {李四, 副教授},
-  supervisor* = {Professor Zhang Ansi},
+  supervisor  = {李四, 教授},
+  supervisor* = {Professor Li Si},
   %
   % 副指导教师
   %
-%   associate-supervisor  = {陈文光, 教授},
-%   associate-supervisor* = {Professor Chen Wenguang},
+  %   associate-supervisor  = {陈文光, 教授},
+  %   associate-supervisor* = {Professor Chen Wenguang},
   %
   % 联合指导教师
   %
@@ -108,25 +107,9 @@
   %
   % 封面
   clc                = {TP999},
-  udc                = {2024025084},
+  udc                = {2024000000},
   school-code        = {10657},
 }
-
-% 载入所需的宏包
-
-% 定理类环境宏包
-\usepackage{amsthm}
-% 也可以使用 ntheorem
-% \usepackage[amsmath,thmmarks,hyperref]{ntheorem}
-
-\gzusetup{
-  %
-  % 数学字体
-  math-style = ISO,  % GB | ISO | TeX
-  math-font  = xits  % stix | xits | libertinus
-}
-
-
 
 % ==================================================
 %       编号设置
@@ -141,6 +124,23 @@
 }
 
 
+% 载入所需的宏包
+% \usepackage{amsthm}
+
+% 定理类环境宏包
+% 也可以使用 ntheorem
+% \usepackage[amsmath,thmmarks,hyperref]{ntheorem}
+
+\gzusetup{
+  %
+  % 数学字体
+  math-style = ISO,  % GB | ISO | TeX
+  math-font  = none  % stix | xits | libertinus
+  }
+
+% 数学红包
+% \usepackage{amssymb}
+% \usepackage{dsfont}
 
 
 % 可以使用 nomencl 生成符号和缩略语说明
@@ -151,10 +151,10 @@
 \usepackage{threeparttable}
 
 % 表格中支持跨行
-% \usepackage{multirow}
+\usepackage{multirow}
 
 % 固定宽度的表格。
-% \usepackage{tabularx}
+\usepackage{tabularx}
 
 % 跨页表格
 \usepackage{longtable}
@@ -275,6 +275,12 @@
 
 % 声明 BibLaTeX 的数据库
 % \addbibresource{ref/refs.bib}
+
+
+
+
+
+
 
 % 定义所有的图片文件在 figures 子目录下
 \graphicspath{{figures/}}

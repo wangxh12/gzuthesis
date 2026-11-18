@@ -17,7 +17,7 @@
 %
 % \iffalse
 %<*driver>
-\ProvidesFile{gzuthesis.dtx}[2026/11/17 0.3.0-dev Guizhou University Thesis Template]
+\ProvidesFile{gzuthesis.dtx}[2026/11/17 0.3.1-dev Guizhou University Thesis Template]
 \documentclass{ltxdoc}
 \usepackage{dtx-style}
 
@@ -544,7 +544,7 @@
 %    \begin{macrocode}
 %<*cls>
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{gzuthesis}[2026/11/17 v0.3.0-dev Guizhou University Thesis Template]
+\ProvidesClass{gzuthesis}[2026/11/17 v0.3.1-dev Guizhou University Thesis Template]
 %    \end{macrocode}
 %
 % \subsection{统一配置系统}
@@ -572,7 +572,7 @@
 }
 
 \newcommand\gzuthesis{GZUThesis}
-\newcommand\gzuversion{0.3.0-dev}
+\newcommand\gzuversion{0.3.1-dev}
 % 保留已有示例中的版本命令；论文信息不依赖该别名。
 \providecommand\version{\gzuversion}
 
@@ -2620,6 +2620,9 @@
 % 
 % 
 % 参考文献公共配置
+% 
+% 避免目录、图目录和表目录中的引用改变顺序编码制参考文献的编号顺序。
+\RequirePackage{notoccite}
 \RequirePackage{url}
 \RequirePackage{etoolbox}
 
@@ -3421,7 +3424,780 @@
 %    \end{macrocode}
 % 
 % 
+% \subsection{专用页面公共功能}
+% \label{sec:special-pages}
+%
+% 为封面之后的专用页面提供 PDF 导入和书签功能。
+% 相关页面不参与章节编号，也不加入正文目录。
+% 页面分页由现有的 \cs{cleardoublepage} 机制控制。
+%
+%    \begin{macrocode}
 
+\RequirePackage{pdfpages}
+\includepdfset{fitpaper=true}
+
+% 专用页面 PDF 书签计数器
+\newcounter{gzu@specialpage}
+
+% 创建独立的 PDF 书签
+\newcommand\gzu@special@bookmark[1]{%
+  \stepcounter{gzu@specialpage}%
+  \@ifpackageloaded{hyperref}{%
+    \pdfbookmark[0]{#1}{%
+      gzu.special.\arabic{gzu@specialpage}%
+    }%
+  }{}%
+}
+
+%    \end{macrocode}
+%    
+%    
+% \subsection{答辩委员会名单}
+% \label{sec:committee}
+%
+% 答辩委员会名单采用独立居中的信息区域。
+% 左侧文字左对齐，委员角色右对齐。
+% 下划线根据单位及职称长度自动调整。
+% 可设置信息区域宽度、姓名对齐模式及行距。
+%
+%    \begin{macrocode}
+
+% --------------------------------------------------
+% 页面选项
+% --------------------------------------------------
+
+\kv@define@key{gzu@committee}{name}{%
+  \def\gzu@committee@name{#1}%
+}
+
+\kv@define@key{gzu@committee}{file}{%
+  \def\gzu@committee@file{#1}%
+}
+
+\kv@define@key{gzu@committee}{body-width}{%
+  \setlength\gzu@committee@bodywidth{#1}%
+}
+
+\kv@define@key{gzu@committee}{line-height}{%
+  \def\gzu@committee@lineheight{#1}%
+}
+
+\kv@define@key{gzu@committee}{row-sep}{%
+  \setlength\gzu@committee@rowgap{#1}%
+}
+
+\kv@define@key{gzu@committee}{role-width}{%
+  \setlength\gzu@committee@rolewidth{#1}%
+}
+
+\kv@define@key{gzu@committee}{role-gap}{%
+  \setlength\gzu@committee@rolegap{#1}%
+}
+
+\kv@define@key{gzu@committee}{name-align}{%
+  \def\gzu@committee@namealign{#1}%
+}
+
+\kv@define@key{gzu@committee}{name-position}{%
+  \def\gzu@committee@nameposition{#1}%
+}
+
+% --------------------------------------------------
+% 布局长度
+% --------------------------------------------------
+
+\newlength\gzu@committee@bodywidth
+\newlength\gzu@committee@rowgap
+\newlength\gzu@committee@rolewidth
+\newlength\gzu@committee@rolegap
+
+\newlength\gzu@committee@labelwidth
+\newlength\gzu@committee@rulewidth
+\newlength\gzu@committee@namecenter
+\newlength\gzu@committee@indent
+
+% 姓名对齐模式
+\def\gzu@committee@align@column{column}
+\def\gzu@committee@align@line{line}
+
+% 标记当前是否为第一条信息
+\newif\ifgzu@committee@firstrow
+
+% --------------------------------------------------
+% 统一信息行间距
+% --------------------------------------------------
+
+\newcommand\gzu@committee@rowstart{%
+  \par
+  \ifgzu@committee@firstrow
+    \gzu@committee@firstrowfalse
+  \else
+    \vspace{\gzu@committee@rowgap}%
+  \fi
+  \noindent
+}
+
+% --------------------------------------------------
+% 答辩委员会委员
+%
+% #1 单位及职称
+% #2 姓名
+% #3 主席或委员
+% --------------------------------------------------
+
+\newcommand\committeemember[3]{%
+  \gzu@committee@rowstart
+  % 测量单位、职称及冒号的实际宽度
+  \settowidth\gzu@committee@labelwidth{#1：}%
+  % 计算下划线可用宽度
+  \setlength\gzu@committee@rulewidth{%
+    \dimexpr
+      \gzu@committee@bodywidth
+      -\gzu@committee@labelwidth
+      -\gzu@committee@rolewidth
+      -\gzu@committee@rolegap
+    \relax
+  }%
+  % 检查是否有足够的下划线空间
+  \ifdim\gzu@committee@rulewidth<2\ccwd
+    \ClassError{gzuthesis}
+      {Committee member label too long}
+      {Increase body-width or shorten the label.}%
+  \fi
+  % 整行占满信息区域
+  \hbox to \gzu@committee@bodywidth{%
+    % 左侧：自然左对齐
+    #1：%
+    % 中间：自适应下划线
+    \underline{%
+      \makebox[\gzu@committee@rulewidth][l]{%
+        \ifx
+          \gzu@committee@namealign
+          \gzu@committee@align@column
+          % 姓名在统一的位置居中
+          \hspace*{%
+            \dimexpr
+              \gzu@committee@namecenter
+              -\gzu@committee@labelwidth
+            \relax
+          }%
+          \makebox[0pt][c]{#2}%
+        \else
+          % 姓名在各自下划线的正中
+          \makebox[\gzu@committee@rulewidth][c]{#2}%
+        \fi
+      }%
+    }%
+    % 横线与角色之间的间距
+    \hspace{\gzu@committee@rolegap}%
+    % 右侧：统一右对齐
+    \makebox[\gzu@committee@rolewidth][r]{（#3）}%
+  }%
+  \par
+}
+
+% --------------------------------------------------
+% 答辩秘书
+% --------------------------------------------------
+
+\kv@define@key{gzu@secretary}{before-name}{%
+  \def\gzu@secretary@before@name{#1}%
+}
+
+\kv@define@key{gzu@secretary}{before-title}{%
+  \def\gzu@secretary@before@title{#1}%
+}
+
+\NewDocumentCommand\committeesecretary{O{} m m}{%
+  \gzu@committee@rowstart
+  \begingroup
+    \def\gzu@secretary@before@name{0pt}%
+    \def\gzu@secretary@before@title{1\ccwd}%
+    \kvsetkeys{gzu@secretary}{#1}%
+    答辩秘书：%
+    \hspace{\gzu@secretary@before@name}%
+    #2%
+    \hspace{\gzu@secretary@before@title}%
+    #3%
+  \endgroup
+  \par
+}
+
+% --------------------------------------------------
+% 答辩时间与地点
+% --------------------------------------------------
+
+\newcommand\committeedate[1]{%
+  \gzu@committee@rowstart
+  答辩时间：#1\par
+}
+
+\newcommand\committeeplace[1]{%
+  \gzu@committee@rowstart
+  答辩地点：#1\par
+}
+
+% --------------------------------------------------
+% 答辩委员会名单环境
+% --------------------------------------------------
+
+\NewDocumentEnvironment{committee}{O{} +b}{%
+  \begingroup
+  % 根据学位层次确定默认标题
+  \ifgzu@degree@doctor
+    \def\gzu@committee@name{%
+      博士学位论文答辩委员会名单%
+    }%
+  \else
+    \def\gzu@committee@name{%
+      硕士学位论文答辩委员会名单%
+    }%
+  \fi
+  \let\gzu@committee@file\@empty
+  % 初始化布局默认值
+  \setlength\gzu@committee@bodywidth{0.86\textwidth}%
+  \setlength\gzu@committee@rowgap{2mm}%
+  \setlength\gzu@committee@rolewidth{4\ccwd}%
+  \setlength\gzu@committee@rolegap{0.5\ccwd}%
+  \def\gzu@committee@lineheight{24bp}%
+  \def\gzu@committee@namealign{column}%
+  \def\gzu@committee@nameposition{0.63}%
+  % 解析用户配置
+  \kvsetkeys{gzu@committee}{#1}%
+  % 检查姓名对齐模式
+  \ifx\gzu@committee@namealign\gzu@committee@align@column
+  \else
+    \ifx\gzu@committee@namealign\gzu@committee@align@line
+    \else
+      \ClassError{gzuthesis}
+        {Invalid committee name-align}
+        {Use column or line.}%
+    \fi
+  \fi
+  % 姓名中心相对于信息区域左端的位置
+  \setlength\gzu@committee@namecenter{%
+    \gzu@committee@nameposition
+    \gzu@committee@bodywidth
+  }%
+  % 页面起始
+  \cleardoublepage
+  \ifx\gzu@committee@file\@empty
+    \thispagestyle{empty}%
+    \gzu@special@bookmark{\gzu@committee@name}%
+    % 页面标题：黑体二号
+    \par\vspace*{8mm}%
+    {%
+      \centering
+      \heiti
+      \fontsize{22bp}{30bp}\selectfont
+      \gzu@committee@name\par
+    }%
+    \vspace{16mm}%
+    % 论文题目：黑体小二
+    {%
+      \centering
+      \heiti
+      \fontsize{18bp}{27bp}\selectfont
+      \gzu@title\par
+    }%
+    \vspace{14mm}%
+    % 计算信息区域左右缩进
+    \setlength\gzu@committee@indent{%
+      \dimexpr
+        (\textwidth-\gzu@committee@bodywidth)/2
+      \relax
+    }%
+    % 信息区域
+    \begingroup
+      \leftskip=\gzu@committee@indent
+      \rightskip=\gzu@committee@indent
+      \parindent=0pt
+      \parskip=0pt
+      \songti
+      \fontsize{14bp}{\gzu@committee@lineheight}\selectfont
+      % 答辩人
+      \noindent 答辩人：\gzu@author\par
+      \vspace{6mm}%
+      % 委员名单标题
+      \noindent 答辩委员会委员：\par
+      \vspace{4mm}%
+      % 下面所有信息行共享统一行距
+      \gzu@committee@firstrowtrue
+      #2\par
+    \endgroup
+    \clearpage
+  \else
+    % 使用外部 PDF 页面
+    \includepdf[
+      pages=1,
+      pagecommand={%
+        \thispagestyle{empty}%
+        \gzu@special@bookmark{\gzu@committee@name}%
+      }%
+    ]{\gzu@committee@file}%
+  \fi
+  \endgroup
+}{}
+
+%    \end{macrocode}
+%    
+%    
+% 
+
+% \subsection{原创性声明与使用授权}
+% \label{sec:statement}
+%
+% 贵州大学学位论文原创性声明与使用授权声明。
+% 两项声明合并为一页，不参与章节编号和正文目录。
+%
+% 标题使用黑体三号，正文使用宋体四号。
+% 默认正文基线间距为 30 bp。
+% 标题默认段前 24 bp、段后 6 bp。
+%
+% 支持声明正文宽度、行距、标题间距、
+% 表单缩进及签名列位置配置。
+% 支持通过 file 选项导入签字扫描 PDF。
+%
+%    \begin{macrocode}
+
+% --------------------------------------------------
+% 页面配置项
+% --------------------------------------------------
+
+\kv@define@key{gzu@statement}{file}{%
+  \def\gzu@statement@file{#1}%
+}
+
+\kv@define@key{gzu@statement}{body-width}{%
+  \setlength\gzu@statement@bodywidth{#1}%
+}
+
+\kv@define@key{gzu@statement}{line-height}{%
+  \def\gzu@statement@lineheight{#1}%
+}
+
+\kv@define@key{gzu@statement}{form-line-height}{%
+  \def\gzu@statement@formlineheight{#1}%
+}
+
+\kv@define@key{gzu@statement}{title-before}{%
+  \def\gzu@statement@titlebefore{#1}%
+}
+
+\kv@define@key{gzu@statement}{title-after}{%
+  \def\gzu@statement@titleafter{#1}%
+}
+
+\kv@define@key{gzu@statement}{authorization-before}{%
+  \def\gzu@statement@authorizationbefore{#1}%
+}
+
+\kv@define@key{gzu@statement}{signature-before}{%
+  \def\gzu@statement@signaturebefore{#1}%
+}
+
+\kv@define@key{gzu@statement}{signature-row-sep}{%
+  \def\gzu@statement@signaturerowsep{#1}%
+}
+
+\kv@define@key{gzu@statement}{confidential-before}{%
+  \def\gzu@statement@confidentialbefore{#1}%
+}
+
+\kv@define@key{gzu@statement}{right-column-position}{%
+  \def\gzu@statement@rightcolumnposition{#1}%
+}
+
+\kv@define@key{gzu@statement}{form-indent}{%
+  \setlength\gzu@statement@formindent{#1}%
+}
+
+% --------------------------------------------------
+% 页面布局长度
+% --------------------------------------------------
+
+\newlength\gzu@statement@bodywidth
+\newlength\gzu@statement@indent
+\newlength\gzu@statement@rightstart
+\newlength\gzu@statement@formindent
+
+% --------------------------------------------------
+% 声明标题
+%
+% #1 标题段前距离
+% #2 标题文字
+% --------------------------------------------------
+
+\newcommand\gzu@statement@title[2]{%
+  \par\vspace*{#1}%
+  {%
+    \centering
+    \heiti
+    \fontsize{16bp}{24bp}\selectfont
+    #2\par
+  }%
+  \vspace{\gzu@statement@titleafter}%
+}
+
+% --------------------------------------------------
+% 声明正文
+%
+% 宋体四号，首行缩进两个汉字。
+% 行距继承声明页面的 line-height。
+% --------------------------------------------------
+
+\newcommand\gzu@statement@paragraph[1]{%
+  \par
+  \begingroup
+    \noindent
+    \hspace*{2\ccwd}%
+    #1\par
+  \endgroup
+}
+
+% --------------------------------------------------
+% 表单信息行
+%
+% 包括保密选项、填写提示等。
+% 左侧缩进由 form-indent 控制。
+% --------------------------------------------------
+
+\newcommand\gzu@statement@formrow[1]{%
+  \par\noindent
+  \hspace*{\gzu@statement@formindent}%
+  #1\par
+}
+
+% --------------------------------------------------
+% 签名信息双列布局
+%
+% #1 左侧内容
+% #2 右侧内容
+%
+% 左侧内容采用 form-indent 缩进。
+% 右侧内容起点由 right-column-position 控制。
+% --------------------------------------------------
+
+\newcommand\gzu@statement@signature@row[2]{%
+  \par\noindent
+  \hbox to \gzu@statement@bodywidth{%
+    \hspace*{\gzu@statement@formindent}%
+    \makebox[
+      \dimexpr
+        \gzu@statement@rightstart
+        -\gzu@statement@formindent
+      \relax
+    ][l]{#1}%
+    \makebox[
+      \dimexpr
+        \gzu@statement@bodywidth
+        -\gzu@statement@rightstart
+      \relax
+    ][l]{#2}%
+  }%
+  \par
+}
+
+% --------------------------------------------------
+% 日期填写区域
+%
+% 日期标签与导师签名使用相同的列起点。
+% 年、月、日自动向右对齐。
+% --------------------------------------------------
+
+\newcommand\gzu@statement@datefields{%
+  \makebox[4\ccwd][l]{日\hfill 期}：%
+  \hfill
+  \makebox[1.5\ccwd]{}年%
+  \makebox[1.2\ccwd]{}月%
+  \makebox[1.2\ccwd]{}日%
+}
+
+% --------------------------------------------------
+% 原创性声明正文
+% --------------------------------------------------
+
+\newcommand\gzu@statement@originality{%
+  本人郑重声明：所呈交的学位论文，是本人在导师的指导下，
+  独立进行研究所取得的成果。除文中已经注明引用的内容外，
+  本论文不包含任何其他个人或集体已经发表或撰写过的科研成果。
+  对本文的研究作出重要贡献的个人和集体，
+  均已在文中以明确方式标明。
+  本人在导师指导下所完成的学位论文及相关的职务作品，
+  知识产权归属贵州大学。
+  本人完全意识到本声明的法律责任由本人承担。%
+}
+
+% --------------------------------------------------
+% 学位论文使用授权声明正文
+% --------------------------------------------------
+
+\newcommand\gzu@statement@authorization{%
+  本人完全了解贵州大学有关保留、使用学位论文的规定，
+  同意学校保留或向国家有关部门或机构送交论文的复印件和电子版，
+  允许论文被查阅和借阅；
+  本人授权贵州大学可以将本学位论文的全部或部分内容
+  编入有关数据库进行检索，
+  可以采用影印、缩印或其他复制手段保存论文
+  和汇编本学位论文。%
+}
+
+% --------------------------------------------------
+% 声明页面主命令
+% --------------------------------------------------
+
+\NewDocumentCommand\statement{O{}}{%
+  \begingroup
+    % ----------------------------------------------
+    % 初始化页面参数
+    % ----------------------------------------------
+
+    \let\gzu@statement@file\@empty
+
+    % 正文区域宽度
+    \setlength\gzu@statement@bodywidth{\textwidth}%
+
+    % 正文基线间距：30 bp
+    \def\gzu@statement@lineheight{30bp}%
+
+    % 表单行距默认继承正文行距
+    \def\gzu@statement@formlineheight{%
+      \gzu@statement@lineheight
+    }%
+
+    % 标题段前、段后
+    \def\gzu@statement@titlebefore{24bp}%
+    \def\gzu@statement@titleafter{6bp}%
+    \def\gzu@statement@authorizationbefore{24bp}%
+
+    % 签名及保密信息间距
+    \def\gzu@statement@signaturebefore{2mm}%
+    \def\gzu@statement@signaturerowsep{1mm}%
+    \def\gzu@statement@confidentialbefore{2mm}%
+
+    % 右侧信息列位置：正文宽度的 53%
+    \def\gzu@statement@rightcolumnposition{0.53}%
+
+    % 表单内容左侧缩进两个汉字
+    \setlength\gzu@statement@formindent{2\ccwd}%
+
+    % 解析用户参数
+    \kvsetkeys{gzu@statement}{#1}%
+
+    % ----------------------------------------------
+    % 计算页面布局
+    % ----------------------------------------------
+
+    % 右侧列的起点
+    % right-column-position 使用无单位比例
+    \setlength\gzu@statement@rightstart{%
+      \dimexpr
+        \gzu@statement@rightcolumnposition
+        \gzu@statement@bodywidth
+      \relax
+    }%
+
+    % 声明内容整体水平居中
+    \setlength\gzu@statement@indent{%
+      \dimexpr
+        (\textwidth-\gzu@statement@bodywidth)/2
+      \relax
+    }%
+
+    % 检查右侧列位置
+    \ifdim\gzu@statement@rightstart<
+      \gzu@statement@formindent
+      \ClassError{gzuthesis}
+        {Invalid statement right column position}
+        {Increase right-column-position.}%
+    \fi
+
+    \ifdim\gzu@statement@rightstart>
+      \gzu@statement@bodywidth
+      \ClassError{gzuthesis}
+        {Statement right column exceeds body width}
+        {Use a right-column-position between 0 and 1.}%
+    \fi
+
+    % ----------------------------------------------
+    % 页面开始
+    % ----------------------------------------------
+
+    \cleardoublepage
+
+    \ifx\gzu@statement@file\@empty
+
+      \thispagestyle{empty}%
+
+      \gzu@special@bookmark{%
+        原创性声明与学位论文使用授权声明%
+      }%
+
+      % --------------------------------------------
+      % 声明正文区域
+      % --------------------------------------------
+
+      \begingroup
+
+        \leftskip=\gzu@statement@indent\relax
+        \rightskip=\gzu@statement@indent\relax
+
+        \parindent=0pt\relax
+        \parskip=0pt\relax
+
+        % 防止 ctexbook 的 baselinestretch
+        % 额外放大指定的固定行距。
+        \renewcommand\baselinestretch{1}%
+
+        % 正文字体：宋体四号
+        \songti
+        \fontsize{14bp}{\gzu@statement@lineheight}%
+        \selectfont
+
+        % ------------------------------------------
+        % 原创性声明
+        % ------------------------------------------
+
+        \gzu@statement@title
+          {\gzu@statement@titlebefore}
+          {原创性声明}%
+
+        \gzu@statement@paragraph{%
+          \gzu@statement@originality
+        }%
+
+        % 原创性声明签名及日期
+        \par\vspace{\gzu@statement@signaturebefore}%
+
+        \begingroup
+          \fontsize
+            {14bp}
+            {\gzu@statement@formlineheight}%
+          \selectfont
+
+          \gzu@statement@signature@row
+            {论文作者签名：}
+            {\gzu@statement@datefields}%
+        \endgroup
+
+        % ------------------------------------------
+        % 学位论文使用授权声明
+        % ------------------------------------------
+
+        \gzu@statement@title
+          {\gzu@statement@authorizationbefore}
+          {关于学位论文使用授权的声明}%
+
+        \gzu@statement@paragraph{%
+          \gzu@statement@authorization
+        }%
+
+        % ------------------------------------------
+        % 保密选项及签名区域
+        % ------------------------------------------
+
+        \begingroup
+          \fontsize
+            {14bp}
+            {\gzu@statement@formlineheight}%
+          \selectfont
+
+          \par\vspace{%
+            \gzu@statement@confidentialbefore
+          }%
+
+          \gzu@statement@formrow{%
+            本学位论文属于：%
+          }%
+
+          % 不保密与保密各占三个汉字宽度
+          % 括号内部仅保留空白，不绘制方框
+
+          \gzu@statement@formrow{%
+            \makebox[3\ccwd][l]{不保密}%
+            （\makebox[1.5\ccwd]{}）%
+          }%
+
+          \gzu@statement@formrow{%
+            \makebox[3\ccwd][l]{保\hfill 密}%
+            （\makebox[1.5\ccwd]{}），%
+            在\underline{\makebox[1.5\ccwd]{}}%
+            年解密后适用授权。%
+          }%
+
+          \gzu@statement@formrow{%
+            （请在以上相应方框内打“√”，%
+            \textbf{请慎重勾选！}）%
+          }%
+
+          % ----------------------------------------
+          % 作者、导师签名
+          % ----------------------------------------
+
+          \par\vspace{%
+            \gzu@statement@signaturebefore
+          }%
+
+          \gzu@statement@signature@row
+            {论文作者签名：}
+            {导师签名：}%
+
+          % 日期位于右侧列，与上方日期对齐
+          \par\vspace{%
+            \gzu@statement@signaturerowsep
+          }%
+
+          \gzu@statement@signature@row
+            {}
+            {\gzu@statement@datefields}%
+
+        \endgroup
+
+      \endgroup
+
+      \clearpage
+
+    \else
+
+      % --------------------------------------------
+      % 导入已签字扫描 PDF
+      % --------------------------------------------
+
+      \includepdf[
+        pages=1,
+        pagecommand={%
+          \thispagestyle{empty}%
+          \gzu@special@bookmark{%
+            原创性声明与学位论文使用授权声明%
+          }%
+        }%
+      ]{\gzu@statement@file}%
+
+    \fi
+
+  \endgroup
+}
+
+%    \end{macrocode}
+%
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+%     
+%    
 % \subsection{摘要}
 % \label{sec:abstract}
 %
@@ -3655,7 +4431,7 @@
 %<*dtx-style>
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{dtx-style}
-  [2026/11/17 v0.3.0-dev GZUThesis documentation style]
+  [2026/11/17 v0.3.1-dev GZUThesis documentation style]
 \RequirePackage[UTF8]{ctex}
 \RequirePackage{siunitx}
 \RequirePackage{booktabs}
