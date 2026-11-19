@@ -960,6 +960,18 @@
     choices = {true, false},
     default = true,
   },
+  % 附录图表是否加入图表清单
+  appendix-figure-in-lof = {
+    name = appendix@figure@in@lof,
+    choices = {true, false},
+    default = false,
+  },
+  % 附录在总目录中的显示深度
+  appendix-toc-depth = {
+    name = appendix@toc@depth,
+    choices = {0, 1, 2, 3},
+    default = 0,
+  },
   % 中文学位论文默认采用 GB 数学排版风格。
   math-style = {
     name = math@style,
@@ -4470,7 +4482,7 @@
 
 % 中文摘要
 \newenvironment{abstract}{%
-  \gzu@abstract@heading{摘\quad 要}{摘要}%
+  \gzu@abstract@heading{摘\qquad 要}{摘要}%
   \ignorespaces
 }{%
   \gzu@abstract@keywords
@@ -4575,8 +4587,13 @@
 % 即使已经执行 \cs{backmatter}，
 % 附录仍然需要启用章节编号。
 %
-% 附录编号和标题分别占一行，居中排版。
-% 目录默认只列出附录章标题。
+% 附录编号和标题位于同一行，居中排版。
+% 编号与标题之间使用 \quad 分隔，
+% 并与章节页眉的间距保持一致。
+%
+% 附录默认仅将章标题加入总目录，
+% 不显示节和小节标题。
+% 附录图、表、公式按照 A.1、B.1 等格式编号。
 %
 %    \begin{macrocode}
 \g@addto@macro\appendix{%
@@ -4584,12 +4601,18 @@
   \ctexset{
     chapter = {
       name = {附录~,},
-      aftername = \par,
+      aftername = \quad, % \par 为换行，\quad：一字空
     }
   }%
+  % 附录图表是否加入图表清单
+  \ifgzu@appendix@figure@in@lof@false
+    \captionsetup[figure]{list=false}%
+    \captionsetup[table]{list=false}%
+  \fi
+  % 附录目录层级
   \protected@write\@auxout{}{%
     \string\ttl@writefile{toc}{%
-      \protect\setcounter{tocdepth}{0}%
+      \protect\setcounter{tocdepth}{\gzu@appendix@toc@depth}%
     }%
   }%
 }

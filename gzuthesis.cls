@@ -352,6 +352,18 @@
     choices = {true, false},
     default = true,
   },
+  % 附录图表是否加入图表清单
+  appendix-figure-in-lof = {
+    name = appendix@figure@in@lof,
+    choices = {true, false},
+    default = false,
+  },
+  % 附录在总目录中的显示深度
+  appendix-toc-depth = {
+    name = appendix@toc@depth,
+    choices = {0, 1, 2, 3},
+    default = 0,
+  },
   % 中文学位论文默认采用 GB 数学排版风格。
   math-style = {
     name = math@style,
@@ -3027,7 +3039,7 @@
 \ExplSyntaxOff
 
 \newenvironment{abstract}{%
-  \gzu@abstract@heading{摘\quad 要}{摘要}%
+  \gzu@abstract@heading{摘\qquad 要}{摘要}%
   \ignorespaces
 }{%
   \gzu@abstract@keywords
@@ -3080,12 +3092,18 @@
   \ctexset{
     chapter = {
       name = {附录~,},
-      aftername = \par,
+      aftername = \quad, % \par 为换行，\quad：一字空
     }
   }%
+  % 附录图表是否加入图表清单
+  \ifgzu@appendix@figure@in@lof@false
+    \captionsetup[figure]{list=false}%
+    \captionsetup[table]{list=false}%
+  \fi
+  % 附录目录层级
   \protected@write\@auxout{}{%
     \string\ttl@writefile{toc}{%
-      \protect\setcounter{tocdepth}{0}%
+      \protect\setcounter{tocdepth}{\gzu@appendix@toc@depth}%
     }%
   }%
 }
