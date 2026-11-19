@@ -31,7 +31,7 @@
 
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{gzuthesis}[2026/11/17 v0.3.1-dev Guizhou University Thesis Template]
+\ProvidesClass{gzuthesis}[2026/11/17 v0.3.3-dev Guizhou University Thesis Template]
 \RequirePackage{kvdefinekeys}
 \RequirePackage{kvsetkeys}
 \RequirePackage{kvoptions}
@@ -43,7 +43,7 @@
 }
 
 \newcommand\gzuthesis{GZUThesis}
-\newcommand\gzuversion{0.3.1-dev}
+\newcommand\gzuversion{0.3.3-dev}
 \providecommand\version{\gzuversion}
 
 \newcommand\gzu@error[2]{\ClassError{gzuthesis}{#1}{#2}}
@@ -179,6 +179,7 @@
 \gzu@define@key{
   title = {},
   title* = {name = title@en},
+  blind-title = {name = blind@title},
   keywords = {},
   keywords* = {name = keywords@en},
   author = {},
@@ -209,6 +210,12 @@
   secret-year = {name = secret@year},
 }
 \gzu@define@key{
+  % 论文版本：正式版或盲审版
+  thesis-version = {
+    name = thesis@version,
+    choices = {official, blind},
+    default = official,
+  },
   % 输出模式：打印版或电子版
   output = {
     choices = {print, electronic},
@@ -1081,11 +1088,21 @@
   \AddToHook{begindocument/before}{%
     \hypersetup{
       pdftitle={\gzu@title},
-      pdfauthor={\gzu@author},
-      pdfsubject={\gzu@discipline},
-      pdfkeywords={\gzu@keywords},
       pdfcreator={GZUThesis v\gzuversion},
     }%
+    \ifgzu@thesis@version@blind
+      \hypersetup{
+        pdfauthor={},
+        pdfsubject={},
+        pdfkeywords={},
+      }%
+    \else
+      \hypersetup{
+        pdfauthor={\gzu@author},
+        pdfsubject={\gzu@discipline},
+        pdfkeywords={\gzu@keywords},
+      }%
+    \fi
   }%
 }
 
@@ -2100,9 +2117,127 @@
   \expandafter\gzu@cover@date@parse
   \gzu@date\@nil
 }
-\renewcommand\maketitle{%
+\newcommand\gzu@blind@heading@font{%
+  \IfFileExists{\gzu@windows@font@dir/STXINGKA.TTF}{%
+    \fontspec[Path=\gzu@windows@font@dir/]{STXINGKA.TTF}%
+  }{%
+    \IfFileExists{\gzu@windows@font@dir/stxingka.ttf}{%
+      \fontspec[Path=\gzu@windows@font@dir/]{stxingka.ttf}%
+    }{%
+      \fontspec{STXingkai}%
+    }%
+  }%
+  \gzu@cover@schoolfont
+}
+
+\newcommand\gzu@blind@maketitle{%
   \gzu@init@cover@fonts
   \begin{titlepage}%
+    \thispagestyle{empty}%
+    \null
+
+    \begin{tikzpicture}[
+      remember picture,overlay,
+      every node/.style={inner sep=0pt,outer sep=0pt}
+    ]
+
+      % 校徽与学校书法校名
+      \node[anchor=center]
+        at ([yshift=-68mm]current page.north)
+        {\includegraphics[
+          width=40mm
+        ]{logo/gzu-cover-logo.pdf}};
+
+      \node[anchor=center]
+        at ([yshift=-101mm]current page.north)
+        {\includegraphics[
+          width=43mm,
+          keepaspectratio
+        ]{logo/gzu-cover-text.pdf}};
+
+      % 届别与论文类型：华文行楷，小初
+      \node[anchor=center]
+        at ([yshift=-125mm]current page.north) {%
+          \gzu@blind@heading@font
+          \fontsize{36bp}{43bp}\selectfont
+          \gzu@graduation@year\hspace{0.15em}届%
+          \ifgzu@degree@doctor
+            博士%
+          \else
+            硕士%
+          \fi
+          学位论文
+        };
+
+      % 论文题目：黑体，一号
+      \node[
+        anchor=center,
+        align=center,
+        text width=166mm
+      ]
+        at ([yshift=-162mm]current page.north) {%
+          \gzu@cover@hei
+          \fontsize{26bp}{37bp}\selectfont
+          \ifx\gzu@blind@title\@empty
+            \gzu@title
+          \else
+            \gzu@blind@title
+          \fi
+        };
+
+      % 学科专业：黑体，三号
+      \node[anchor=center]
+        at ([yshift=-201mm]current page.north) {%
+          \gzu@cover@hei
+          \fontsize{16bp}{23bp}\selectfont
+          \makebox[29mm][l]{学科专业：}%
+          \underline{%
+            \makebox[55mm][c]{%
+              \strut\gzu@discipline
+            }%
+          }%
+        };
+
+      % 研究方向：黑体，三号
+      \node[anchor=center]
+        at ([yshift=-211mm]current page.north) {%
+          \gzu@cover@hei
+          \fontsize{16bp}{23bp}\selectfont
+          \makebox[29mm][l]{研究方向：}%
+          \underline{%
+            \makebox[55mm][c]{%
+              \strut\gzu@research@direction
+            }%
+          }%
+        };
+
+      % 地点和日期：黑体，四号
+      \node[
+        anchor=north,
+        align=center,
+        font={\gzu@cover@hei\sffamily\fontsize{14bp}{20bp}\selectfont}
+      ]
+        at ([yshift=-251mm]current page.north) {%
+          中国·贵州·贵阳\\[1.5mm]
+          \gzu@cover@date
+        };
+
+    \end{tikzpicture}%
+  \end{titlepage}%
+
+  % 打印版保留空白背页，但不生成作者书脊
+  \ifgzu@output@print
+    \thispagestyle{empty}%
+    \null
+    \clearpage
+  \fi
+}
+\renewcommand\maketitle{%
+  \ifgzu@thesis@version@blind
+    \gzu@blind@maketitle
+  \else
+    \gzu@init@cover@fonts
+    \begin{titlepage}%
     \thispagestyle{empty}%
     \null
 
@@ -2217,6 +2352,7 @@
         {include-spine=true is ignored when output=electronic}%
     \fi
   \fi
+  \fi % thesis-version=official
 }
 
 \RequirePackage{pdfpages}
@@ -2387,6 +2523,7 @@
 
 
 \NewDocumentEnvironment{committee}{O{} +b}{%
+  \ifgzu@thesis@version@official
   \begingroup
   % 根据学位层次确定默认标题
   \ifgzu@degree@doctor
@@ -2482,6 +2619,7 @@
     ]{\gzu@committee@file}%
   \fi
   \endgroup
+  \fi
 }{}
 
 
@@ -2625,6 +2763,7 @@
 
 
 \NewDocumentCommand\statement{O{}}{%
+  \ifgzu@thesis@version@official
   \begingroup
     % ----------------------------------------------
     % 初始化页面参数
@@ -2854,6 +2993,7 @@
     \fi
 
   \endgroup
+  \fi
 }
 
 
@@ -2924,17 +3064,17 @@
 }{%
   \end{gzu@denotation}%
 }
-\newcommand\gzu@acknowledgements@name{致\quad 谢}
+\newcommand\gzu@acknowledgements@name{致\qquad 谢}
 \newcommand\gzu@acknowledgements@tocname{致谢}
 
-\newenvironment{acknowledgements}{%
-  \gzu@unnumbered@chapter
-    {\gzu@acknowledgements@name}
-    {\gzu@acknowledgements@tocname}%
-  \ignorespaces
-}{%
-  \par
-}
+\NewDocumentEnvironment{acknowledgements}{+b}{%
+  \ifgzu@thesis@version@official
+    \gzu@unnumbered@chapter
+      {\gzu@acknowledgements@name}
+      {\gzu@acknowledgements@tocname}%
+    #1\par
+  \fi
+}{}
 \g@addto@macro\appendix{%
   \@mainmattertrue
   \ctexset{
