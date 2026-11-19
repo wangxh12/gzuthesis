@@ -419,6 +419,7 @@
   fontset=none,
   twoside
 ]{ctexbook}
+\@openrighttrue
 \RequirePackage{geometry}
 
 \geometry{
@@ -940,28 +941,49 @@
   \let\@mkboth\markboth
   \def\chaptermark##1{%
     \markboth{%
-      \CTEXifname{\CTEXthechapter\quad}{}##1%
+      \CTEXifname{\CTEX@chaptername\CTEX@chapter@aftername}{}##1%
     }{}%
   }%
   \let\sectionmark\@gobble
 }
+\RequirePackage{etoolbox}
+\patchcmd{\@chapter}{\chaptermark{#1}}{\chaptermark{#2}}{}{%
+  \ClassWarningNoLine{gzuthesis}{Unable to synchronize full chapter title in header}%
+}
+\fancypagestyle{gzu-chapter-first}{%
+  \fancyhf{}%
+  \renewcommand\headrulewidth{0.75bp}%
+  \renewcommand\footrulewidth{0pt}%
+  \fancyhead[C]{%
+    \songti
+    \fontsize{10.5bp}{12.1bp}\selectfont
+    \nouppercase{\leftmark}%
+  }%
+  \fancyfoot[C]{%
+    \rmfamily
+    \fontsize{10.5bp}{12.1bp}\selectfont
+    \thepage
+  }%
+}
 \pagestyle{plain}
 \ctexset{
-  chapter/pagestyle = plain,
+  chapter/pagestyle = gzu-chapter-first,
 }
 
 \renewcommand\cleardoublepage{%
   \clearpage
   \if@twoside
-    \ifgzu@output@print
-      \ifodd\c@page
-      \else
+    \ifodd\c@page
+    \else
+      \ifgzu@output@print
         \thispagestyle{empty}%
         \hbox{}%
         \newpage
         \if@twocolumn
           \hbox{}\newpage
         \fi
+      \else
+        \stepcounter{page}%
       \fi
     \fi
   \fi
@@ -993,8 +1015,8 @@
   \addcontentsline{toc}{chapter}{#2}%
   % 生成未编号章节标题
   \chapter*{#1}%
-  % 设置页眉
-  \markboth{#2}{#2}%
+  % 页眉继承实际显示标题的全部间距；目录标题仍由 #2 独立控制
+  \markboth{#1}{#1}%
 }
 \RequirePackage{titletoc}
 
@@ -1041,6 +1063,7 @@
   psdextra=true,
   breaklinks=true,
   plainpages=false,
+  pdfpagelabels=true,
   pdfdisplaydoctitle=true,
   hidelinks,
 }{hyperref}
@@ -1542,6 +1565,26 @@
   \endgroup
 }
 
+\newcommand\gzu@bib@apply@pagestyle{%
+  \ifgzu@bib@page@style@empty
+    \thispagestyle{empty}%
+  \else
+    \ifgzu@in@appendix
+      \ifgzu@bib@appendix@heading@level@chapter
+        \thispagestyle{gzu-chapter-first}%
+      \else
+        \thispagestyle{plain}%
+      \fi
+    \else
+      \ifgzu@bib@heading@level@chapter
+        \thispagestyle{gzu-chapter-first}%
+      \else
+        \thispagestyle{plain}%
+      \fi
+    \fi
+  \fi
+}
+
 \newcommand\gzu@bib@heading[1]{%
   \ifgzu@in@appendix
     \gzu@bib@appendix@heading{#1}%
@@ -1552,7 +1595,7 @@
       \gzu@bib@section@heading{#1}%
     \fi\fi
   \fi
-  \thispagestyle{\gzu@bib@page@style}%
+  \gzu@bib@apply@pagestyle
 }
 
 \newcommand\gzu@bib@appendix@heading[1]{%
@@ -1567,7 +1610,7 @@
       \section*{#1}%
     \endgroup
   \fi\fi
-  \thispagestyle{\gzu@bib@page@style}%
+  \gzu@bib@apply@pagestyle
 }
 
 

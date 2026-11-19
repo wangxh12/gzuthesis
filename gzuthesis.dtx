@@ -240,6 +240,8 @@
 % 偶数页页眉根据学位类型显示
 % “贵州大学硕士学位论文”或“贵州大学博士学位论文”。
 %
+% 所有章节均从逻辑奇数页开始，章首页页眉显示当前章标题。
+% 电子版省略补白偶数页但不压缩页码，打印版保留实体空白页。
 % 页眉采用宋体五号字，下方设置 0.75 bp 的横线。
 % 页脚居中显示页码，采用五号西文字体。
 %
@@ -522,8 +524,10 @@
 % |output=print| 为默认模式，在双面排版时，
 % 根据页面奇偶性自动补充必要的空白页。
 %
-% |output=electronic| 为电子版，不额外生成
-% 打印装订所需的空白页。
+% |output=electronic| 为电子版，不额外生成打印装订所需的空白页，
+% 但仍保留逻辑上的奇数页起章：需补偶数页时直接跳过其页码，
+% 因此电子版的页码可以不连续（例如 1、3、5）。
+% 两种模式的章首页都显示章节标题，页眉与正文标题的间距保持一致。
 %
 % |include-spine| 仅对打印版生效。
 % 当电子版设置 |include-spine=true| 时，
@@ -1011,6 +1015,8 @@
   fontset=none,
   twoside
 ]{ctexbook}
+% 论文各章（含摘要、致谢、参考文献等）一律从逻辑奇数页开始。
+\@openrighttrue
 %    \end{macrocode}
 %
 % \subsection{页面布局}
@@ -1679,16 +1685,24 @@
 % \subsubsection{章节标记}
 %
 % 重新定义章节标记，仅在页眉显示当前章的信息，
-% 不显示节标题。
+% 不显示节标题；章节编号和标题之间的间距直接复用 ctex 的
+% chapter/aftername 设置，不独立写死 \quad。
 %
 %    \begin{macrocode}
   \let\@mkboth\markboth
   \def\chaptermark##1{%
     \markboth{%
-      \CTEXifname{\CTEXthechapter\quad}{}##1%
+      \CTEXifname{\CTEX@chaptername\CTEX@chapter@aftername}{}##1%
     }{}%
   }%
   \let\sectionmark\@gobble
+}
+% 有可选短标题时，目录和书签仍使用短标题，页眉使用实际正文标题。
+% ctexbook 的 \@chapter 默认用 #1（可选标题）生成章节标记，
+% 这里替换为 #2（完整标题），避免页眉和正文标题间距不一致。
+\RequirePackage{etoolbox}
+\patchcmd{\@chapter}{\chaptermark{#1}}{\chaptermark{#2}}{}{%
+  \ClassWarningNoLine{gzuthesis}{Unable to synchronize full chapter title in header}%
 }
 %    \end{macrocode}
 %
@@ -1698,9 +1712,26 @@
 % 并应用于章首页。
 %
 %    \begin{macrocode}
+% 章节首页统一显示章节标题。电子版采用逻辑奇数页起章，
+% 此样式同时作为章节首面页眉的明确约束。
+\fancypagestyle{gzu-chapter-first}{%
+  \fancyhf{}%
+  \renewcommand\headrulewidth{0.75bp}%
+  \renewcommand\footrulewidth{0pt}%
+  \fancyhead[C]{%
+    \songti
+    \fontsize{10.5bp}{12.1bp}\selectfont
+    \nouppercase{\leftmark}%
+  }%
+  \fancyfoot[C]{%
+    \rmfamily
+    \fontsize{10.5bp}{12.1bp}\selectfont
+    \thepage
+  }%
+}
 \pagestyle{plain}
 \ctexset{
-  chapter/pagestyle = plain,
+  chapter/pagestyle = gzu-chapter-first,
 }
 %    \end{macrocode}
 %    
@@ -1714,25 +1745,28 @@
 %
 % \subsubsection{双面分页处理}
 %
-% 对于双面排版，章节通常从奇数页开始。
-% 当需要插入空白页时，不显示页眉、页脚和页码。
+% 两种输出模式均要求章节从逻辑奇数页开始。
+% 打印版补出空白偶数页；电子版不输出补白页，但跳过对应逻辑页码。
+% 打印版的补白页不显示页眉、页脚和页码。
 %
 %    \begin{macrocode}
 % 双面分页处理
-% print      : 必要时补充空白页，保证右页起始
-% electronic : 只结束当前页，不额外补充空白页
+% print      : 补出空白偶数页，保证章节从奇数页开始
+% electronic : 不输出空白页，直接跳过偶数逻辑页码
 \renewcommand\cleardoublepage{%
   \clearpage
   \if@twoside
-    \ifgzu@output@print
-      \ifodd\c@page
-      \else
+    \ifodd\c@page
+    \else
+      \ifgzu@output@print
         \thispagestyle{empty}%
         \hbox{}%
         \newpage
         \if@twocolumn
           \hbox{}\newpage
         \fi
+      \else
+        \stepcounter{page}%
       \fi
     \fi
   \fi
@@ -1784,8 +1818,8 @@
 % 在生成章节标题之前建立 PDF 跳转锚点，
 % 保证目录链接和书签跳转到章节顶部。
 %
-% 第一个参数：页面显示的标题
-% 第二个参数：目录与页眉使用的标题
+% 第一个参数：页面显示的标题（页眉与其保持一致）
+% 第二个参数：目录与 PDF 书签使用的简洁标题
 %
 %    \begin{macrocode}
 \newcommand\gzu@unnumbered@chapter[2]{%
@@ -1801,8 +1835,8 @@
   \addcontentsline{toc}{chapter}{#2}%
   % 生成未编号章节标题
   \chapter*{#1}%
-  % 设置页眉
-  \markboth{#2}{#2}%
+  % 页眉继承实际显示标题的全部间距；目录标题仍由 #2 独立控制
+  \markboth{#1}{#1}%
 }
 %    \end{macrocode}
 % 
@@ -1922,6 +1956,7 @@
   psdextra=true,
   breaklinks=true,
   plainpages=false,
+  pdfpagelabels=true,
   pdfdisplaydoctitle=true,
   hidelinks,
 }{hyperref}
@@ -2670,6 +2705,29 @@
   \endgroup
 }
 
+% Bibliography chapter headings must retain the chapter-opening page style.
+% Section headings retain the ordinary parity-based header, while
+% bib-page-style=empty always suppresses the header and footer.
+\newcommand\gzu@bib@apply@pagestyle{%
+  \ifgzu@bib@page@style@empty
+    \thispagestyle{empty}%
+  \else
+    \ifgzu@in@appendix
+      \ifgzu@bib@appendix@heading@level@chapter
+        \thispagestyle{gzu-chapter-first}%
+      \else
+        \thispagestyle{plain}%
+      \fi
+    \else
+      \ifgzu@bib@heading@level@chapter
+        \thispagestyle{gzu-chapter-first}%
+      \else
+        \thispagestyle{plain}%
+      \fi
+    \fi
+  \fi
+}
+
 % 正文参考文献标题
 \newcommand\gzu@bib@heading[1]{%
   \ifgzu@in@appendix
@@ -2681,7 +2739,7 @@
       \gzu@bib@section@heading{#1}%
     \fi\fi
   \fi
-  \thispagestyle{\gzu@bib@page@style}%
+  \gzu@bib@apply@pagestyle
 }
 
 % 附录独立参考文献标题
@@ -2697,7 +2755,7 @@
       \section*{#1}%
     \endgroup
   \fi\fi
-  \thispagestyle{\gzu@bib@page@style}%
+  \gzu@bib@apply@pagestyle
 }
 % 
 %
