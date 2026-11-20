@@ -295,36 +295,73 @@
 % 
 % \subsection{数学字体、数学符号和公式编号}
 %
-% GZUThesis 使用 |amsmath| 与 |unicode-math|。
-% 默认正文使用 Times New Roman，数学符号使用与其风格协调、支持完整数学字符的
-% XITS Math；并不是把每个运算符强制用 Times New Roman 绘制。
-% 字母的正斜体属于数学风格约定：如 \verb|$R$| 表示变量，
-% \verb|$\mathrm{R}$| 表示正体字母，
-% \verb|$\mathbb{R}$| 表示实数集合。后者使用数学字体中的衬线双线体。
+% GZU-MATH-REFACTOR v1: user documentation.
+% 模板默认以 |amsmath| 提供公式结构，以 |unicode-math| 管理数学字体。
+% |math-font=auto| 解析为 XITS Math；|math-style=GB| 是模板提供的默认风格。
+% 这些是模板的可配置选择，不是贵州大学指定的数学字体或强制符号风格。
+% 学校 2026 年版格式文件第 2.4 节另有公式编号、换行、引用及符号解释要求；
+% 本模块不接管公式编号、超链接、正文大小或页面布局。
 %
-% |math-style| 支持 |GB|（默认，适用于中文学位论文）、|ISO| 和 |TeX|。
-% 以下七项可独立覆盖风格预设，默认 |auto| 表示遵循所选风格：
-% \begin{description}
-%   \item[uppercase-greek] 大写希腊字母：|italic|、|upright|。
-%   \item[less-than-or-equal] 小于等于号：|slanted|、|horizontal|。
-%   \item[integral] 积分号：|upright|、|slanted|。
-%   \item[integral-limits] 积分上下限位置：|true|、|false|。
-%   \item[partial] 偏微分符号：|upright|、|italic|。
-%   \item[math-ellipsis] 数学省略号：|centered|、|lower|、|AMS|。
-%   \item[real-part] 实部/虚部符号：|roman|、|fraktur|。
-% \end{description}
-%
-% 全部数学选项可在文档类选项或导言区的 \cs{gzusetup} 中使用，
-% 只在正文开始前完成字体与符号的统一初始化；不允许在正文内重新加载数学字体。
-% 例如：
 % \begin{verbatim}
 % \gzusetup{
+%   math-font  = xits,
 %   math-style = GB,
-%   integral = upright,
-%   partial = upright,
-%   math-ellipsis = centered,
 % }
 % \end{verbatim}
+%
+% 支持的数学字体为 |xits|、|stix|（STIX Two Math）、|libertinus|、
+% |newcm|（New Computer Modern Math）、|lm|（Latin Modern Math）。
+% |auto| 为 XITS 的默认入口；不存在静默换字体或自动下载行为。
+% 西文字体与数学字体分别配置；\cs{mathrm}、\cs{mathbf} 等文本数学字母
+% 继承已配置的正文字体，而 \cs{symup}、\cs{symbfup}、\cs{symbfit}
+% 从 OpenType 数学字体选取数学符号。
+%
+% |math-style| 支持 |GB|、|ISO|、|TeX|，是有限的排版预设，
+% 不代替作者检查物理量、常量、单位或学科惯例。
+% 以下选项默认 |auto|，显式值优先于风格预设，与设置顺序无关：
+% \begin{description}
+%   \item[uppercase-greek] 大写希腊字母：|italic|、|upright|。
+%   \item[less-than-or-equal] 不等号：|slanted|、|horizontal|。
+%   \item[integral] 积分号：|upright|、|slanted|，受字体能力限制。
+%   \item[integral-limits] 显示公式中积分上下限：|true| 上下、|false| 侧边。
+%   \item[partial] 偏微分号：|upright|、|italic|。
+%   \item[math-ellipsis] 省略号：|centered|、|lower|、|AMS|（保留原生上下文处理）。
+%   \item[real-part] 实部和虚部：|roman|、|fraktur|。
+% \end{description}
+% 所有上述选项可在文档类选项或导言区的 \cs{gzusetup} 中设置。
+% 最终配置只初始化一次；正文开始后修改这些选项会报错。
+% 模板在导言区末尾加载数学后端；导言区需要直接调用 \cs{setmathfont}
+% 等命令时，应显式加载 |unicode-math|，通常同时选择 |math-font=none|。
+%
+% 新内容建议使用明确的数学字母命令：
+% \begin{verbatim}
+% \symbfit{x}       % 粗斜体向量
+% \symbfup{A}       % 粗正体矩阵
+% \symbb{R}         % 实数集合
+% \mathrm{label}    % 多字母文本标识
+% \end{verbatim}
+% 保留 \cs{boldsymbol} 的 AMS 整体公式语义；\cs{bm} 提供兼容入口，
+% 转调 \cs{boldsymbol}，并不实现 |bm| 宏包的全部接口。
+% XITS 主字体与花体子范围均配置真实粗体文件；不使用伪粗体。
+% 其他字体预设提供 Unicode 粗体字母，但没有配置独立的整体粗体文件，
+% 请求 \cs{boldsymbol}、\cs{bm} 或 \cs{boldmath} 时会提示这一限制。
+% Latin Modern 的正体积分号预设不可用时会明确提示并保留原生字形。
+%
+% \textbf{退出管理。} |math-font=none| 表示不自动加载 |unicode-math|，
+% 不选择字体、不应用数学风格、不改写数学命令；|amsmath| 仍由模板提供。
+% 这是相对于旧实现的语义变化：不能再依赖它自动得到 Latin Modern Math。
+% 自定义 Unicode 字体例如：
+% \begin{verbatim}
+% \gzusetup{math-font=none}
+% \usepackage{unicode-math}
+% \unimathsetup{math-style=ISO}
+% \setmathfont{latinmodern-math.otf}
+% \end{verbatim}
+% 证明环境的结束符在没有 Unicode QED 时使用 |amsthm| 的方框。
+% 同样可在 |none| 模式自行配置传统 |amssymb|、|bm| 等宏包。
+% 托管模式不支持混入 |amsfonts|、|amssymb|、|bm|、|mathrsfs|、
+% |mathspec|、|newtxmath| 等数学字体后端；误用时给出明确错误。
+% 这是一项模板支持边界，并非声称这些宏包在任何手工配置下都不能共存。
 %
 % 公式编号默认按章编排，如（1.1），使用中文全角括号。
 % 可通过 |eqn-paren-style=half| 使用半角括号；图表及公式的编号连接符
@@ -2340,80 +2377,78 @@
 % \subsection{数学公式}
 % \label{sec:math}
 %
-% 数学字体与数学风格分开配置。Times New Roman 提供正文与罗马体，
-% XITS Math 提供完整数学字符，二者均为衬线 Times 风格。
-% GB/ISO/TeX 风格决定正斜体、积分号、偏微分等数学排版习惯，
-% 不负责字体名称的选择；细分设置支持覆盖风格预设。
-%
-% \subsubsection{加载宏包与风格预设}
+% GZU-MATH-REFACTOR v1: implementation.
+% 数学模块分为预设解析、后端加载、字形映射和兼容接口。
+% 只在导言区末尾初始化一次，避免重复加载字体以及 auto 状态漂移。
+% 数学字母风格在字体映射建立前设置；符号别名在后端开始文档处理后设置。
+% |none| 分支完全退出字体与符号管理，公式编号模块保持不变。
 %
 %    \begin{macrocode}
+% GZUThesis math-font refactor, 2026-11-20.
+% LPPL 1.3c or later; integrates with the existing GZUThesis key layer.
+% This file is inserted into the cls guard in gzuthesis.dtx, not loaded separately.
 \RequirePackage{amsmath}
-\RequirePackage{unicode-math}
 
-% 与清华同义的预设，只有 auto 子选项才随 math-style 改变。
-% GB: 斜体大写希腊字母、正体积分号、斜线 <= 等。
-% ISO: 斜体大写希腊字母、正体积分号、横线 <= 等。
-% TeX: 正体大写希腊字母、斜体积分号、TeX 传统符号。
-\newcommand\gzu@resolve@math@style{%
-  \ifgzu@math@font@auto
-    \gzu@set@key{math-font}{xits}%
-  \fi
-  \ifgzu@uppercase@greek@auto
-    \ifgzu@math@style@TeX
-      \gzu@set@key{uppercase-greek}{upright}%
-    \else
-      \gzu@set@key{uppercase-greek}{italic}%
-    \fi
-  \fi
-  \ifgzu@leq@auto
-    \ifgzu@math@style@GB
-      \gzu@set@key{less-than-or-equal}{slanted}%
-    \else
-      \gzu@set@key{less-than-or-equal}{horizontal}%
-    \fi
-  \fi
-  \ifgzu@integral@auto
-    \ifgzu@math@style@TeX
-      \gzu@set@key{integral}{slanted}%
-    \else
-      \gzu@set@key{integral}{upright}%
-    \fi
-  \fi
-  \ifgzu@integral@limits@auto
-    \ifgzu@math@style@ISO
-      \gzu@set@key{integral-limits}{true}%
-    \else
-      \gzu@set@key{integral-limits}{false}%
-    \fi
-  \fi
-  \ifgzu@partial@auto
-    \ifgzu@math@style@TeX
-      \gzu@set@key{partial}{italic}%
-    \else
-      \gzu@set@key{partial}{upright}%
-    \fi
-  \fi
-  \ifgzu@math@ellipsis@auto
-    \ifgzu@math@style@GB
-      \gzu@set@key{math-ellipsis}{centered}%
-    \else\ifgzu@math@style@ISO
-      \gzu@set@key{math-ellipsis}{lower}%
-    \else
-      \gzu@set@key{math-ellipsis}{AMS}%
-    \fi\fi
-  \fi
-  \ifgzu@real@part@auto
-    \ifgzu@math@style@TeX
-      \gzu@set@key{real-part}{fraktur}%
-    \else
-      \gzu@set@key{real-part}{roman}%
-    \fi
+% Initialise only once, after all preamble configuration has been collected.
+\newif\ifgzu@math@initialised
+\newif\ifgzu@math@managed
+\newif\ifgzu@math@realbold
+\newif\ifgzu@math@boldwarned
+\newcommand\gzu@math@keys{math-font,math-style,uppercase-greek,%
+  less-than-or-equal,integral,integral-limits,partial,math-ellipsis,real-part}
+
+% A preset fills only auto values. Explicit overrides are order-independent.
+\newcommand\gzu@math@default[2]{%
+  \@nameuse{ifgzu@\@nameuse{gzu@#1@@name}@auto}%
+    \gzu@set@key{#1}{#2}%
   \fi
 }
+\newcommand\gzu@math@preset@GB{%
+  \gzu@math@default{uppercase-greek}{italic}%
+  \gzu@math@default{less-than-or-equal}{slanted}%
+  \gzu@math@default{integral}{upright}%
+  \gzu@math@default{integral-limits}{false}%
+  \gzu@math@default{partial}{upright}%
+  \gzu@math@default{math-ellipsis}{centered}%
+  \gzu@math@default{real-part}{roman}%
+}
+\newcommand\gzu@math@preset@ISO{%
+  \gzu@math@default{uppercase-greek}{italic}%
+  \gzu@math@default{less-than-or-equal}{horizontal}%
+  \gzu@math@default{integral}{upright}%
+  \gzu@math@default{integral-limits}{true}%
+  \gzu@math@default{partial}{upright}%
+  \gzu@math@default{math-ellipsis}{lower}%
+  \gzu@math@default{real-part}{roman}%
+}
+\newcommand\gzu@math@preset@TeX{%
+  \gzu@math@default{uppercase-greek}{upright}%
+  \gzu@math@default{less-than-or-equal}{horizontal}%
+  \gzu@math@default{integral}{slanted}%
+  \gzu@math@default{integral-limits}{false}%
+  \gzu@math@default{partial}{italic}%
+  \gzu@math@default{math-ellipsis}{AMS}%
+  \gzu@math@default{real-part}{fraktur}%
+}
 
-% 保留默认 unicode-math 符号以便在设置之间正确切换。
-\newcommand\gzu@apply@math@symbols{%
+% Fail early for unsupported mixtures instead of silently replacing symbols.
+% This is a template support policy, not a claim about every possible manual mix.
+\newcommand\gzu@math@check@package[1]{%
+  \@ifpackageloaded{#1}{%
+    \ClassError{gzuthesis}{Package `#1' is not supported in managed Unicode math}%
+      {Remove #1 and use unicode-math commands, or set math-font=none\MessageBreak
+       and configure the entire math stack yourself before begin(document).}%
+  }{}%
+}
+\newcommand\gzu@math@check@packages{%
+  \@for\gzu@math@package:=amsfonts,amssymb,bm,mathrsfs,mathspec,%
+    newtxmath,txfonts,pxfonts,mathptmx,mathpazo,eulervm\do{%
+    \expandafter\gzu@math@check@package\expandafter{\gzu@math@package}%
+  }%
+}
+
+% These options must precede setmathfont: they affect Unicode mathcode mapping.
+\newcommand\gzu@math@setup@style{%
   \ifgzu@uppercase@greek@upright
     \unimathsetup{math-style=TeX}%
   \else
@@ -2429,129 +2464,143 @@
   \else
     \unimathsetup{partial=italic}%
   \fi
+}
+
+% A font registry with a shared loader. Never synthesise a fake bold face.
+\newcommand\gzu@math@require@font[1]{%
+  \IfFontExistsTF{#1}{}{%
+    \ClassError{gzuthesis}{Math font `#1' was not found}%
+      {Install the corresponding TeX Live font package, or select\MessageBreak
+       an installed math-font. The template does not download fonts.}%
+  }%
+}
+\newcommand\gzu@math@load@font[3]{%
+  \gzu@math@require@font{#1}%
+  \gzu@math@require@font{#2}%
+  \setmathfont{#1}[BoldFont={#2},StylisticSet={#3}]%
+}
+\newcommand\gzu@math@load@range[4]{%
+  % Each range creates another font family; it needs its own BoldFont mapping.
+  \setmathfont{#1}[BoldFont={#2},StylisticSet={#3},range={#4}]%
+}
+\newcommand\gzu@math@font@xits{%
+  \gzu@math@realboldtrue
+  \def\gzu@math@ss{}%
+  \ifgzu@integral@upright\def\gzu@math@ss{8}\fi
+  \gzu@math@load@font{XITSMath-Regular.otf}{XITSMath-Bold.otf}{\gzu@math@ss}%
+  \gzu@math@load@range{XITSMath-Regular.otf}{XITSMath-Bold.otf}{1}{cal,bfcal}%
+}
+\newcommand\gzu@math@font@stix{%
+  \def\gzu@math@ss{}%
+  \ifgzu@integral@upright\def\gzu@math@ss{8}\fi
+  \gzu@math@load@font{STIXTwoMath-Regular.otf}{STIXTwoMath-Regular.otf}{\gzu@math@ss}%
+  \gzu@math@load@range{STIXTwoMath-Regular.otf}{STIXTwoMath-Regular.otf}{1}{scr,bfscr}%
+}
+\newcommand\gzu@math@font@libertinus{%
+  \def\gzu@math@ss{}%
+  \ifgzu@integral@slanted\def\gzu@math@ss{8}\fi
+  \gzu@math@load@font{LibertinusMath-Regular.otf}{LibertinusMath-Regular.otf}{\gzu@math@ss}%
+}
+\newcommand\gzu@math@font@newcm{%
+  \def\gzu@math@ss{}%
+  \ifgzu@integral@upright\def\gzu@math@ss{2}\fi
+  \gzu@math@load@font{NewCMMath-Book.otf}{NewCMMath-Book.otf}{\gzu@math@ss}%
+  \gzu@math@load@range{NewCMMath-Book.otf}{NewCMMath-Book.otf}{1}{scr,bfscr}%
+}
+\newcommand\gzu@math@font@lm{%
+  \ifgzu@integral@upright
+    \ClassWarningNoLine{gzuthesis}{Latin Modern Math has no upright-integral\MessageBreak
+      preset here; retaining its native integral shape.\MessageBreak
+      Select xits, stix, libertinus or newcm for upright integrals}%
+  \fi
+  \gzu@math@load@font{latinmodern-math.otf}{latinmodern-math.otf}{}%
+}
+
+% Unicode bold alphabets and a genuinely bold whole formula are different.
+% XITS provides a separate bold face. Other presets retain native operator
+% shapes in the bold version; say so once when whole-formula bold is requested.
+\newcommand\gzu@math@warn@bold{%
+  \ifgzu@math@realbold\else
+    \ifgzu@math@boldwarned\else
+      \global\gzu@math@boldwarnedtrue
+      \ClassWarningNoLine{gzuthesis}{Math font `\gzu@math@font' has no separate\MessageBreak
+        bold face configured. Bold letters are available, but operators\MessageBreak
+        and delimiters retain their native weight. Use symbfup/symbfit\MessageBreak
+        for bold letters, or math-font=xits for a bold whole formula}%
+    \fi
+  \fi
+}
+\newcommand\gzu@math@setup@compat{%
+  \NewCommandCopy\gzu@math@original@boldsymbol\boldsymbol
+  \DeclareRobustCommand\boldsymbol[1]{%
+    \gzu@math@warn@bold
+    \gzu@math@original@boldsymbol{##1}}%
+  % Compatibility for the common \bm{...} call, NOT the full bm package API.
+  \DeclareRobustCommand\bm[1]{\boldsymbol{##1}}%
+  \AddToHook{cmd/boldmath/before}[gzuthesis/math]{\gzu@math@warn@bold}%
+  \providecommand\square{\mdlgwhtsquare}%
+  \providecommand\blacksquare{\mdlgblksquare}%
+}
+
+% Install command aliases after unicode-math's begin-document definitions.
+% Do not rewrite \ldots or \cdots; AMS mode leaves contextual \dots untouched.
+\newcommand\gzu@math@setup@symbols{%
   \ifgzu@leq@slanted
-    \let\le\leqslant
-    \let\ge\geqslant
-    \let\leq\leqslant
-    \let\geq\geqslant
-  \else
-    \let\le\gzu@save@leq
-    \let\ge\gzu@save@geq
-    \let\leq\gzu@save@leq
-    \let\geq\gzu@save@geq
+    \let\le\leqslant \let\leq\leqslant
+    \let\ge\geqslant \let\geq\geqslant
   \fi
   \ifgzu@integral@limits@true
-    \removenolimits{\int\iint\iiint\oint}%
+    \removenolimits{\int\iint\iiint\iiiint\oint\oiint\oiiint}%
   \else
-    \addnolimits{\int\iint\iiint\oint}%
+    \addnolimits{\int\iint\iiint\iiiint\oint\oiint\oiiint}%
   \fi
   \ifgzu@math@ellipsis@centered
     \def\mathellipsis{\mathinner{\unicodecdots}}%
   \else\ifgzu@math@ellipsis@lower
     \def\mathellipsis{\mathinner{\unicodeellipsis}}%
-  \else
-    \def\mathellipsis{\mathinner{\cdots}}%
   \fi\fi
   \ifgzu@real@part@roman
     \def\Re{\operatorname{Re}}%
     \def\Im{\operatorname{Im}}%
-  \else
-    \let\Re\gzu@save@Re
-    \let\Im\gzu@save@Im
   \fi
+  \gzu@math@setup@compat
 }
-%    \end{macrocode}
-%
-% \subsubsection{数学字体选择}
-%
-% Times New Roman 不是完整的 OpenType 数学字体，因此默认 XITS Math。
-% 与正文独立的数学字体保持符号覆盖完整；正体文本 \cs{mathrm} 在
-% Times 模式下使用同一 Times New Roman 字体家族。
-%    \begin{macrocode}
-\newcommand\gzu@set@math@font@xits{%
-  \ifgzu@integral@upright
-    \setmathfont{XITSMath-Regular.otf}[BoldFont=XITSMath-Bold.otf,StylisticSet=8]%
-  \else
-    \setmathfont{XITSMath-Regular.otf}[BoldFont=XITSMath-Bold.otf]%
-  \fi
-  \setmathfont{XITSMath-Regular.otf}[
-    StylisticSet=1,range={cal,bfcal},
-  ]%
+
+% Unlike class-only keys, these are valid throughout the preamble.
+\newcommand\gzu@math@locked[2]{%
+  \ClassError{gzuthesis}{Math option `#1' cannot be changed after initialisation}%
+    {Put all math options in documentclass or gzusetup in the preamble.}%
 }
-\newcommand\gzu@set@math@font@stix{%
-  \ifgzu@integral@upright
-    \setmathfont{STIXTwoMath-Regular.otf}[StylisticSet=8]%
-  \else
-    \setmathfont{STIXTwoMath-Regular.otf}%
-  \fi
-  \setmathfont{STIXTwoMath-Regular.otf}[
-    StylisticSet=1,range={scr,bfscr},
-  ]%
+\newcommand\gzu@math@lock@key[1]{%
+  \@namedef{gzu@#1@@guard}{\gzu@math@locked{#1}}%
 }
-\newcommand\gzu@set@math@font@libertinus{%
-  \ifgzu@integral@slanted
-    \setmathfont{LibertinusMath-Regular.otf}[StylisticSet=8]%
-  \else
-    \setmathfont{LibertinusMath-Regular.otf}%
-  \fi
-}
-\newcommand\gzu@set@math@font@newcm{%
-  \ifgzu@integral@upright
-    \setmathfont{NewCMMath-Book.otf}[StylisticSet=2]%
-  \else
-    \setmathfont{NewCMMath-Book.otf}%
-  \fi
-  \setmathfont{NewCMMath-Book.otf}[
-    StylisticSet=1,range={scr,bfscr},
-  ]%
-}
-\newcommand\gzu@set@math@font@lm{%
-  \setmathfont{latinmodern-math.otf}%
-}
-\newcommand\gzu@set@math@font@none{}
-\newcommand\gzu@set@math@roman{%
-  \ifgzu@font@times
-    \setmathrm{Times New Roman}%
-  \else
-    \ifx\gzu@font\gzu@value@times@local
-      \setmathrm{times.ttf}[
-        Path=\gzu@windows@font@dir/,
-        BoldFont=timesbd.ttf,
-        ItalicFont=timesi.ttf,
-        BoldItalicFont=timesbi.ttf,
-      ]%
+\newcommand\gzu@math@initialise{%
+  \ifgzu@math@initialised\else
+    \gzu@math@initialisedtrue
+    \ifgzu@math@font@none
+      % A real opt-out: no Unicode package, no font or symbol overrides.
+      \ClassInfo{gzuthesis}{Math fonts and styles are user-managed (math-font=none)}%
+    \else
+      \gzu@math@managedtrue
+      \gzu@math@default{math-font}{xits}%
+      \@nameuse{gzu@math@preset@\gzu@math@style}%
+      \gzu@math@check@packages
+      \RequirePackage{unicode-math}%
+      \gzu@math@setup@style
+      \@nameuse{gzu@math@font@\gzu@math@font}%
+      % Text math alphabets inherit fontspec's existing text font families.
+      % Do not duplicate the Times/Windows/local-path selection here.
+      \ClassInfo{gzuthesis}{Math font=\gzu@math@font, style=\gzu@math@style}%
     \fi
+    \@for\gzu@math@key:=\gzu@math@keys\do{%
+      \expandafter\gzu@math@lock@key\expandafter{\gzu@math@key}%
+    }%
   \fi
 }
-\newcommand\gzu@apply@math@settings{%
-  \gzu@resolve@math@style
-  \ifgzu@math@font@none\else
-    \@nameuse{gzu@set@math@font@\gzu@math@font}%
-    \gzu@set@math@roman
-  \fi
+\AddToHook{begindocument/before}[gzuthesis/math]{\gzu@math@initialise}
+\AddToHook{begindocument/end}[gzuthesis/math]{%
+  \ifgzu@math@managed\gzu@math@setup@symbols\fi
 }
-% 数学风格只在导言区配置；先加载数学字体，后应用符号宏覆盖。
-\AddToHook{begindocument/end}{%
-  % unicode-math 在 begindocument 中可能重新定义这些符号；
-  % 必须等其完成后才保存原始命令，不能在载入包时提前保存。
-  \let\gzu@save@leq\leq
-  \let\gzu@save@geq\geq
-  \let\gzu@save@Re\Re
-  \let\gzu@save@Im\Im
-  \gzu@apply@math@symbols
-}
-\AddToHook{begindocument/before}{%
-  \gzu@apply@math@settings
-  \gzu@option@classonly{math-font}%
-  \gzu@option@classonly{math-style}%
-  \gzu@option@classonly{uppercase-greek}%
-  \gzu@option@classonly{less-than-or-equal}%
-  \gzu@option@classonly{integral}%
-  \gzu@option@classonly{integral-limits}%
-  \gzu@option@classonly{partial}%
-  \gzu@option@classonly{math-ellipsis}%
-  \gzu@option@classonly{real-part}%
-}%
 %    \end{macrocode}
 %
 % \subsubsection{公式编号与引用}
@@ -2680,10 +2729,13 @@
 %
 % \subsubsection{证明结束符号}
 %
-% 采用 |unicode-math| 提供的 QED 符号。
+% 有 Unicode QED 符号时使用它；否则保留 amsthm 的结束方框。
+% 此处不要求数学字体模块必须加载 unicode-math。
 %
 %    \begin{macrocode}
-\renewcommand\qedsymbol{\ensuremath{\QED}}
+\renewcommand\qedsymbol{%
+  \ifdefined\QED\ensuremath{\QED}\else\openbox\fi
+}
 %    \end{macrocode}
 % 
 % 
@@ -3020,7 +3072,11 @@
         }%
         \@ifpackageloaded{gbt7714}{%
           % 使附录的 bibunit 也读取国标 BST 控制记录
-          \nocite{GBT7714:BSTcontrol}%
+          \@startbibunitorrelax
+          \if@filesw
+            \immediate\write\@bibunitaux{%
+              \string\citation{GBT7714:BSTcontrol}}%
+          \fi
           \putbib[\jobname-BSTcontrol,#1]%
         }{%
           \putbib[#1]%
@@ -3535,6 +3591,8 @@
 % 
 %    
 \renewcommand\maketitle{%
+  \cleardoublepage
+  \pagenumbering{Alph}%
   \ifgzu@thesis@version@blind
     \gzu@blind@maketitle
   \else
@@ -4606,8 +4664,8 @@
   }%
   % 附录图表是否加入图表清单
   \ifgzu@appendix@figure@in@lof@false
-    \captionsetup[figure]{list=false}%
-    \captionsetup[table]{list=false}%
+    \captionsetup*[figure]{list=false}%
+    \captionsetup*[table]{list=false}%
   \fi
   % 附录目录层级
   \protected@write\@auxout{}{%

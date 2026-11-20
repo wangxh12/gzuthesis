@@ -87,7 +87,9 @@
   {}+a_6x^6+a_7x^7+a_8x^8+a_9x^9+a_{10}x^{10}.
 \end{multline}
 
-较复杂的函数推导可以在对齐公式之间加入普通说明文字。下面的例子检验 \texttt{\textbackslash intertext} 是否维持正确的缩进和公式前后间距：
+较复杂的函数推导可以在对齐公式之间加入普通说明文字。
+
+下面的例子检验 \texttt{\textbackslash intertext} 是否维持正确的缩进和公式前后间距：
 \begin{align}
   J(\boldsymbol{x})
     &=\frac{1}{2}\lVert\boldsymbol{A}\boldsymbol{x}-\boldsymbol{b}\rVert_2^2
@@ -352,10 +354,10 @@
 \end{equation}
 
 为了检验特殊公式标签，可单独使用手动编号。该标签不参与常规公式编号序列，正式论文中一般不建议频繁使用：
-\begin{equation}
+\begin{equation*}
   \tag{T}\label{eq:test-custom-tag}
   \boldsymbol{I}\boldsymbol{x}=\boldsymbol{x}.
-\end{equation}
+\end{equation*}
 手动标签的引用结果应为式\eqref{eq:test-custom-tag}。
 
 最后通过集中引用检查公式编号、超链接与引用标点的一致性：单行公式见式\eqref{eq:test-motion}，多行同号公式见式\eqref{eq:test-split}，子公式见式\eqref{eq:test-system-x}—\eqref{eq:test-system-z}，长公式见式\eqref{eq:test-multline}，矩阵公式见式\eqref{eq:test-large-matrix}，概率公式见式\eqref{eq:test-bayes}。这些编号应当在至少两轮编译后稳定显示，不应出现问号或重复标签警告。

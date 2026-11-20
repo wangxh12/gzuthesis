@@ -155,9 +155,15 @@
 \gzusetup{
   %
   % 数学字体
-  math-style = ISO,  % GB | ISO | TeX
-  math-font  = none  % stix | xits | libertinus
-  }
+  math-style = GB,  % GB | ISO | TeX
+  math-font  = xits  % stix | xits | libertinus
+}
+
+% 仅将 \mathbb 切换为传统 AMS Blackboard Bold
+\AddToHook{begindocument/end}{%
+  \DeclareSymbolFont{AMSbb}{U}{msb}{m}{n}%
+  \DeclareSymbolFontAlphabet{\mathbb}{AMSbb}%
+}
 
 % 数学红包
 % \usepackage{amssymb}

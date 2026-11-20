@@ -1286,66 +1286,62 @@
   {\gzu@list@leaders\thecontentspage}
 
 \RequirePackage{amsmath}
-\RequirePackage{unicode-math}
 
-\newcommand\gzu@resolve@math@style{%
-  \ifgzu@math@font@auto
-    \gzu@set@key{math-font}{xits}%
-  \fi
-  \ifgzu@uppercase@greek@auto
-    \ifgzu@math@style@TeX
-      \gzu@set@key{uppercase-greek}{upright}%
-    \else
-      \gzu@set@key{uppercase-greek}{italic}%
-    \fi
-  \fi
-  \ifgzu@leq@auto
-    \ifgzu@math@style@GB
-      \gzu@set@key{less-than-or-equal}{slanted}%
-    \else
-      \gzu@set@key{less-than-or-equal}{horizontal}%
-    \fi
-  \fi
-  \ifgzu@integral@auto
-    \ifgzu@math@style@TeX
-      \gzu@set@key{integral}{slanted}%
-    \else
-      \gzu@set@key{integral}{upright}%
-    \fi
-  \fi
-  \ifgzu@integral@limits@auto
-    \ifgzu@math@style@ISO
-      \gzu@set@key{integral-limits}{true}%
-    \else
-      \gzu@set@key{integral-limits}{false}%
-    \fi
-  \fi
-  \ifgzu@partial@auto
-    \ifgzu@math@style@TeX
-      \gzu@set@key{partial}{italic}%
-    \else
-      \gzu@set@key{partial}{upright}%
-    \fi
-  \fi
-  \ifgzu@math@ellipsis@auto
-    \ifgzu@math@style@GB
-      \gzu@set@key{math-ellipsis}{centered}%
-    \else\ifgzu@math@style@ISO
-      \gzu@set@key{math-ellipsis}{lower}%
-    \else
-      \gzu@set@key{math-ellipsis}{AMS}%
-    \fi\fi
-  \fi
-  \ifgzu@real@part@auto
-    \ifgzu@math@style@TeX
-      \gzu@set@key{real-part}{fraktur}%
-    \else
-      \gzu@set@key{real-part}{roman}%
-    \fi
+\newif\ifgzu@math@initialised
+\newif\ifgzu@math@managed
+\newif\ifgzu@math@realbold
+\newif\ifgzu@math@boldwarned
+\newcommand\gzu@math@keys{math-font,math-style,uppercase-greek,%
+  less-than-or-equal,integral,integral-limits,partial,math-ellipsis,real-part}
+
+\newcommand\gzu@math@default[2]{%
+  \@nameuse{ifgzu@\@nameuse{gzu@#1@@name}@auto}%
+    \gzu@set@key{#1}{#2}%
   \fi
 }
+\newcommand\gzu@math@preset@GB{%
+  \gzu@math@default{uppercase-greek}{italic}%
+  \gzu@math@default{less-than-or-equal}{slanted}%
+  \gzu@math@default{integral}{upright}%
+  \gzu@math@default{integral-limits}{false}%
+  \gzu@math@default{partial}{upright}%
+  \gzu@math@default{math-ellipsis}{centered}%
+  \gzu@math@default{real-part}{roman}%
+}
+\newcommand\gzu@math@preset@ISO{%
+  \gzu@math@default{uppercase-greek}{italic}%
+  \gzu@math@default{less-than-or-equal}{horizontal}%
+  \gzu@math@default{integral}{upright}%
+  \gzu@math@default{integral-limits}{true}%
+  \gzu@math@default{partial}{upright}%
+  \gzu@math@default{math-ellipsis}{lower}%
+  \gzu@math@default{real-part}{roman}%
+}
+\newcommand\gzu@math@preset@TeX{%
+  \gzu@math@default{uppercase-greek}{upright}%
+  \gzu@math@default{less-than-or-equal}{horizontal}%
+  \gzu@math@default{integral}{slanted}%
+  \gzu@math@default{integral-limits}{false}%
+  \gzu@math@default{partial}{italic}%
+  \gzu@math@default{math-ellipsis}{AMS}%
+  \gzu@math@default{real-part}{fraktur}%
+}
 
-\newcommand\gzu@apply@math@symbols{%
+\newcommand\gzu@math@check@package[1]{%
+  \@ifpackageloaded{#1}{%
+    \ClassError{gzuthesis}{Package `#1' is not supported in managed Unicode math}%
+      {Remove #1 and use unicode-math commands, or set math-font=none\MessageBreak
+       and configure the entire math stack yourself before begin(document).}%
+  }{}%
+}
+\newcommand\gzu@math@check@packages{%
+  \@for\gzu@math@package:=amsfonts,amssymb,bm,mathrsfs,mathspec,%
+    newtxmath,txfonts,pxfonts,mathptmx,mathpazo,eulervm\do{%
+    \expandafter\gzu@math@check@package\expandafter{\gzu@math@package}%
+  }%
+}
+
+\newcommand\gzu@math@setup@style{%
   \ifgzu@uppercase@greek@upright
     \unimathsetup{math-style=TeX}%
   \else
@@ -1361,120 +1357,136 @@
   \else
     \unimathsetup{partial=italic}%
   \fi
+}
+
+\newcommand\gzu@math@require@font[1]{%
+  \IfFontExistsTF{#1}{}{%
+    \ClassError{gzuthesis}{Math font `#1' was not found}%
+      {Install the corresponding TeX Live font package, or select\MessageBreak
+       an installed math-font. The template does not download fonts.}%
+  }%
+}
+\newcommand\gzu@math@load@font[3]{%
+  \gzu@math@require@font{#1}%
+  \gzu@math@require@font{#2}%
+  \setmathfont{#1}[BoldFont={#2},StylisticSet={#3}]%
+}
+\newcommand\gzu@math@load@range[4]{%
+  % Each range creates another font family; it needs its own BoldFont mapping.
+  \setmathfont{#1}[BoldFont={#2},StylisticSet={#3},range={#4}]%
+}
+\newcommand\gzu@math@font@xits{%
+  \gzu@math@realboldtrue
+  \def\gzu@math@ss{}%
+  \ifgzu@integral@upright\def\gzu@math@ss{8}\fi
+  \gzu@math@load@font{XITSMath-Regular.otf}{XITSMath-Bold.otf}{\gzu@math@ss}%
+  \gzu@math@load@range{XITSMath-Regular.otf}{XITSMath-Bold.otf}{1}{cal,bfcal}%
+}
+\newcommand\gzu@math@font@stix{%
+  \def\gzu@math@ss{}%
+  \ifgzu@integral@upright\def\gzu@math@ss{8}\fi
+  \gzu@math@load@font{STIXTwoMath-Regular.otf}{STIXTwoMath-Regular.otf}{\gzu@math@ss}%
+  \gzu@math@load@range{STIXTwoMath-Regular.otf}{STIXTwoMath-Regular.otf}{1}{scr,bfscr}%
+}
+\newcommand\gzu@math@font@libertinus{%
+  \def\gzu@math@ss{}%
+  \ifgzu@integral@slanted\def\gzu@math@ss{8}\fi
+  \gzu@math@load@font{LibertinusMath-Regular.otf}{LibertinusMath-Regular.otf}{\gzu@math@ss}%
+}
+\newcommand\gzu@math@font@newcm{%
+  \def\gzu@math@ss{}%
+  \ifgzu@integral@upright\def\gzu@math@ss{2}\fi
+  \gzu@math@load@font{NewCMMath-Book.otf}{NewCMMath-Book.otf}{\gzu@math@ss}%
+  \gzu@math@load@range{NewCMMath-Book.otf}{NewCMMath-Book.otf}{1}{scr,bfscr}%
+}
+\newcommand\gzu@math@font@lm{%
+  \ifgzu@integral@upright
+    \ClassWarningNoLine{gzuthesis}{Latin Modern Math has no upright-integral\MessageBreak
+      preset here; retaining its native integral shape.\MessageBreak
+      Select xits, stix, libertinus or newcm for upright integrals}%
+  \fi
+  \gzu@math@load@font{latinmodern-math.otf}{latinmodern-math.otf}{}%
+}
+
+\newcommand\gzu@math@warn@bold{%
+  \ifgzu@math@realbold\else
+    \ifgzu@math@boldwarned\else
+      \global\gzu@math@boldwarnedtrue
+      \ClassWarningNoLine{gzuthesis}{Math font `\gzu@math@font' has no separate\MessageBreak
+        bold face configured. Bold letters are available, but operators\MessageBreak
+        and delimiters retain their native weight. Use symbfup/symbfit\MessageBreak
+        for bold letters, or math-font=xits for a bold whole formula}%
+    \fi
+  \fi
+}
+\newcommand\gzu@math@setup@compat{%
+  \NewCommandCopy\gzu@math@original@boldsymbol\boldsymbol
+  \DeclareRobustCommand\boldsymbol[1]{%
+    \gzu@math@warn@bold
+    \gzu@math@original@boldsymbol{##1}}%
+  % Compatibility for the common \bm{...} call, NOT the full bm package API.
+  \DeclareRobustCommand\bm[1]{\boldsymbol{##1}}%
+  \AddToHook{cmd/boldmath/before}[gzuthesis/math]{\gzu@math@warn@bold}%
+  \providecommand\square{\mdlgwhtsquare}%
+  \providecommand\blacksquare{\mdlgblksquare}%
+}
+
+\newcommand\gzu@math@setup@symbols{%
   \ifgzu@leq@slanted
-    \let\le\leqslant
-    \let\ge\geqslant
-    \let\leq\leqslant
-    \let\geq\geqslant
-  \else
-    \let\le\gzu@save@leq
-    \let\ge\gzu@save@geq
-    \let\leq\gzu@save@leq
-    \let\geq\gzu@save@geq
+    \let\le\leqslant \let\leq\leqslant
+    \let\ge\geqslant \let\geq\geqslant
   \fi
   \ifgzu@integral@limits@true
-    \removenolimits{\int\iint\iiint\oint}%
+    \removenolimits{\int\iint\iiint\iiiint\oint\oiint\oiiint}%
   \else
-    \addnolimits{\int\iint\iiint\oint}%
+    \addnolimits{\int\iint\iiint\iiiint\oint\oiint\oiiint}%
   \fi
   \ifgzu@math@ellipsis@centered
     \def\mathellipsis{\mathinner{\unicodecdots}}%
   \else\ifgzu@math@ellipsis@lower
     \def\mathellipsis{\mathinner{\unicodeellipsis}}%
-  \else
-    \def\mathellipsis{\mathinner{\cdots}}%
   \fi\fi
   \ifgzu@real@part@roman
     \def\Re{\operatorname{Re}}%
     \def\Im{\operatorname{Im}}%
-  \else
-    \let\Re\gzu@save@Re
-    \let\Im\gzu@save@Im
   \fi
+  \gzu@math@setup@compat
 }
-\newcommand\gzu@set@math@font@xits{%
-  \ifgzu@integral@upright
-    \setmathfont{XITSMath-Regular.otf}[BoldFont=XITSMath-Bold.otf,StylisticSet=8]%
-  \else
-    \setmathfont{XITSMath-Regular.otf}[BoldFont=XITSMath-Bold.otf]%
-  \fi
-  \setmathfont{XITSMath-Regular.otf}[
-    StylisticSet=1,range={cal,bfcal},
-  ]%
+
+\newcommand\gzu@math@locked[2]{%
+  \ClassError{gzuthesis}{Math option `#1' cannot be changed after initialisation}%
+    {Put all math options in documentclass or gzusetup in the preamble.}%
 }
-\newcommand\gzu@set@math@font@stix{%
-  \ifgzu@integral@upright
-    \setmathfont{STIXTwoMath-Regular.otf}[StylisticSet=8]%
-  \else
-    \setmathfont{STIXTwoMath-Regular.otf}%
-  \fi
-  \setmathfont{STIXTwoMath-Regular.otf}[
-    StylisticSet=1,range={scr,bfscr},
-  ]%
+\newcommand\gzu@math@lock@key[1]{%
+  \@namedef{gzu@#1@@guard}{\gzu@math@locked{#1}}%
 }
-\newcommand\gzu@set@math@font@libertinus{%
-  \ifgzu@integral@slanted
-    \setmathfont{LibertinusMath-Regular.otf}[StylisticSet=8]%
-  \else
-    \setmathfont{LibertinusMath-Regular.otf}%
-  \fi
-}
-\newcommand\gzu@set@math@font@newcm{%
-  \ifgzu@integral@upright
-    \setmathfont{NewCMMath-Book.otf}[StylisticSet=2]%
-  \else
-    \setmathfont{NewCMMath-Book.otf}%
-  \fi
-  \setmathfont{NewCMMath-Book.otf}[
-    StylisticSet=1,range={scr,bfscr},
-  ]%
-}
-\newcommand\gzu@set@math@font@lm{%
-  \setmathfont{latinmodern-math.otf}%
-}
-\newcommand\gzu@set@math@font@none{}
-\newcommand\gzu@set@math@roman{%
-  \ifgzu@font@times
-    \setmathrm{Times New Roman}%
-  \else
-    \ifx\gzu@font\gzu@value@times@local
-      \setmathrm{times.ttf}[
-        Path=\gzu@windows@font@dir/,
-        BoldFont=timesbd.ttf,
-        ItalicFont=timesi.ttf,
-        BoldItalicFont=timesbi.ttf,
-      ]%
+\newcommand\gzu@math@initialise{%
+  \ifgzu@math@initialised\else
+    \gzu@math@initialisedtrue
+    \ifgzu@math@font@none
+      % A real opt-out: no Unicode package, no font or symbol overrides.
+      \ClassInfo{gzuthesis}{Math fonts and styles are user-managed (math-font=none)}%
+    \else
+      \gzu@math@managedtrue
+      \gzu@math@default{math-font}{xits}%
+      \@nameuse{gzu@math@preset@\gzu@math@style}%
+      \gzu@math@check@packages
+      \RequirePackage{unicode-math}%
+      \gzu@math@setup@style
+      \@nameuse{gzu@math@font@\gzu@math@font}%
+      % Text math alphabets inherit fontspec's existing text font families.
+      % Do not duplicate the Times/Windows/local-path selection here.
+      \ClassInfo{gzuthesis}{Math font=\gzu@math@font, style=\gzu@math@style}%
     \fi
+    \@for\gzu@math@key:=\gzu@math@keys\do{%
+      \expandafter\gzu@math@lock@key\expandafter{\gzu@math@key}%
+    }%
   \fi
 }
-\newcommand\gzu@apply@math@settings{%
-  \gzu@resolve@math@style
-  \ifgzu@math@font@none\else
-    \@nameuse{gzu@set@math@font@\gzu@math@font}%
-    \gzu@set@math@roman
-  \fi
+\AddToHook{begindocument/before}[gzuthesis/math]{\gzu@math@initialise}
+\AddToHook{begindocument/end}[gzuthesis/math]{%
+  \ifgzu@math@managed\gzu@math@setup@symbols\fi
 }
-\AddToHook{begindocument/end}{%
-  % unicode-math 在 begindocument 中可能重新定义这些符号；
-  % 必须等其完成后才保存原始命令，不能在载入包时提前保存。
-  \let\gzu@save@leq\leq
-  \let\gzu@save@geq\geq
-  \let\gzu@save@Re\Re
-  \let\gzu@save@Im\Im
-  \gzu@apply@math@symbols
-}
-\AddToHook{begindocument/before}{%
-  \gzu@apply@math@settings
-  \gzu@option@classonly{math-font}%
-  \gzu@option@classonly{math-style}%
-  \gzu@option@classonly{uppercase-greek}%
-  \gzu@option@classonly{less-than-or-equal}%
-  \gzu@option@classonly{integral}%
-  \gzu@option@classonly{integral-limits}%
-  \gzu@option@classonly{partial}%
-  \gzu@option@classonly{math-ellipsis}%
-  \gzu@option@classonly{real-part}%
-}%
 \ifgzu@equation@numbering@global
   \@removefromreset{equation}{chapter}%
 \fi
@@ -1549,7 +1561,9 @@
 }{%
   \popQED\endtrivlist\@endpefalse
 }
-\renewcommand\qedsymbol{\ensuremath{\QED}}
+\renewcommand\qedsymbol{%
+  \ifdefined\QED\ensuremath{\QED}\else\openbox\fi
+}
 \RequirePackage{notoccite}
 \RequirePackage{url}
 \RequirePackage{etoolbox}
@@ -1823,7 +1837,11 @@
         }%
         \@ifpackageloaded{gbt7714}{%
           % 使附录的 bibunit 也读取国标 BST 控制记录
-          \nocite{GBT7714:BSTcontrol}%
+          \@startbibunitorrelax
+          \if@filesw
+            \immediate\write\@bibunitaux{%
+              \string\citation{GBT7714:BSTcontrol}}%
+          \fi
           \putbib[\jobname-BSTcontrol,#1]%
         }{%
           \putbib[#1]%
@@ -2245,6 +2263,8 @@
   \fi
 }
 \renewcommand\maketitle{%
+  \cleardoublepage
+  \pagenumbering{Alph}%
   \ifgzu@thesis@version@blind
     \gzu@blind@maketitle
   \else
@@ -3097,8 +3117,8 @@
   }%
   % 附录图表是否加入图表清单
   \ifgzu@appendix@figure@in@lof@false
-    \captionsetup[figure]{list=false}%
-    \captionsetup[table]{list=false}%
+    \captionsetup*[figure]{list=false}%
+    \captionsetup*[table]{list=false}%
   \fi
   % 附录目录层级
   \protected@write\@auxout{}{%
